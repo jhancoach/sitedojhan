@@ -28,6 +28,7 @@ interface PlayerFormData {
   player2: PlayerData;
   player3: PlayerData;
   player4: PlayerData;
+  player5: PlayerData;
 }
 
 const defaultPlayerData: PlayerData = {
@@ -47,6 +48,7 @@ export default function Estatisticas() {
     player2: { ...defaultPlayerData },
     player3: { ...defaultPlayerData },
     player4: { ...defaultPlayerData },
+    player5: { ...defaultPlayerData },
   });
 
   const handleInputChange = (
@@ -69,6 +71,7 @@ export default function Estatisticas() {
       player2: { ...defaultPlayerData },
       player3: { ...defaultPlayerData },
       player4: { ...defaultPlayerData },
+      player5: { ...defaultPlayerData },
     });
     setShowSummary(false);
     toast.success('Dados resetados com sucesso!');
@@ -79,7 +82,7 @@ export default function Estatisticas() {
   };
 
   const calculateTotals = () => {
-    const players = [formData.player1, formData.player2, formData.player3, formData.player4];
+    const players = [formData.player1, formData.player2, formData.player3, formData.player4, formData.player5];
     return {
       totalKills: players.reduce((sum, p) => sum + (parseInt(p.kills) || 0), 0),
       totalMortes: players.reduce((sum, p) => sum + (parseInt(p.mortes) || 0), 0),
@@ -90,7 +93,7 @@ export default function Estatisticas() {
   };
 
   const handleGenerateSummary = () => {
-    const players = [formData.player1, formData.player2, formData.player3, formData.player4];
+    const players = [formData.player1, formData.player2, formData.player3, formData.player4, formData.player5];
     const hasData = players.some(p => p.nome.trim() !== '');
     
     if (!hasData) {
@@ -261,11 +264,12 @@ export default function Estatisticas() {
           </div>
 
           {/* Player Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {renderPlayerCard('player1', 1)}
             {renderPlayerCard('player2', 2)}
             {renderPlayerCard('player3', 3)}
             {renderPlayerCard('player4', 4)}
+            {renderPlayerCard('player5', 5)}
           </div>
 
           {/* Summary Section */}
@@ -275,8 +279,8 @@ export default function Estatisticas() {
                 Resumo Final
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[formData.player1, formData.player2, formData.player3, formData.player4].map(
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                {[formData.player1, formData.player2, formData.player3, formData.player4, formData.player5].map(
                   (player, index) =>
                     player.nome && (
                       <Card key={index} className="bg-card border-primary/50">
