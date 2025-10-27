@@ -69,34 +69,28 @@ export type Database = {
         Row: {
           apelido: string | null
           created_at: string
-          email: string
           funcao_ff: string
           id: string
           instagram: string | null
-          nome: string
-          sobrenome: string
+          nick: string
           updated_at: string
         }
         Insert: {
           apelido?: string | null
           created_at?: string
-          email: string
           funcao_ff: string
           id: string
           instagram?: string | null
-          nome: string
-          sobrenome: string
+          nick: string
           updated_at?: string
         }
         Update: {
           apelido?: string | null
           created_at?: string
-          email?: string
           funcao_ff?: string
           id?: string
           instagram?: string | null
-          nome?: string
-          sobrenome?: string
+          nick?: string
           updated_at?: string
         }
         Relationships: []

@@ -20,14 +20,10 @@ const signUpSchema = z.object({
   password: z.string()
     .min(8, 'Senha deve ter no mínimo 8 caracteres')
     .max(100, 'Senha deve ter no máximo 100 caracteres'),
-  nome: z.string()
+  nick: z.string()
     .trim()
-    .min(1, 'Nome é obrigatório')
-    .max(50, 'Nome deve ter no máximo 50 caracteres'),
-  sobrenome: z.string()
-    .trim()
-    .min(1, 'Sobrenome é obrigatório')
-    .max(50, 'Sobrenome deve ter no máximo 50 caracteres'),
+    .min(3, 'Nick no jogo deve ter no mínimo 3 caracteres')
+    .max(50, 'Nick no jogo deve ter no máximo 50 caracteres'),
   funcao_ff: z.string()
     .trim()
     .min(1, 'Função é obrigatória')
@@ -55,8 +51,7 @@ export default function Auth() {
   // Sign Up Form
   const [signUpData, setSignUpData] = useState({
     password: '',
-    nome: '',
-    sobrenome: '',
+    nick: '',
     apelido: '',
     funcao_ff: '',
     instagram: '',
@@ -84,8 +79,7 @@ export default function Auth() {
         password: validatedData.password,
         options: {
           data: {
-            nome: validatedData.nome,
-            sobrenome: validatedData.sobrenome,
+            nick: validatedData.nick,
             apelido: validatedData.apelido,
             funcao_ff: validatedData.funcao_ff,
           },
@@ -223,25 +217,15 @@ export default function Auth() {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nome">Nome *</Label>
-                    <Input
-                      id="nome"
-                      required
-                      value={signUpData.nome}
-                      onChange={(e) => setSignUpData({ ...signUpData, nome: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sobrenome">Sobrenome *</Label>
-                    <Input
-                      id="sobrenome"
-                      required
-                      value={signUpData.sobrenome}
-                      onChange={(e) => setSignUpData({ ...signUpData, sobrenome: e.target.value })}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="nick">Nick no Jogo *</Label>
+                  <Input
+                    id="nick"
+                    placeholder="Seu nick no Free Fire"
+                    required
+                    value={signUpData.nick}
+                    onChange={(e) => setSignUpData({ ...signUpData, nick: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="apelido">Usuário *</Label>
