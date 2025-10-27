@@ -16,6 +16,7 @@ import Composicao from "./pages/Composicao";
 import VisoesAereas from "./pages/VisoesAereas";
 import Safes from "./pages/Safes";
 import PicksBans from "./pages/PicksBans";
+import Estatisticas from "./pages/Estatisticas";
 import AdminStorage from "./pages/AdminStorage";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/visoes-aereas" element={<VisoesAereas />} />
             <Route path="/safes" element={<Safes />} />
             <Route path="/picks-bans" element={<PicksBans />} />
+            <Route path="/estatisticas" element={<Estatisticas />} />
             <Route path="/admin/storage" element={<AdminStorage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

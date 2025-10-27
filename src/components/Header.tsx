@@ -33,6 +33,7 @@ export function Header() {
   const gameItems = [
     { name: 'Monte Sua Composição', path: '/composicao' },
     { name: 'Picks e Bans', path: '/picks-bans' },
+    { name: 'Estatísticas dos Jogadores', path: '/estatisticas' },
   ];
 
   const communityItems = [
