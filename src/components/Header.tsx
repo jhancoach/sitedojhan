@@ -22,6 +22,10 @@ export function Header() {
     { name: 'Picks e Bans', path: '/picks-bans' },
   ];
 
+  const adminItems = [
+    { name: 'Admin Storage', path: '/admin/storage' },
+  ];
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -44,6 +48,19 @@ export function Header() {
                 key={item.path}
                 to={item.path}
                 className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                  isActive(item.path)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+            {user && adminItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md border border-primary/50 ${
                   isActive(item.path)
                     ? 'bg-primary text-primary-foreground'
                     : 'text-foreground/80 hover:text-foreground hover:bg-accent'
@@ -105,6 +122,20 @@ export function Header() {
                 to={item.path}
                 onClick={() => setIsMenuOpen(false)}
                 className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isActive(item.path)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+            {user && adminItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsMenuOpen(false)}
+                className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors border border-primary/50 ${
                   isActive(item.path)
                     ? 'bg-primary text-primary-foreground'
                     : 'text-foreground/80 hover:text-foreground hover:bg-accent'
