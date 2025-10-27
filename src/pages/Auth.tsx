@@ -16,7 +16,6 @@ export default function Auth() {
 
   // Sign Up Form
   const [signUpData, setSignUpData] = useState({
-    email: '',
     password: '',
     nome: '',
     sobrenome: '',
@@ -27,7 +26,7 @@ export default function Auth() {
 
   // Sign In Form
   const [signInData, setSignInData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
 
@@ -36,8 +35,15 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      if (!signUpData.apelido) {
+        throw new Error('Usuário é obrigatório');
+      }
+
+      // Gera email interno baseado no username
+      const internalEmail = `${signUpData.apelido.toLowerCase().replace(/\s+/g, '')}@jhanmedeiros.app`;
+
       const { error } = await supabase.auth.signUp({
-        email: signUpData.email,
+        email: internalEmail,
         password: signUpData.password,
         options: {
           data: {
@@ -73,8 +79,11 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Gera email interno baseado no username
+      const internalEmail = `${signInData.username.toLowerCase().replace(/\s+/g, '')}@jhanmedeiros.app`;
+
       const { error } = await supabase.auth.signInWithPassword({
-        email: signInData.email,
+        email: internalEmail,
         password: signInData.password,
       });
 
@@ -121,13 +130,13 @@ export default function Auth() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-username">Usuário</Label>
                   <Input
-                    id="signin-email"
-                    type="email"
+                    id="signin-username"
+                    type="text"
                     required
-                    value={signInData.email}
-                    onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                    value={signInData.username}
+                    onChange={(e) => setSignInData({ ...signInData, username: e.target.value })}
                   />
                 </div>
                 <div>
@@ -170,21 +179,12 @@ export default function Auth() {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="apelido">Apelido</Label>
+                  <Label htmlFor="apelido">Usuário *</Label>
                   <Input
                     id="apelido"
+                    required
                     value={signUpData.apelido}
                     onChange={(e) => setSignUpData({ ...signUpData, apelido: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={signUpData.email}
-                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                   />
                 </div>
                 <div>
