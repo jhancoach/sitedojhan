@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RotateCcw, Printer, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const playerSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
@@ -40,6 +42,14 @@ interface CollectiveData {
   salasJogadas: string;
 }
 
+interface MapStats {
+  pontos: string;
+  salas: string;
+  abates: string;
+  mediaPontos: string;
+  mediaAbates: string;
+}
+
 const defaultPlayerData: PlayerData = {
   nome: '',
   foto: '',
@@ -51,8 +61,18 @@ const defaultPlayerData: PlayerData = {
   salasJogadas: '',
 };
 
+const defaultMapStats: MapStats = {
+  pontos: '',
+  salas: '',
+  abates: '',
+  mediaPontos: '',
+  mediaAbates: '',
+};
+
 export default function Estatisticas() {
   const [showSummary, setShowSummary] = useState(false);
+  const [eventType, setEventType] = useState<string>('');
+  const [eventName, setEventName] = useState<string>('');
   const [formData, setFormData] = useState<PlayerFormData>({
     player1: { ...defaultPlayerData },
     player2: { ...defaultPlayerData },
@@ -67,6 +87,30 @@ export default function Estatisticas() {
     mediaAbates: '',
     salasJogadas: '',
   });
+  const [mapStats, setMapStats] = useState<Record<string, MapStats>>({
+    bermuda: { ...defaultMapStats },
+    purgatorio: { ...defaultMapStats },
+    alpine: { ...defaultMapStats },
+    novaTerra: { ...defaultMapStats },
+    kalahari: { ...defaultMapStats },
+    solara: { ...defaultMapStats },
+  });
+
+  // Auto-calculate collective stats from map stats
+  useEffect(() => {
+    const maps = Object.values(mapStats);
+    const totalPontos = maps.reduce((sum, map) => sum + (parseInt(map.pontos) || 0), 0);
+    const totalSalas = maps.reduce((sum, map) => sum + (parseInt(map.salas) || 0), 0);
+    const totalAbates = maps.reduce((sum, map) => sum + (parseInt(map.abates) || 0), 0);
+    
+    setCollectiveData({
+      pontos: totalPontos > 0 ? totalPontos.toString() : '',
+      salasJogadas: totalSalas > 0 ? totalSalas.toString() : '',
+      abates: totalAbates > 0 ? totalAbates.toString() : '',
+      mediaPontos: totalSalas > 0 ? (totalPontos / totalSalas).toFixed(2) : '',
+      mediaAbates: totalSalas > 0 ? (totalAbates / totalSalas).toFixed(2) : '',
+    });
+  }, [mapStats]);
 
   const handleInputChange = (
     player: keyof PlayerFormData,
@@ -77,6 +121,20 @@ export default function Estatisticas() {
       ...prev,
       [player]: {
         ...prev[player],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleMapStatsChange = (
+    map: string,
+    field: keyof MapStats,
+    value: string
+  ) => {
+    setMapStats((prev) => ({
+      ...prev,
+      [map]: {
+        ...prev[map],
         [field]: value,
       },
     }));
@@ -97,6 +155,16 @@ export default function Estatisticas() {
       mediaAbates: '',
       salasJogadas: '',
     });
+    setMapStats({
+      bermuda: { ...defaultMapStats },
+      purgatorio: { ...defaultMapStats },
+      alpine: { ...defaultMapStats },
+      novaTerra: { ...defaultMapStats },
+      kalahari: { ...defaultMapStats },
+      solara: { ...defaultMapStats },
+    });
+    setEventType('');
+    setEventName('');
     setShowSummary(false);
     toast.success('Dados resetados com sucesso!');
   };
@@ -304,21 +372,143 @@ export default function Estatisticas() {
             </Button>
           </div>
 
-          {/* Collective Stats */}
+          {/* Event Type and Name */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-primary">Estatísticas Coletivas</h2>
             <Card className="bg-card border-border">
               <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="eventType">Tipo de Evento</Label>
+                    <Select value={eventType} onValueChange={setEventType}>
+                      <SelectTrigger className="bg-background border-input">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="competicao">Competição</SelectItem>
+                        <SelectItem value="treino">Treino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="eventName">Nome do Evento</Label>
+                    <Input
+                      id="eventName"
+                      placeholder="Ex: Copa GWL, Treino 10h"
+                      value={eventName}
+                      onChange={(e) => setEventName(e.target.value)}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Map Stats */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-primary">Estatísticas por Mapa</h2>
+            {['bermuda', 'purgatorio', 'alpine', 'novaTerra', 'kalahari', 'solara'].map((mapKey) => {
+              const mapNames: Record<string, string> = {
+                bermuda: 'Bermuda',
+                purgatorio: 'Purgatório',
+                alpine: 'Alpine',
+                novaTerra: 'Nova Terra',
+                kalahari: 'Kalahari',
+                solara: 'Solara',
+              };
+              const stats = mapStats[mapKey];
+              return (
+                <Card key={mapKey} className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="text-primary">{mapNames[mapKey]}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`${mapKey}-pontos`}>Pontos</Label>
+                        <Input
+                          id={`${mapKey}-pontos`}
+                          type="number"
+                          placeholder="0"
+                          value={stats.pontos}
+                          onChange={(e) => handleMapStatsChange(mapKey, 'pontos', e.target.value)}
+                          className="bg-background border-input"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`${mapKey}-salas`}>Salas</Label>
+                        <Input
+                          id={`${mapKey}-salas`}
+                          type="number"
+                          placeholder="0"
+                          value={stats.salas}
+                          onChange={(e) => handleMapStatsChange(mapKey, 'salas', e.target.value)}
+                          className="bg-background border-input"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`${mapKey}-abates`}>Abates</Label>
+                        <Input
+                          id={`${mapKey}-abates`}
+                          type="number"
+                          placeholder="0"
+                          value={stats.abates}
+                          onChange={(e) => handleMapStatsChange(mapKey, 'abates', e.target.value)}
+                          className="bg-background border-input"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`${mapKey}-mediaPontos`}>Média de Pontos</Label>
+                        <Input
+                          id={`${mapKey}-mediaPontos`}
+                          type="number"
+                          placeholder="Auto"
+                          value={
+                            parseInt(stats.salas) > 0
+                              ? (parseInt(stats.pontos || '0') / parseInt(stats.salas)).toFixed(2)
+                              : stats.mediaPontos
+                          }
+                          readOnly
+                          className="bg-muted border-input"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`${mapKey}-mediaAbates`}>Média de Abates</Label>
+                        <Input
+                          id={`${mapKey}-mediaAbates`}
+                          type="number"
+                          placeholder="Auto"
+                          value={
+                            parseInt(stats.salas) > 0
+                              ? (parseInt(stats.abates || '0') / parseInt(stats.salas)).toFixed(2)
+                              : stats.mediaAbates
+                          }
+                          readOnly
+                          className="bg-muted border-input"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Collective Stats */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-primary">Estatísticas Coletivas (Auto-calculadas)</h2>
+            <Card className="bg-card border-border">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="pontos">Pontos</Label>
                     <Input
                       id="pontos"
                       type="number"
-                      placeholder="0"
+                      placeholder="Auto"
                       value={collectiveData.pontos}
-                      onChange={(e) => setCollectiveData({ ...collectiveData, pontos: e.target.value })}
-                      className="bg-background border-input"
+                      readOnly
+                      className="bg-muted border-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -326,10 +516,10 @@ export default function Estatisticas() {
                     <Input
                       id="mediaPontos"
                       type="number"
-                      placeholder="0"
+                      placeholder="Auto"
                       value={collectiveData.mediaPontos}
-                      onChange={(e) => setCollectiveData({ ...collectiveData, mediaPontos: e.target.value })}
-                      className="bg-background border-input"
+                      readOnly
+                      className="bg-muted border-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -337,10 +527,10 @@ export default function Estatisticas() {
                     <Input
                       id="abates"
                       type="number"
-                      placeholder="0"
+                      placeholder="Auto"
                       value={collectiveData.abates}
-                      onChange={(e) => setCollectiveData({ ...collectiveData, abates: e.target.value })}
-                      className="bg-background border-input"
+                      readOnly
+                      className="bg-muted border-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -348,10 +538,10 @@ export default function Estatisticas() {
                     <Input
                       id="mediaAbates"
                       type="number"
-                      placeholder="0"
+                      placeholder="Auto"
                       value={collectiveData.mediaAbates}
-                      onChange={(e) => setCollectiveData({ ...collectiveData, mediaAbates: e.target.value })}
-                      className="bg-background border-input"
+                      readOnly
+                      className="bg-muted border-input"
                     />
                   </div>
                   <div className="space-y-2">
@@ -359,10 +549,10 @@ export default function Estatisticas() {
                     <Input
                       id="salasJogadas"
                       type="number"
-                      placeholder="0"
+                      placeholder="Auto"
                       value={collectiveData.salasJogadas}
-                      onChange={(e) => setCollectiveData({ ...collectiveData, salasJogadas: e.target.value })}
-                      className="bg-background border-input"
+                      readOnly
+                      className="bg-muted border-input"
                     />
                   </div>
                 </div>
@@ -388,6 +578,108 @@ export default function Estatisticas() {
               <h2 className="text-3xl font-bold text-center text-primary">
                 Resumo Final
               </h2>
+
+              {/* Event Info */}
+              {(eventType || eventName) && (
+                <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/30">
+                  <CardHeader>
+                    <CardTitle className="text-2xl text-center">
+                      {eventType === 'competicao' ? '🏆 Competição' : '💪 Treino'}
+                      {eventName && `: ${eventName}`}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {/* Map Stats Charts */}
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-center text-primary">Estatísticas por Mapa</h3>
+                
+                {/* Bar Chart for Points */}
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="text-center">Pontos por Mapa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={[
+                        { name: 'Bermuda', pontos: parseInt(mapStats.bermuda.pontos) || 0 },
+                        { name: 'Purgatório', pontos: parseInt(mapStats.purgatorio.pontos) || 0 },
+                        { name: 'Alpine', pontos: parseInt(mapStats.alpine.pontos) || 0 },
+                        { name: 'Nova Terra', pontos: parseInt(mapStats.novaTerra.pontos) || 0 },
+                        { name: 'Kalahari', pontos: parseInt(mapStats.kalahari.pontos) || 0 },
+                        { name: 'Solara', pontos: parseInt(mapStats.solara.pontos) || 0 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="pontos" fill="hsl(var(--primary))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Bar Chart for Kills */}
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="text-center">Abates por Mapa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={[
+                        { name: 'Bermuda', abates: parseInt(mapStats.bermuda.abates) || 0 },
+                        { name: 'Purgatório', abates: parseInt(mapStats.purgatorio.abates) || 0 },
+                        { name: 'Alpine', abates: parseInt(mapStats.alpine.abates) || 0 },
+                        { name: 'Nova Terra', abates: parseInt(mapStats.novaTerra.abates) || 0 },
+                        { name: 'Kalahari', abates: parseInt(mapStats.kalahari.abates) || 0 },
+                        { name: 'Solara', abates: parseInt(mapStats.solara.abates) || 0 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="abates" fill="hsl(var(--secondary))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Pie Chart for Rooms Distribution */}
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="text-center">Distribuição de Salas por Mapa</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex justify-center">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Bermuda', value: parseInt(mapStats.bermuda.salas) || 0 },
+                            { name: 'Purgatório', value: parseInt(mapStats.purgatorio.salas) || 0 },
+                            { name: 'Alpine', value: parseInt(mapStats.alpine.salas) || 0 },
+                            { name: 'Nova Terra', value: parseInt(mapStats.novaTerra.salas) || 0 },
+                            { name: 'Kalahari', value: parseInt(mapStats.kalahari.salas) || 0 },
+                            { name: 'Solara', value: parseInt(mapStats.solara.salas) || 0 },
+                          ].filter(item => item.value > 0)}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label
+                        >
+                          {['#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6', '#EF4444'].map((color, index) => (
+                            <Cell key={`cell-${index}`} fill={color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Collective Summary */}
               <Card className="bg-gradient-to-br from-secondary/10 to-primary/10 border-secondary">
