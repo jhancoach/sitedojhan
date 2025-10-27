@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CharacterSelector } from '@/components/CharacterSelector';
+import { PetSelector } from '@/components/PetSelector';
 import { Printer, X, Plus } from 'lucide-react';
 import { activeCharacters, passiveCharacters, Character } from '@/data/characters';
+import { pets, Pet } from '@/data/pets';
 import { useToast } from '@/hooks/use-toast';
 
 interface PlayerComposition {
@@ -16,6 +18,7 @@ interface PlayerComposition {
   passive1: Character | null;
   passive2: Character | null;
   passive3: Character | null;
+  pet: Pet | null;
 }
 
 type SelectionType = {
@@ -28,12 +31,14 @@ export default function Composicao() {
   const printRef = useRef<HTMLDivElement>(null);
   const [selectionOpen, setSelectionOpen] = useState(false);
   const [currentSelection, setCurrentSelection] = useState<SelectionType>(null);
+  const [petSelectionOpen, setPetSelectionOpen] = useState(false);
+  const [currentPetPlayerIndex, setCurrentPetPlayerIndex] = useState<number | null>(null);
   
   const [players, setPlayers] = useState<PlayerComposition[]>([
-    { name: '', active: null, passive1: null, passive2: null, passive3: null },
-    { name: '', active: null, passive1: null, passive2: null, passive3: null },
-    { name: '', active: null, passive1: null, passive2: null, passive3: null },
-    { name: '', active: null, passive1: null, passive2: null, passive3: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
   ]);
 
   const updatePlayer = (index: number, field: keyof PlayerComposition, value: any) => {
@@ -121,6 +126,17 @@ export default function Composicao() {
     updatePlayer(playerIndex, slot, null);
   };
 
+  const openPetSelector = (playerIndex: number) => {
+    setCurrentPetPlayerIndex(playerIndex);
+    setPetSelectionOpen(true);
+  };
+
+  const handlePetSelect = (pet: Pet) => {
+    if (currentPetPlayerIndex !== null) {
+      updatePlayer(currentPetPlayerIndex, 'pet', pet);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -160,7 +176,7 @@ export default function Composicao() {
                   </div>
 
                   {/* Characters */}
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     {/* Active */}
                     <div>
                       <Label className="mb-2 block text-xs">Ativa</Label>
@@ -254,6 +270,52 @@ export default function Composicao() {
                         )}
                       </div>
                     ))}
+
+                    {/* Pet */}
+                    <div>
+                      <Label className="mb-2 block text-xs">Pet</Label>
+                      {player.pet ? (
+                        <Card className="relative group hover:shadow-lg hover:shadow-accent/50 transition-all cursor-pointer">
+                          <CardContent className="p-2">
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              className="absolute -top-1 -right-1 h-5 w-5 z-10"
+                              onClick={() => removeCharacter(playerIndex, 'pet')}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                            <div 
+                              className="aspect-square bg-accent/10 rounded overflow-hidden mb-1"
+                              onClick={() => openPetSelector(playerIndex)}
+                            >
+                              <img
+                                src={player.pet.image}
+                                alt={player.pet.name}
+                                className="w-full h-full object-contain p-1"
+                              />
+                            </div>
+                            <p className="text-[10px] font-semibold text-center truncate">
+                              {player.pet.name}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card 
+                          className="cursor-pointer hover:shadow-lg hover:shadow-accent/50 hover:border-accent transition-all"
+                          onClick={() => openPetSelector(playerIndex)}
+                        >
+                          <CardContent className="p-2">
+                            <div className="aspect-square bg-accent/10 rounded flex items-center justify-center mb-1">
+                              <Plus className="h-8 w-8 text-accent/50" />
+                            </div>
+                            <p className="text-[10px] text-center text-muted-foreground">
+                              Pet
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -270,6 +332,14 @@ export default function Composicao() {
         onSelect={handleCharacterSelect}
         title={getSelectorTitle()}
         type={currentSelection?.slot === 'active' ? 'active' : 'passive'}
+      />
+
+      <PetSelector
+        open={petSelectionOpen}
+        onOpenChange={setPetSelectionOpen}
+        pets={pets}
+        onSelect={handlePetSelect}
+        title={currentPetPlayerIndex !== null ? `Selecione Pet - Jogador ${currentPetPlayerIndex + 1}` : 'Selecione Pet'}
       />
 
       <style>{`
