@@ -28,7 +28,7 @@ interface FreeAgentProfile {
   user_id: string;
 }
 
-const funcoes = ['Coach', 'Analista', 'Manager', 'Rush 1', 'Rush 2', 'Sniper', 'Granadeiro', 'Coringa'];
+const funcoes = ['Coach', 'Analista', 'Rush 1', 'Rush 2', 'Sniper', 'Granadeiro'];
 
 export default function FreeAgent() {
   const navigate = useNavigate();
