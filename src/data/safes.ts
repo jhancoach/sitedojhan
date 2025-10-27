@@ -4,10 +4,10 @@ export interface Safe {
   imageUrl: string;
 }
 
-// Simplified safe data extracted from Excel - showing representative sample
+// Simplified safe data extracted from Excel - all unique links
 // Maps: BER (Bermuda), PUR (Purgatório), KAL (Kalahari), ALP (Alpine), NT (Nova Terra)
 export const safes: Safe[] = [
-  // Bermuda
+  // Bermuda - 16 unique safes
   { map: 'BER', safe: 'PEAK', imageUrl: 'https://drive.google.com/uc?id=12ucIsWGuDqQFKRBlGrfklPBSnfvhNx8V' },
   { map: 'BER', safe: 'KOTA TUA', imageUrl: 'https://drive.google.com/uc?id=15pDpq_O72lAffYtAFl0T4wFhOSUiXfdI' },
   { map: 'BER', safe: 'MARS', imageUrl: 'https://drive.google.com/uc?id=1jXag5O30xtqn62NwqKqXbbvycxM8uUTK' },
@@ -25,7 +25,7 @@ export const safes: Safe[] = [
   { map: 'BER', safe: 'SENTOSA', imageUrl: 'https://drive.google.com/uc?id=1B77waWwql9AlWZ4wvMAYY34BrLDRE8Ci' },
   { map: 'BER', safe: 'RIVERSIDE', imageUrl: 'https://drive.google.com/uc?id=1fqu-E9rszXq4qoALl3k6NsICTAX0yUAb' },
   
-  // Purgatório
+  // Purgatório - 13 unique safes
   { map: 'PUR', safe: 'BR CIMA', imageUrl: 'https://drive.google.com/uc?id=1uhmGYuvH4bT-KNSyaWWEH9FZoTkS_Axu' },
   { map: 'PUR', safe: 'GOLF', imageUrl: 'https://drive.google.com/uc?id=1j8OvGxkMJBpwXCh0UjDPq6FKumzdtGhx' },
   { map: 'PUR', safe: 'CROSSROADS', imageUrl: 'https://drive.google.com/uc?id=1oh58XD9kEzOuvhTXDTGNQnYA_iirRJNV' },
@@ -40,7 +40,7 @@ export const safes: Safe[] = [
   { map: 'PUR', safe: 'CENTRAL', imageUrl: 'https://drive.google.com/uc?id=1bOHOBIYK4AI4H1sfGuJeFWB610QvCktY' },
   { map: 'PUR', safe: 'BR BAIXO', imageUrl: 'https://drive.google.com/uc?id=1WdSMyU-qjnAdUvGCo3S_zDxyQZHvO9Yr' },
   
-  // Kalahari
+  // Kalahari - 9 unique safes
   { map: 'KAL', safe: 'SUBMARINO', imageUrl: 'https://drive.google.com/uc?id=11To71d1R6Xr1fPhhybYZ51MJN3WvFFf0' },
   { map: 'KAL', safe: 'PLAYGROUND', imageUrl: 'https://drive.google.com/uc?id=1YiNm0wLU_WD_NdrFKV2SDvF_FZ1yEbN0' },
   { map: 'KAL', safe: 'PEDRA DO BAÚ', imageUrl: 'https://drive.google.com/uc?id=1okgEGMxNGv6DcLdbIMmk6mW0X6AEvSPl' },
@@ -51,7 +51,7 @@ export const safes: Safe[] = [
   { map: 'KAL', safe: 'RUÍNAS', imageUrl: 'https://drive.google.com/uc?id=1_C9YR-v_fZPtpYXn1hknnt2fjL13-IMP' },
   { map: 'KAL', safe: 'LABIRINTO', imageUrl: 'https://drive.google.com/uc?id=1CJHesd7fvqL_g7d_C3Vz2zsRiSkHVijc' },
   
-  // Alpine
+  // Alpine - 12 unique safes
   { map: 'ALP', safe: 'FOZ', imageUrl: 'https://drive.google.com/uc?id=1-s2g85viL6Sa7LzhORoLnk1hJU8XK40K' },
   { map: 'ALP', safe: 'NEVADO', imageUrl: 'https://drive.google.com/uc?id=1UtZ6JHz8Pf-V1qJMp7aAhsk3RTLdqbjG' },
   { map: 'ALP', safe: 'CARROSSEL', imageUrl: 'https://drive.google.com/uc?id=1CCN1tNaF-TCLyeWYcDUcOJ1K_zruEZHw' },
@@ -65,7 +65,7 @@ export const safes: Safe[] = [
   { map: 'ALP', safe: 'GUARNIÇÃO', imageUrl: 'https://drive.google.com/uc?id=1LltZhC35TwiQohzk900_bhLqb_eYjv7w' },
   { map: 'ALP', safe: 'COLONIA', imageUrl: 'https://drive.google.com/uc?id=1HgkNeRw8ouUxd6jSn3iH9h4RkPFsLogt' },
   
-  // Nova Terra
+  // Nova Terra - 12 unique safes
   { map: 'NT', safe: 'FEIRA PLAZA', imageUrl: 'https://drive.google.com/uc?id=1inme428v46seOIou1GT-KeWd8EIYe3iv' },
   { map: 'NT', safe: 'VIADUTO', imageUrl: 'https://drive.google.com/uc?id=1Cxmb8PrJh0QjCmkj3r90sV9fC2WWGcW4' },
   { map: 'NT', safe: 'MANGUEZAL', imageUrl: 'https://drive.google.com/uc?id=1dA7_PsRyx1WE5FvIVRZjk6MZKOVD3JCx' },
