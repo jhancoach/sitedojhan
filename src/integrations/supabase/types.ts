@@ -19,7 +19,7 @@ export type Database = {
           ano_nascimento: number
           capitao: boolean
           created_at: string
-          foto_url: string
+          foto_url: string | null
           funcao: string
           habilidades: string | null
           hud_dedos: string | null
@@ -35,7 +35,7 @@ export type Database = {
           ano_nascimento: number
           capitao?: boolean
           created_at?: string
-          foto_url: string
+          foto_url?: string | null
           funcao: string
           habilidades?: string | null
           hud_dedos?: string | null
@@ -51,7 +51,7 @@ export type Database = {
           ano_nascimento?: number
           capitao?: boolean
           created_at?: string
-          foto_url?: string
+          foto_url?: string | null
           funcao?: string
           habilidades?: string | null
           hud_dedos?: string | null

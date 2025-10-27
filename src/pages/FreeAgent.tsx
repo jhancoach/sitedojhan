@@ -117,6 +117,7 @@ export default function FreeAgent() {
     try {
       const payload = {
         ...formData,
+        foto_url: '', // Campo removido mas mantido por compatibilidade
         user_id: user.id,
         hud_dedos: formData.hud_dedos || null,
         youtube: formData.youtube || null,
