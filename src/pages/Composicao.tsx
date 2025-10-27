@@ -6,13 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CharacterSelector } from '@/components/CharacterSelector';
-import { Printer, Upload, X, Plus } from 'lucide-react';
+import { Printer, X, Plus } from 'lucide-react';
 import { activeCharacters, passiveCharacters, Character } from '@/data/characters';
 import { useToast } from '@/hooks/use-toast';
 
 interface PlayerComposition {
   name: string;
-  photo: string | null;
   active: Character | null;
   passive1: Character | null;
   passive2: Character | null;
@@ -31,27 +30,16 @@ export default function Composicao() {
   const [currentSelection, setCurrentSelection] = useState<SelectionType>(null);
   
   const [players, setPlayers] = useState<PlayerComposition[]>([
-    { name: '', photo: null, active: null, passive1: null, passive2: null, passive3: null },
-    { name: '', photo: null, active: null, passive1: null, passive2: null, passive3: null },
-    { name: '', photo: null, active: null, passive1: null, passive2: null, passive3: null },
-    { name: '', photo: null, active: null, passive1: null, passive2: null, passive3: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null },
   ]);
 
   const updatePlayer = (index: number, field: keyof PlayerComposition, value: any) => {
     const newPlayers = [...players];
     newPlayers[index] = { ...newPlayers[index], [field]: value };
     setPlayers(newPlayers);
-  };
-
-  const handlePhotoUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        updatePlayer(index, 'photo', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const openCharacterSelector = (playerIndex: number, slot: 'active' | 'passive1' | 'passive2' | 'passive3') => {
@@ -152,103 +140,67 @@ export default function Composicao() {
             </Button>
           </div>
 
-          <div ref={printRef} className="space-y-8">
+          <div ref={printRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {players.map((player, playerIndex) => (
               <Card key={playerIndex} className="animate-fade-in">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-6 text-primary">
+                <CardContent className="p-4">
+                  <h3 className="text-lg font-bold mb-4 text-primary">
                     Jogador {playerIndex + 1}
                   </h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    {/* Name */}
-                    <div>
-                      <Label htmlFor={`name-${playerIndex}`}>Nome do Jogador</Label>
-                      <Input
-                        id={`name-${playerIndex}`}
-                        value={player.name}
-                        onChange={(e) => updatePlayer(playerIndex, 'name', e.target.value)}
-                        placeholder="Digite o nome..."
-                      />
-                    </div>
-
-                    {/* Photo */}
-                    <div>
-                      <Label>Foto do Jogador</Label>
-                      <div className="flex items-center gap-4">
-                        {player.photo ? (
-                          <div className="relative">
-                            <img
-                              src={player.photo}
-                              alt="Foto"
-                              className="h-20 w-20 rounded-full object-cover"
-                            />
-                            <Button
-                              size="icon"
-                              variant="destructive"
-                              className="absolute -top-2 -right-2 h-6 w-6"
-                              onClick={() => updatePlayer(playerIndex, 'photo', null)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-                            <Upload className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handlePhotoUpload(playerIndex, e)}
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
+                  {/* Name */}
+                  <div className="mb-4">
+                    <Label htmlFor={`name-${playerIndex}`}>Nome do Jogador</Label>
+                    <Input
+                      id={`name-${playerIndex}`}
+                      value={player.name}
+                      onChange={(e) => updatePlayer(playerIndex, 'name', e.target.value)}
+                      placeholder="Digite o nome..."
+                    />
                   </div>
 
                   {/* Characters */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-4 gap-2">
                     {/* Active */}
                     <div>
-                      <Label className="mb-2 block">Habilidade Ativa</Label>
+                      <Label className="mb-2 block text-xs">Ativa</Label>
                       {player.active ? (
-                        <Card className="relative group hover:shadow-glow-orange transition-all cursor-pointer">
-                          <CardContent className="p-3">
+                        <Card className="relative group hover:shadow-lg hover:shadow-primary/50 transition-all cursor-pointer">
+                          <CardContent className="p-2">
                             <Button
                               size="icon"
                               variant="destructive"
-                              className="absolute -top-2 -right-2 h-6 w-6 z-10"
+                              className="absolute -top-1 -right-1 h-5 w-5 z-10"
                               onClick={() => removeCharacter(playerIndex, 'active')}
                             >
                               <X className="h-3 w-3" />
                             </Button>
                             <div 
-                              className="aspect-square bg-primary/10 rounded-lg overflow-hidden mb-2"
+                              className="aspect-square bg-primary/10 rounded overflow-hidden mb-1"
                               onClick={() => openCharacterSelector(playerIndex, 'active')}
                             >
                               <img
                                 src={player.active.image}
                                 alt={player.active.name}
-                                className="w-full h-full object-contain p-2"
+                                className="w-full h-full object-contain p-1"
                               />
                             </div>
-                            <p className="text-xs font-semibold text-center truncate">
+                            <p className="text-[10px] font-semibold text-center truncate">
                               {player.active.name}
                             </p>
                           </CardContent>
                         </Card>
                       ) : (
                         <Card 
-                          className="cursor-pointer hover:shadow-glow-orange hover:border-primary transition-all"
+                          className="cursor-pointer hover:shadow-lg hover:shadow-primary/50 hover:border-primary transition-all"
                           onClick={() => openCharacterSelector(playerIndex, 'active')}
                         >
-                          <CardContent className="p-3">
-                            <div className="aspect-square bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                              <Plus className="h-12 w-12 text-primary/50" />
+                          <CardContent className="p-2">
+                            <div className="aspect-square bg-primary/10 rounded flex items-center justify-center mb-1">
+                              <Plus className="h-8 w-8 text-primary/50" />
                             </div>
-                            <p className="text-xs text-center text-muted-foreground">
-                              Selecionar Ativa
+                            <p className="text-[10px] text-center text-muted-foreground">
+                              Ativa
                             </p>
                           </CardContent>
                         </Card>
@@ -258,44 +210,44 @@ export default function Composicao() {
                     {/* Passives */}
                     {(['passive1', 'passive2', 'passive3'] as const).map((slot, slotIndex) => (
                       <div key={slot}>
-                        <Label className="mb-2 block">Passiva {slotIndex + 1}</Label>
+                        <Label className="mb-2 block text-xs">Pass. {slotIndex + 1}</Label>
                         {player[slot] ? (
-                          <Card className="relative group hover:shadow-glow-blue transition-all cursor-pointer">
-                            <CardContent className="p-3">
+                          <Card className="relative group hover:shadow-lg hover:shadow-secondary/50 transition-all cursor-pointer">
+                            <CardContent className="p-2">
                               <Button
                                 size="icon"
                                 variant="destructive"
-                                className="absolute -top-2 -right-2 h-6 w-6 z-10"
+                                className="absolute -top-1 -right-1 h-5 w-5 z-10"
                                 onClick={() => removeCharacter(playerIndex, slot)}
                               >
                                 <X className="h-3 w-3" />
                               </Button>
                               <div 
-                                className="aspect-square bg-secondary/10 rounded-lg overflow-hidden mb-2"
+                                className="aspect-square bg-secondary/10 rounded overflow-hidden mb-1"
                                 onClick={() => openCharacterSelector(playerIndex, slot)}
                               >
                                 <img
                                   src={player[slot]!.image}
                                   alt={player[slot]!.name}
-                                  className="w-full h-full object-contain p-2"
+                                  className="w-full h-full object-contain p-1"
                                 />
                               </div>
-                              <p className="text-xs font-semibold text-center truncate">
+                              <p className="text-[10px] font-semibold text-center truncate">
                                 {player[slot]!.name}
                               </p>
                             </CardContent>
                           </Card>
                         ) : (
                           <Card 
-                            className="cursor-pointer hover:shadow-glow-blue hover:border-secondary transition-all"
+                            className="cursor-pointer hover:shadow-lg hover:shadow-secondary/50 hover:border-secondary transition-all"
                             onClick={() => openCharacterSelector(playerIndex, slot)}
                           >
-                            <CardContent className="p-3">
-                              <div className="aspect-square bg-secondary/10 rounded-lg flex items-center justify-center mb-2">
-                                <Plus className="h-12 w-12 text-secondary/50" />
+                            <CardContent className="p-2">
+                              <div className="aspect-square bg-secondary/10 rounded flex items-center justify-center mb-1">
+                                <Plus className="h-8 w-8 text-secondary/50" />
                               </div>
-                              <p className="text-xs text-center text-muted-foreground">
-                                Selecionar Passiva
+                              <p className="text-[10px] text-center text-muted-foreground">
+                                Pass.
                               </p>
                             </CardContent>
                           </Card>
