@@ -40,6 +40,7 @@ export default function Sobre() {
               <li>TOP 3 COPA NOBRU – 2024 (E1 ESPORTS)</li>
               <li>FINALISTA LBFF 2023, WB 2024, WB 2024 SPLIT 1 E 2</li>
               <li>TOP 2 DA FASE CLASSIFICATÓRIA WB 2025</li>
+              <li>TOP 2 DA FINAL SPLIT 2 WB 2025</li>
               <li>MUNDIAL 2025 EM ANDAMENTO (TEAM SOLID)</li>
             </ul>
 
