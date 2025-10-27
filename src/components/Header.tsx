@@ -22,15 +22,15 @@ export function Header() {
     { name: 'Sobre', path: '/sobre' },
   ];
 
-  const contentItems = [
+  const downloadItems = [
     { name: 'Mapas', path: '/mapas' },
     { name: 'Visões Aéreas', path: '/visoes-aereas' },
     { name: 'Safes', path: '/safes' },
+    { name: 'Personagens', path: '/personagens' },
+    { name: 'Pets', path: '/pets' },
   ];
 
   const gameItems = [
-    { name: 'Personagens', path: '/personagens' },
-    { name: 'Pets', path: '/pets' },
     { name: 'Monte Sua Composição', path: '/composicao' },
     { name: 'Picks e Bans', path: '/picks-bans' },
   ];
@@ -44,17 +44,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <img 
-              src="https://i.ibb.co/mCS1fCxY/Whats-App-Image-2025-10-26-at-08-14-03.jpg" 
-              alt="Jhan Medeiros Logo" 
-              className="h-12 w-auto"
-            />
-          </Link>
-
-          {/* Desktop Navigation */}
+        <div className="flex items-center justify-center">
+          {/* Desktop Navigation - Centered */}
           <div className="hidden lg:flex items-center space-x-1">
             {mainItems.map((item) => (
               <Link
@@ -70,15 +61,15 @@ export function Header() {
               </Link>
             ))}
 
-            {/* Conteúdo Dropdown */}
+            {/* Downloads Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-sm font-medium">
-                  Conteúdo <ChevronDown className="ml-1 h-4 w-4" />
+                  Downloads <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-background z-50">
-                {contentItems.map((item) => (
+                {downloadItems.map((item) => (
                   <DropdownMenuItem key={item.path} asChild>
                     <Link to={item.path} className="w-full cursor-pointer">
                       {item.name}
@@ -134,37 +125,37 @@ export function Header() {
                 Admin
               </Link>
             )}
-          </div>
 
-          {/* Social Links & Auth */}
-          <div className="hidden lg:flex items-center space-x-3">
-            <a href="https://www.youtube.com/@jhanmedeiros" target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon">
-                <Youtube className="h-5 w-5" />
-              </Button>
-            </a>
-            <a href="https://www.instagram.com/jhanmedeiros/" target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon">
-                <Instagram className="h-5 w-5" />
-              </Button>
-            </a>
-            <a href="https://discord.gg/YU8uTRyz2Y" target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon">
-                <MessageSquare className="h-5 w-5" />
-              </Button>
-            </a>
-            <a href="https://x.com/Jansey_Medeiros" target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon">
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </Button>
-            </a>
-            {user && (
-              <Button onClick={signOut} variant="outline">
-                Sair
-              </Button>
-            )}
+            {/* Social Links & Auth - Right side */}
+            <div className="ml-auto flex items-center space-x-3">
+              <a href="https://www.youtube.com/@jhanmedeiros" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="icon">
+                  <Youtube className="h-5 w-5" />
+                </Button>
+              </a>
+              <a href="https://www.instagram.com/jhanmedeiros/" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="icon">
+                  <Instagram className="h-5 w-5" />
+                </Button>
+              </a>
+              <a href="https://discord.gg/YU8uTRyz2Y" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="icon">
+                  <MessageSquare className="h-5 w-5" />
+                </Button>
+              </a>
+              <a href="https://x.com/Jansey_Medeiros" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="icon">
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </Button>
+              </a>
+              {user && (
+                <Button onClick={signOut} variant="outline">
+                  Sair
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -197,10 +188,10 @@ export function Header() {
               </Link>
             ))}
 
-            {/* Content Section */}
+            {/* Downloads Section */}
             <div className="pt-2 border-t border-border">
-              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">Conteúdo</p>
-              {contentItems.map((item) => (
+              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">Downloads</p>
+              {downloadItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
