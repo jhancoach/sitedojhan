@@ -47,7 +47,7 @@ export default function Safes() {
           Safes
         </h1>
         <p className="text-center text-muted-foreground mb-8">
-          Filtre por mapa e safe para visualizar as imagens
+          Filtre por mapa e safe para acessar os links
         </p>
 
         {/* Filters */}
@@ -84,34 +84,29 @@ export default function Safes() {
         {/* Stats */}
         <div className="text-center mb-8">
           <p className="text-lg font-semibold">
-            Mostrando <span className="text-primary">{stats.total}</span> imagens
+            Mostrando <span className="text-primary">{stats.total}</span> safes
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {/* List */}
+        <div className="max-w-4xl mx-auto space-y-2">
           {filteredSafes.map((safe, index) => (
-            <Card key={index} className="group hover:shadow-glow-orange transition-all duration-300 animate-fade-in">
+            <Card key={index} className="hover:border-primary/50 transition-all animate-fade-in">
               <CardContent className="p-4">
-                <div className="aspect-video relative overflow-hidden rounded-lg mb-3 bg-muted">
-                  <img
-                    src={safe.imageUrl}
-                    alt={`${safe.map} - ${safe.safe}`}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-primary">{safe.map}</span>
-                    <span className="text-xs font-semibold">{safe.safe}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-base">
+                      {safe.map} - {safe.safe}
+                    </h3>
                   </div>
                   <Button
                     onClick={() => handleDownload(safe.imageUrl)}
                     size="sm"
-                    className="w-full"
+                    variant="outline"
+                    className="ml-4"
                   >
-                    <Download className="mr-1 h-3 w-3" />
-                    Download
+                    <Download className="mr-2 h-4 w-4" />
+                    Abrir
                   </Button>
                 </div>
               </CardContent>
