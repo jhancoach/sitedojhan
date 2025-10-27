@@ -21,9 +21,9 @@ export function useHasRole(role: 'admin' | 'user') {
           .select('role')
           .eq('user_id', user.id)
           .eq('role', role)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Error checking role:', error);
           setHasRole(false);
         } else {
