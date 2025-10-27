@@ -21,28 +21,25 @@ export default function Safes() {
       return mapMatch && safeMatch;
     });
     
-    // Group by map and safe, enumerate each link
-    const grouped: Array<{ map: string; safe: string; links: string[]; count: number }> = [];
-    const groupMap = new Map<string, string[]>();
-    
-    filtered.forEach(safe => {
-      const key = `${safe.map}-${safe.safe}`;
-      if (!groupMap.has(key)) {
-        groupMap.set(key, []);
-      }
-      groupMap.get(key)!.push(safe.imageUrl);
+    // Add enumeration for each link
+    const withEnumeration = filtered.map((safe, index) => {
+      // Count how many times this map+safe combination appeared before this one
+      const previousCount = filtered
+        .slice(0, index)
+        .filter(s => s.map === safe.map && s.safe === safe.safe)
+        .length;
+      
+      return {
+        ...safe,
+        enumeration: previousCount + 1
+      };
     });
     
-    groupMap.forEach((links, key) => {
-      const [map, safe] = key.split('-');
-      grouped.push({ map, safe, links, count: links.length });
-    });
-    
-    return grouped;
+    return withEnumeration;
   }, [selectedMap, selectedSafe]);
 
   const stats = useMemo(() => {
-    const totalLinks = filteredSafes.reduce((sum, item) => sum + item.count, 0);
+    const total = filteredSafes.length;
     const byMap = mapNames.reduce((acc, map) => {
       acc[map] = safes.filter(s => s.map === map).length;
       return acc;
@@ -51,7 +48,7 @@ export default function Safes() {
       acc[safe] = safes.filter(s => s.safe === safe).length;
       return acc;
     }, {} as Record<string, number>);
-    return { total: totalLinks, byMap, bySafe };
+    return { total, byMap, bySafe };
   }, [filteredSafes, mapNames, safeNames]);
 
   const handleDownload = (url: string) => {
@@ -119,27 +116,25 @@ export default function Safes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSafes.flatMap((group) =>
-                group.links.map((link, linkIndex) => (
-                  <TableRow key={`${group.map}-${group.safe}-${linkIndex}`}>
-                    <TableCell className="font-medium">{group.map}</TableCell>
-                    <TableCell>{group.safe}</TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {linkIndex + 1}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        onClick={() => handleDownload(link)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        <ExternalLink className="mr-2 h-3 w-3" />
-                        Abrir Link
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              {filteredSafes.map((safe, index) => (
+                <TableRow key={`${safe.map}-${safe.safe}-${index}`}>
+                  <TableCell className="font-medium">{safe.map}</TableCell>
+                  <TableCell>{safe.safe}</TableCell>
+                  <TableCell className="text-center text-muted-foreground">
+                    {safe.enumeration}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      onClick={() => handleDownload(safe.imageUrl)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <ExternalLink className="mr-2 h-3 w-3" />
+                      Abrir Link
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
 
