@@ -17,6 +17,7 @@ import VisoesAereas from "./pages/VisoesAereas";
 import Safes from "./pages/Safes";
 import PicksBans from "./pages/PicksBans";
 import Estatisticas from "./pages/Estatisticas";
+import Feedback from "./pages/Feedback";
 import AdminStorage from "./pages/AdminStorage";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/safes" element={<Safes />} />
             <Route path="/picks-bans" element={<PicksBans />} />
             <Route path="/estatisticas" element={<Estatisticas />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/admin/storage" element={<AdminStorage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
