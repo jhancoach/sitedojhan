@@ -591,64 +591,103 @@ export default function Estatisticas() {
                 </Card>
               )}
 
-              {/* Map Stats Charts */}
-              <div className="space-y-6">
-                <h3 className="text-2xl font-bold text-center text-primary">Estatísticas por Mapa</h3>
-                
-                {/* Bar Chart for Points */}
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-center">Pontos por Mapa</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={[
-                        { name: 'Bermuda', pontos: parseInt(mapStats.bermuda.pontos) || 0 },
-                        { name: 'Purgatório', pontos: parseInt(mapStats.purgatorio.pontos) || 0 },
-                        { name: 'Alpine', pontos: parseInt(mapStats.alpine.pontos) || 0 },
-                        { name: 'Nova Terra', pontos: parseInt(mapStats.novaTerra.pontos) || 0 },
-                        { name: 'Kalahari', pontos: parseInt(mapStats.kalahari.pontos) || 0 },
-                        { name: 'Solara', pontos: parseInt(mapStats.solara.pontos) || 0 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="pontos" fill="hsl(var(--primary))" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+              {/* Collective Summary */}
+              <Card className="bg-gradient-to-br from-secondary/10 to-primary/10 border-secondary">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-center">Estatísticas Coletivas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Pontos</p>
+                      <p className="text-3xl font-bold text-primary">{collectiveData.pontos || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Média de Pontos</p>
+                      <p className="text-3xl font-bold text-secondary">{collectiveData.mediaPontos || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Abates</p>
+                      <p className="text-3xl font-bold text-primary">{collectiveData.abates || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Média de Abates</p>
+                      <p className="text-3xl font-bold text-secondary">{collectiveData.mediaAbates || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Salas Jogadas</p>
+                      <p className="text-3xl font-bold text-primary">{collectiveData.salasJogadas || '0'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Bar Chart for Kills */}
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-center">Abates por Mapa</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={[
-                        { name: 'Bermuda', abates: parseInt(mapStats.bermuda.abates) || 0 },
-                        { name: 'Purgatório', abates: parseInt(mapStats.purgatorio.abates) || 0 },
-                        { name: 'Alpine', abates: parseInt(mapStats.alpine.abates) || 0 },
-                        { name: 'Nova Terra', abates: parseInt(mapStats.novaTerra.abates) || 0 },
-                        { name: 'Kalahari', abates: parseInt(mapStats.kalahari.abates) || 0 },
-                        { name: 'Solara', abates: parseInt(mapStats.solara.abates) || 0 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="abates" fill="hsl(var(--secondary))" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+              {/* Map Stats Charts - Side by Side */}
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-center text-primary">Pontos Por Mapa e Abates Por Mapa</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Horizontal Bar Chart for Points */}
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-center">Pontos por Mapa</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart 
+                          layout="horizontal"
+                          data={[
+                            { name: 'Bermuda', pontos: parseInt(mapStats.bermuda.pontos) || 0 },
+                            { name: 'Purgatório', pontos: parseInt(mapStats.purgatorio.pontos) || 0 },
+                            { name: 'Alpine', pontos: parseInt(mapStats.alpine.pontos) || 0 },
+                            { name: 'Nova Terra', pontos: parseInt(mapStats.novaTerra.pontos) || 0 },
+                            { name: 'Kalahari', pontos: parseInt(mapStats.kalahari.pontos) || 0 },
+                            { name: 'Solara', pontos: parseInt(mapStats.solara.pontos) || 0 },
+                          ]}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis type="category" dataKey="name" width={80} />
+                          <Tooltip />
+                          <Bar dataKey="pontos" fill="hsl(var(--primary))" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Horizontal Bar Chart for Kills */}
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-center">Abates por Mapa</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart 
+                          layout="horizontal"
+                          data={[
+                            { name: 'Bermuda', abates: parseInt(mapStats.bermuda.abates) || 0 },
+                            { name: 'Purgatório', abates: parseInt(mapStats.purgatorio.abates) || 0 },
+                            { name: 'Alpine', abates: parseInt(mapStats.alpine.abates) || 0 },
+                            { name: 'Nova Terra', abates: parseInt(mapStats.novaTerra.abates) || 0 },
+                            { name: 'Kalahari', abates: parseInt(mapStats.kalahari.abates) || 0 },
+                            { name: 'Solara', abates: parseInt(mapStats.solara.abates) || 0 },
+                          ]}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis type="category" dataKey="name" width={80} />
+                          <Tooltip />
+                          <Bar dataKey="abates" fill="hsl(var(--secondary))" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
 
                 {/* Pie Chart for Rooms Distribution */}
                 <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-center">Distribuição de Salas por Mapa</CardTitle>
+                    <CardTitle className="text-center">Distribuição de Salas Por Mapa</CardTitle>
                   </CardHeader>
                   <CardContent className="flex justify-center">
                     <ResponsiveContainer width="100%" height={300}>
@@ -681,33 +720,39 @@ export default function Estatisticas() {
                 </Card>
               </div>
 
-              {/* Collective Summary */}
-              <Card className="bg-gradient-to-br from-secondary/10 to-primary/10 border-secondary">
+              {/* Team Totals */}
+              <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-center">Estatísticas Coletivas</CardTitle>
+                  <CardTitle className="text-2xl text-center">Totais do Time</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Pontos</p>
-                      <p className="text-3xl font-bold text-primary">{collectiveData.pontos || '0'}</p>
+                      <p className="text-sm text-muted-foreground">Total Kills</p>
+                      <p className="text-3xl font-bold text-primary">{totals.totalKills}</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Média de Pontos</p>
-                      <p className="text-3xl font-bold text-secondary">{collectiveData.mediaPontos || '0'}</p>
+                      <p className="text-sm text-muted-foreground">Total Mortes</p>
+                      <p className="text-3xl font-bold text-destructive">{totals.totalMortes}</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Abates</p>
-                      <p className="text-3xl font-bold text-primary">{collectiveData.abates || '0'}</p>
+                      <p className="text-sm text-muted-foreground">Total Assists</p>
+                      <p className="text-3xl font-bold text-secondary">{totals.totalAssistencias}</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Média de Abates</p>
-                      <p className="text-3xl font-bold text-secondary">{collectiveData.mediaAbates || '0'}</p>
+                      <p className="text-sm text-muted-foreground">Total Dano</p>
+                      <p className="text-3xl font-bold">{totals.totalDano.toLocaleString()}</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Salas Jogadas</p>
-                      <p className="text-3xl font-bold text-primary">{collectiveData.salasJogadas || '0'}</p>
+                      <p className="text-sm text-muted-foreground">Total Derrubados</p>
+                      <p className="text-3xl font-bold">{totals.totalDerrubados}</p>
                     </div>
+                  </div>
+                  <div className="mt-6 pt-6 border-t border-border text-center">
+                    <p className="text-sm text-muted-foreground mb-2">K/D Ratio do Time</p>
+                    <p className="text-4xl font-bold text-primary">
+                      {(totals.totalKills / (totals.totalMortes || 1)).toFixed(2)}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -772,43 +817,6 @@ export default function Estatisticas() {
                     )
                 )}
               </div>
-
-              {/* Team Totals */}
-              <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-center">Totais do Time</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Kills</p>
-                      <p className="text-3xl font-bold text-primary">{totals.totalKills}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Mortes</p>
-                      <p className="text-3xl font-bold text-destructive">{totals.totalMortes}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Assists</p>
-                      <p className="text-3xl font-bold text-secondary">{totals.totalAssistencias}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Dano</p>
-                      <p className="text-3xl font-bold">{totals.totalDano.toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Derrubados</p>
-                      <p className="text-3xl font-bold">{totals.totalDerrubados}</p>
-                    </div>
-                  </div>
-                  <div className="mt-6 pt-6 border-t border-border text-center">
-                    <p className="text-sm text-muted-foreground mb-2">K/D Ratio do Time</p>
-                    <p className="text-4xl font-bold text-primary">
-                      {(totals.totalKills / (totals.totalMortes || 1)).toFixed(2)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           )}
         </div>
