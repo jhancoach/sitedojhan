@@ -31,6 +31,13 @@ interface PlayerFormData {
   player5: PlayerData;
 }
 
+interface CollectiveData {
+  pontos: string;
+  mediaPontos: string;
+  abates: string;
+  mediaAbates: string;
+}
+
 const defaultPlayerData: PlayerData = {
   nome: '',
   foto: '',
@@ -49,6 +56,12 @@ export default function Estatisticas() {
     player3: { ...defaultPlayerData },
     player4: { ...defaultPlayerData },
     player5: { ...defaultPlayerData },
+  });
+  const [collectiveData, setCollectiveData] = useState<CollectiveData>({
+    pontos: '',
+    mediaPontos: '',
+    abates: '',
+    mediaAbates: '',
   });
 
   const handleInputChange = (
@@ -72,6 +85,12 @@ export default function Estatisticas() {
       player3: { ...defaultPlayerData },
       player4: { ...defaultPlayerData },
       player5: { ...defaultPlayerData },
+    });
+    setCollectiveData({
+      pontos: '',
+      mediaPontos: '',
+      abates: '',
+      mediaAbates: '',
     });
     setShowSummary(false);
     toast.success('Dados resetados com sucesso!');
@@ -227,11 +246,16 @@ export default function Estatisticas() {
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="text-center space-y-4 no-print">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Estatísticas dos Jogadores
+              Estatísticas do Time
             </h1>
             <p className="text-muted-foreground">
-              Preencha os dados estatísticos de cada jogador
+              Preencha os dados estatísticos coletivos e individuais
             </p>
+            <div className="bg-muted/50 border border-border rounded-lg p-4 max-w-2xl mx-auto">
+              <p className="text-sm text-muted-foreground italic">
+                💡 <span className="font-semibold">Observação:</span> Ferramenta desenvolvida principalmente para analistas que não possuem computador
+              </p>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -263,13 +287,71 @@ export default function Estatisticas() {
             </Button>
           </div>
 
-          {/* Player Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {renderPlayerCard('player1', 1)}
-            {renderPlayerCard('player2', 2)}
-            {renderPlayerCard('player3', 3)}
-            {renderPlayerCard('player4', 4)}
-            {renderPlayerCard('player5', 5)}
+          {/* Collective Stats */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-primary">Estatísticas Coletivas</h2>
+            <Card className="bg-card border-border">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pontos">Pontos</Label>
+                    <Input
+                      id="pontos"
+                      type="number"
+                      placeholder="0"
+                      value={collectiveData.pontos}
+                      onChange={(e) => setCollectiveData({ ...collectiveData, pontos: e.target.value })}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mediaPontos">Média de Pontos</Label>
+                    <Input
+                      id="mediaPontos"
+                      type="number"
+                      placeholder="0"
+                      value={collectiveData.mediaPontos}
+                      onChange={(e) => setCollectiveData({ ...collectiveData, mediaPontos: e.target.value })}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="abates">Abates</Label>
+                    <Input
+                      id="abates"
+                      type="number"
+                      placeholder="0"
+                      value={collectiveData.abates}
+                      onChange={(e) => setCollectiveData({ ...collectiveData, abates: e.target.value })}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mediaAbates">Média de Abates</Label>
+                    <Input
+                      id="mediaAbates"
+                      type="number"
+                      placeholder="0"
+                      value={collectiveData.mediaAbates}
+                      onChange={(e) => setCollectiveData({ ...collectiveData, mediaAbates: e.target.value })}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Individual Stats */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-primary">Estatísticas Individuais</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {renderPlayerCard('player1', 1)}
+              {renderPlayerCard('player2', 2)}
+              {renderPlayerCard('player3', 3)}
+              {renderPlayerCard('player4', 4)}
+              {renderPlayerCard('player5', 5)}
+            </div>
           </div>
 
           {/* Summary Section */}
@@ -279,6 +361,35 @@ export default function Estatisticas() {
                 Resumo Final
               </h2>
 
+              {/* Collective Summary */}
+              <Card className="bg-gradient-to-br from-secondary/10 to-primary/10 border-secondary">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-center">Estatísticas Coletivas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Pontos</p>
+                      <p className="text-3xl font-bold text-primary">{collectiveData.pontos || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Média de Pontos</p>
+                      <p className="text-3xl font-bold text-secondary">{collectiveData.mediaPontos || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Abates</p>
+                      <p className="text-3xl font-bold text-primary">{collectiveData.abates || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Média de Abates</p>
+                      <p className="text-3xl font-bold text-secondary">{collectiveData.mediaAbates || '0'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Individual Summary */}
+              <h3 className="text-2xl font-bold text-center text-primary mt-8">Estatísticas Individuais</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {[formData.player1, formData.player2, formData.player3, formData.player4, formData.player5].map(
                   (player, index) =>
