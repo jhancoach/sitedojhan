@@ -158,7 +158,7 @@ export default function PicksBans() {
                       <img
                         src={teamA.ban.image}
                         alt={teamA.ban.name}
-                        className="w-full h-full object-cover scale-110"
+                        className="w-full h-full object-contain p-2"
                       />
                     ) : (
                       <span className="text-muted-foreground text-sm">BAN</span>
@@ -187,7 +187,7 @@ export default function PicksBans() {
                           <img
                             src={pick.image}
                             alt={pick.name}
-                            className="w-full h-full object-cover scale-110"
+                            className="w-full h-full object-contain p-1"
                           />
                         ) : (
                           <span className="text-muted-foreground text-xs">PICK {index + 1}</span>
@@ -246,7 +246,7 @@ export default function PicksBans() {
                       <img
                         src={teamB.ban.image}
                         alt={teamB.ban.name}
-                        className="w-full h-full object-cover scale-110"
+                        className="w-full h-full object-contain p-2"
                       />
                     ) : (
                       <span className="text-muted-foreground text-sm">BAN</span>
@@ -275,7 +275,7 @@ export default function PicksBans() {
                           <img
                             src={pick.image}
                             alt={pick.name}
-                            className="w-full h-full object-cover scale-110"
+                            className="w-full h-full object-contain p-1"
                           />
                         ) : (
                           <span className="text-muted-foreground text-xs">PICK {index + 1}</span>
@@ -319,7 +319,7 @@ export default function PicksBans() {
                       <img
                         src={char.image}
                         alt={char.name}
-                        className="w-full h-full object-cover scale-110"
+                        className="w-full h-full object-contain p-1"
                       />
                     </div>
                     <p className="text-center mt-1 text-xs font-bold truncate">
