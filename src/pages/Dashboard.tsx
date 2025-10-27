@@ -30,7 +30,7 @@ export default function Dashboard() {
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="text-center space-y-8">
           <h1 className="text-4xl font-bold bg-gradient-fire bg-clip-text text-transparent">
-            Plataforma de Análise Free Fire
+            Site do Jhan
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Acesse recursos profissionais para análise de mapas, personagens, composições e muito mais.

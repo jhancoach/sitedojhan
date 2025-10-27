@@ -32,7 +32,7 @@ export default function Index() {
         />
         
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-fire bg-clip-text text-transparent">
-          Jhan Medeiros
+          Bem-vindo ao site do Jhan
         </h1>
         
         <p className="text-lg md:text-xl text-foreground/80 italic px-4">
