@@ -19,6 +19,7 @@ const playerSchema = z.object({
   assistencias: z.string().min(1, 'Assistências é obrigatório'),
   danoCausado: z.string().min(1, 'Dano Causado é obrigatório'),
   derrubados: z.string().min(1, 'Derrubados é obrigatório'),
+  salasJogadas: z.string().min(1, 'Salas Jogadas é obrigatório'),
 });
 
 type PlayerData = z.infer<typeof playerSchema>;
@@ -36,6 +37,7 @@ interface CollectiveData {
   mediaPontos: string;
   abates: string;
   mediaAbates: string;
+  salasJogadas: string;
 }
 
 const defaultPlayerData: PlayerData = {
@@ -46,6 +48,7 @@ const defaultPlayerData: PlayerData = {
   assistencias: '',
   danoCausado: '',
   derrubados: '',
+  salasJogadas: '',
 };
 
 export default function Estatisticas() {
@@ -62,6 +65,7 @@ export default function Estatisticas() {
     mediaPontos: '',
     abates: '',
     mediaAbates: '',
+    salasJogadas: '',
   });
 
   const handleInputChange = (
@@ -91,6 +95,7 @@ export default function Estatisticas() {
       mediaPontos: '',
       abates: '',
       mediaAbates: '',
+      salasJogadas: '',
     });
     setShowSummary(false);
     toast.success('Dados resetados com sucesso!');
@@ -219,7 +224,7 @@ export default function Estatisticas() {
               />
             </div>
 
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <Label htmlFor={`${playerKey}-derrubados`}>Derrubados</Label>
               <Input
                 id={`${playerKey}-derrubados`}
@@ -227,6 +232,18 @@ export default function Estatisticas() {
                 placeholder="0"
                 value={player.derrubados}
                 onChange={(e) => handleInputChange(playerKey, 'derrubados', e.target.value)}
+                className="bg-background border-input"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`${playerKey}-salasJogadas`}>Salas Jogadas</Label>
+              <Input
+                id={`${playerKey}-salasJogadas`}
+                type="number"
+                placeholder="0"
+                value={player.salasJogadas}
+                onChange={(e) => handleInputChange(playerKey, 'salasJogadas', e.target.value)}
                 className="bg-background border-input"
               />
             </div>
@@ -337,6 +354,17 @@ export default function Estatisticas() {
                       className="bg-background border-input"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="salasJogadas">Salas Jogadas</Label>
+                    <Input
+                      id="salasJogadas"
+                      type="number"
+                      placeholder="0"
+                      value={collectiveData.salasJogadas}
+                      onChange={(e) => setCollectiveData({ ...collectiveData, salasJogadas: e.target.value })}
+                      className="bg-background border-input"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -367,7 +395,7 @@ export default function Estatisticas() {
                   <CardTitle className="text-2xl text-center">Estatísticas Coletivas</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Pontos</p>
                       <p className="text-3xl font-bold text-primary">{collectiveData.pontos || '0'}</p>
@@ -383,6 +411,10 @@ export default function Estatisticas() {
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Média de Abates</p>
                       <p className="text-3xl font-bold text-secondary">{collectiveData.mediaAbates || '0'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Salas Jogadas</p>
+                      <p className="text-3xl font-bold text-primary">{collectiveData.salasJogadas || '0'}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -428,6 +460,10 @@ export default function Estatisticas() {
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Derrubados:</span>
                             <span className="font-semibold">{player.derrubados}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Salas Jogadas:</span>
+                            <span className="font-semibold">{player.salasJogadas}</span>
                           </div>
                           <div className="pt-2 border-t border-border">
                             <div className="flex justify-between">
