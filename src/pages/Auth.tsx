@@ -177,13 +177,12 @@ export default function Auth() {
             className="h-24 w-auto mx-auto mb-4"
           />
           <CardTitle className="text-2xl bg-gradient-fire bg-clip-text text-transparent">
-            Bem-vindo
+            Bem Vindo ao Site do Jhan
           </CardTitle>
           <CardDescription className="text-center italic mt-4">
-            "Tudo o que fizerem, façam de todo o coração, como para o Senhor, não para os homens, 
-            sabendo que receberão do Senhor a recompensa da herança, pois é a Cristo, o Senhor, a quem vocês servem."
+            "Não a nós, Senhor, mas ao teu nome dá glória"
             <br />
-            <span className="font-semibold">- Colossenses 3:23-24</span>
+            <span className="font-semibold">- Salmo 115:1</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
