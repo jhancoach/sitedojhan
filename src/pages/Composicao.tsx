@@ -5,8 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Printer, Upload, X } from 'lucide-react';
+import { CharacterSelector } from '@/components/CharacterSelector';
+import { Printer, Upload, X, Plus } from 'lucide-react';
 import { activeCharacters, passiveCharacters, Character } from '@/data/characters';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,9 +19,16 @@ interface PlayerComposition {
   passive3: Character | null;
 }
 
+type SelectionType = {
+  playerIndex: number;
+  slot: 'active' | 'passive1' | 'passive2' | 'passive3';
+} | null;
+
 export default function Composicao() {
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
+  const [selectionOpen, setSelectionOpen] = useState(false);
+  const [currentSelection, setCurrentSelection] = useState<SelectionType>(null);
   
   const [players, setPlayers] = useState<PlayerComposition[]>([
     { name: '', photo: null, active: null, passive1: null, passive2: null, passive3: null },
@@ -47,6 +54,32 @@ export default function Composicao() {
     }
   };
 
+  const openCharacterSelector = (playerIndex: number, slot: 'active' | 'passive1' | 'passive2' | 'passive3') => {
+    setCurrentSelection({ playerIndex, slot });
+    setSelectionOpen(true);
+  };
+
+  const handleCharacterSelect = (character: Character) => {
+    if (!currentSelection) return;
+
+    const { playerIndex, slot } = currentSelection;
+    
+    // Validação para ativos - não pode repetir entre jogadores
+    if (slot === 'active') {
+      const isUsed = players.some((p, i) => i !== playerIndex && p.active?.name === character.name);
+      if (isUsed) {
+        toast({
+          title: 'Erro',
+          description: 'Esta habilidade ativa já está sendo usada por outro jogador',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    updatePlayer(playerIndex, slot, character);
+  };
+
   const getAvailableActives = (currentIndex: number) => {
     const usedActives = players
       .filter((_, i) => i !== currentIndex)
@@ -55,13 +88,16 @@ export default function Composicao() {
     return activeCharacters.filter(c => !usedActives.includes(c.name));
   };
 
-  const getAvailablePassivesForPlayer = (playerIndex: number, slotIndex: number) => {
+  const getAvailablePassivesForPlayer = (playerIndex: number, slot: 'passive1' | 'passive2' | 'passive3') => {
     const player = players[playerIndex];
     const usedInPlayer = [
       player.passive1?.name,
       player.passive2?.name,
       player.passive3?.name
-    ].filter((name, i) => i !== slotIndex && name);
+    ].filter((name, i) => {
+      const slots = ['passive1', 'passive2', 'passive3'];
+      return slots[i] !== slot && name;
+    });
     
     return passiveCharacters.filter(c => !usedInPlayer.includes(c.name));
   };
@@ -70,22 +106,31 @@ export default function Composicao() {
     window.print();
   };
 
-  const validateComposition = () => {
-    const usedActives = new Set<string>();
-    for (const player of players) {
-      if (player.active) {
-        if (usedActives.has(player.active.name)) {
-          toast({
-            title: 'Erro',
-            description: 'Não pode usar a mesma habilidade ativa em jogadores diferentes',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        usedActives.add(player.active.name);
-      }
+  const getCurrentCharacters = () => {
+    if (!currentSelection) return [];
+    const { playerIndex, slot } = currentSelection;
+    
+    if (slot === 'active') {
+      return getAvailableActives(playerIndex);
+    } else {
+      return getAvailablePassivesForPlayer(playerIndex, slot);
     }
-    return true;
+  };
+
+  const getSelectorTitle = () => {
+    if (!currentSelection) return '';
+    const { playerIndex, slot } = currentSelection;
+    
+    if (slot === 'active') {
+      return `Selecione Ativa - Jogador ${playerIndex + 1}`;
+    } else {
+      const slotNumber = slot === 'passive1' ? 1 : slot === 'passive2' ? 2 : 3;
+      return `Selecione Passiva ${slotNumber} - Jogador ${playerIndex + 1}`;
+    }
+  };
+
+  const removeCharacter = (playerIndex: number, slot: keyof PlayerComposition) => {
+    updatePlayer(playerIndex, slot, null);
   };
 
   return (
@@ -97,7 +142,7 @@ export default function Composicao() {
             Monte Sua Composição
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            Monte a composição do seu time com 4 jogadores
+            Clique nos cards para selecionar personagens
           </p>
 
           <div className="flex justify-end mb-6 print:hidden">
@@ -166,66 +211,94 @@ export default function Composicao() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Active */}
                     <div>
-                      <Label>Habilidade Ativa</Label>
-                      <Select
-                        value={player.active?.name || ''}
-                        onValueChange={(value) => {
-                          const char = activeCharacters.find(c => c.name === value);
-                          updatePlayer(playerIndex, 'active', char || null);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getAvailableActives(playerIndex).map((char) => (
-                            <SelectItem key={char.name} value={char.name}>
-                              {char.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {player.active && (
-                        <div className="mt-2">
-                          <img
-                            src={player.active.image}
-                            alt={player.active.name}
-                            className="w-full aspect-square object-contain bg-gradient-fire/10 rounded p-2"
-                          />
-                        </div>
+                      <Label className="mb-2 block">Habilidade Ativa</Label>
+                      {player.active ? (
+                        <Card className="relative group hover:shadow-glow-orange transition-all cursor-pointer">
+                          <CardContent className="p-3">
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              className="absolute -top-2 -right-2 h-6 w-6 z-10"
+                              onClick={() => removeCharacter(playerIndex, 'active')}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                            <div 
+                              className="aspect-square bg-primary/10 rounded-lg overflow-hidden mb-2"
+                              onClick={() => openCharacterSelector(playerIndex, 'active')}
+                            >
+                              <img
+                                src={player.active.image}
+                                alt={player.active.name}
+                                className="w-full h-full object-contain p-2"
+                              />
+                            </div>
+                            <p className="text-xs font-semibold text-center truncate">
+                              {player.active.name}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card 
+                          className="cursor-pointer hover:shadow-glow-orange hover:border-primary transition-all"
+                          onClick={() => openCharacterSelector(playerIndex, 'active')}
+                        >
+                          <CardContent className="p-3">
+                            <div className="aspect-square bg-primary/10 rounded-lg flex items-center justify-center mb-2">
+                              <Plus className="h-12 w-12 text-primary/50" />
+                            </div>
+                            <p className="text-xs text-center text-muted-foreground">
+                              Selecionar Ativa
+                            </p>
+                          </CardContent>
+                        </Card>
                       )}
                     </div>
 
                     {/* Passives */}
                     {(['passive1', 'passive2', 'passive3'] as const).map((slot, slotIndex) => (
                       <div key={slot}>
-                        <Label>Passiva {slotIndex + 1}</Label>
-                        <Select
-                          value={player[slot]?.name || ''}
-                          onValueChange={(value) => {
-                            const char = passiveCharacters.find(c => c.name === value);
-                            updatePlayer(playerIndex, slot, char || null);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getAvailablePassivesForPlayer(playerIndex, slotIndex).map((char) => (
-                              <SelectItem key={char.name} value={char.name}>
-                                {char.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {player[slot] && (
-                          <div className="mt-2">
-                            <img
-                              src={player[slot]!.image}
-                              alt={player[slot]!.name}
-                              className="w-full aspect-square object-contain bg-gradient-blue/10 rounded p-2"
-                            />
-                          </div>
+                        <Label className="mb-2 block">Passiva {slotIndex + 1}</Label>
+                        {player[slot] ? (
+                          <Card className="relative group hover:shadow-glow-blue transition-all cursor-pointer">
+                            <CardContent className="p-3">
+                              <Button
+                                size="icon"
+                                variant="destructive"
+                                className="absolute -top-2 -right-2 h-6 w-6 z-10"
+                                onClick={() => removeCharacter(playerIndex, slot)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                              <div 
+                                className="aspect-square bg-secondary/10 rounded-lg overflow-hidden mb-2"
+                                onClick={() => openCharacterSelector(playerIndex, slot)}
+                              >
+                                <img
+                                  src={player[slot]!.image}
+                                  alt={player[slot]!.name}
+                                  className="w-full h-full object-contain p-2"
+                                />
+                              </div>
+                              <p className="text-xs font-semibold text-center truncate">
+                                {player[slot]!.name}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <Card 
+                            className="cursor-pointer hover:shadow-glow-blue hover:border-secondary transition-all"
+                            onClick={() => openCharacterSelector(playerIndex, slot)}
+                          >
+                            <CardContent className="p-3">
+                              <div className="aspect-square bg-secondary/10 rounded-lg flex items-center justify-center mb-2">
+                                <Plus className="h-12 w-12 text-secondary/50" />
+                              </div>
+                              <p className="text-xs text-center text-muted-foreground">
+                                Selecionar Passiva
+                              </p>
+                            </CardContent>
+                          </Card>
                         )}
                       </div>
                     ))}
@@ -238,6 +311,15 @@ export default function Composicao() {
       </main>
       <Footer />
       
+      <CharacterSelector
+        open={selectionOpen}
+        onOpenChange={setSelectionOpen}
+        characters={getCurrentCharacters()}
+        onSelect={handleCharacterSelect}
+        title={getSelectorTitle()}
+        type={currentSelection?.slot === 'active' ? 'active' : 'passive'}
+      />
+
       <style>{`
         @media print {
           .print\\:hidden {
