@@ -149,23 +149,23 @@ export default function PicksBans() {
             <div>
               <h3 className="text-destructive font-bold mb-2">BAN</h3>
               <Card 
-                className={`border-2 ${selectionMode?.team === 'A' && selectionMode?.type === 'ban' ? 'border-destructive' : 'border-border'} bg-card/50`}
+                className={`border-4 ${selectionMode?.team === 'A' && selectionMode?.type === 'ban' ? 'border-destructive shadow-lg shadow-destructive/50' : 'border-border'} bg-card cursor-pointer hover:border-destructive/50 transition-all`}
                 onClick={() => teamA.ban && removeCharacter('A', 'ban')}
               >
-                <CardContent className="p-4">
-                  <div className="aspect-square rounded-lg bg-muted/50 flex items-center justify-center">
+                <CardContent className="p-3">
+                  <div className="aspect-square rounded-lg bg-gradient-to-br from-background to-muted flex items-center justify-center overflow-hidden">
                     {teamA.ban ? (
                       <img
                         src={teamA.ban.image}
                         alt={teamA.ban.name}
-                        className="w-full h-full object-contain p-4"
+                        className="w-full h-full object-cover scale-110"
                       />
                     ) : (
                       <span className="text-muted-foreground text-sm">BAN</span>
                     )}
                   </div>
                   {teamA.ban && (
-                    <p className="text-center mt-2 font-semibold">{teamA.ban.name}</p>
+                    <p className="text-center mt-2 font-bold text-base">{teamA.ban.name}</p>
                   )}
                 </CardContent>
               </Card>
@@ -174,27 +174,27 @@ export default function PicksBans() {
             {/* Picks */}
             <div>
               <h3 className="text-secondary font-bold mb-2">PICKS</h3>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-3">
                 {teamA.picks.map((pick, index) => (
                   <Card 
                     key={index}
-                    className={`border-2 ${selectionMode?.team === 'A' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-secondary' : 'border-border'} bg-card/50`}
+                    className={`border-4 ${selectionMode?.team === 'A' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-secondary shadow-lg shadow-secondary/50' : 'border-border'} bg-card cursor-pointer hover:border-secondary/50 transition-all`}
                     onClick={() => pick && removeCharacter('A', 'pick', index)}
                   >
                     <CardContent className="p-2">
-                      <div className="aspect-square rounded bg-muted/50 flex items-center justify-center">
+                      <div className="aspect-square rounded bg-gradient-to-br from-background to-muted flex items-center justify-center overflow-hidden">
                         {pick ? (
                           <img
                             src={pick.image}
                             alt={pick.name}
-                            className="w-full h-full object-contain p-1"
+                            className="w-full h-full object-cover scale-110"
                           />
                         ) : (
                           <span className="text-muted-foreground text-xs">PICK {index + 1}</span>
                         )}
                       </div>
                       {pick && (
-                        <p className="text-center mt-1 text-xs font-semibold truncate">{pick.name}</p>
+                        <p className="text-center mt-1 text-xs font-bold truncate">{pick.name}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -237,23 +237,23 @@ export default function PicksBans() {
             <div>
               <h3 className="text-destructive font-bold mb-2">BAN</h3>
               <Card 
-                className={`border-2 ${selectionMode?.team === 'B' && selectionMode?.type === 'ban' ? 'border-destructive' : 'border-border'} bg-card/50`}
+                className={`border-4 ${selectionMode?.team === 'B' && selectionMode?.type === 'ban' ? 'border-destructive shadow-lg shadow-destructive/50' : 'border-border'} bg-card cursor-pointer hover:border-destructive/50 transition-all`}
                 onClick={() => teamB.ban && removeCharacter('B', 'ban')}
               >
-                <CardContent className="p-4">
-                  <div className="aspect-square rounded-lg bg-muted/50 flex items-center justify-center">
+                <CardContent className="p-3">
+                  <div className="aspect-square rounded-lg bg-gradient-to-br from-background to-muted flex items-center justify-center overflow-hidden">
                     {teamB.ban ? (
                       <img
                         src={teamB.ban.image}
                         alt={teamB.ban.name}
-                        className="w-full h-full object-contain p-4"
+                        className="w-full h-full object-cover scale-110"
                       />
                     ) : (
                       <span className="text-muted-foreground text-sm">BAN</span>
                     )}
                   </div>
                   {teamB.ban && (
-                    <p className="text-center mt-2 font-semibold">{teamB.ban.name}</p>
+                    <p className="text-center mt-2 font-bold text-base">{teamB.ban.name}</p>
                   )}
                 </CardContent>
               </Card>
@@ -262,27 +262,27 @@ export default function PicksBans() {
             {/* Picks */}
             <div>
               <h3 className="text-primary font-bold mb-2">PICKS</h3>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-3">
                 {teamB.picks.map((pick, index) => (
                   <Card 
                     key={index}
-                    className={`border-2 ${selectionMode?.team === 'B' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-primary' : 'border-border'} bg-card/50`}
+                    className={`border-4 ${selectionMode?.team === 'B' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-primary shadow-lg shadow-primary/50' : 'border-border'} bg-card cursor-pointer hover:border-primary/50 transition-all`}
                     onClick={() => pick && removeCharacter('B', 'pick', index)}
                   >
                     <CardContent className="p-2">
-                      <div className="aspect-square rounded bg-muted/50 flex items-center justify-center">
+                      <div className="aspect-square rounded bg-gradient-to-br from-background to-muted flex items-center justify-center overflow-hidden">
                         {pick ? (
                           <img
                             src={pick.image}
                             alt={pick.name}
-                            className="w-full h-full object-contain p-1"
+                            className="w-full h-full object-cover scale-110"
                           />
                         ) : (
                           <span className="text-muted-foreground text-xs">PICK {index + 1}</span>
                         )}
                       </div>
                       {pick && (
-                        <p className="text-center mt-1 text-xs font-semibold truncate">{pick.name}</p>
+                        <p className="text-center mt-1 text-xs font-bold truncate">{pick.name}</p>
                       )}
                     </CardContent>
                   </Card>
@@ -305,24 +305,24 @@ export default function PicksBans() {
               return (
                 <Card
                   key={char.name}
-                  className={`cursor-pointer transition-all ${
+                  className={`cursor-pointer transition-all border-2 ${
                     isUsed 
                       ? 'opacity-30 cursor-not-allowed' 
                       : isSelectable
-                      ? 'hover:scale-105 hover:shadow-glow-orange border-primary/50'
-                      : 'hover:scale-105'
+                      ? 'hover:scale-105 hover:shadow-lg hover:shadow-primary/50 border-primary'
+                      : 'hover:scale-105 border-border'
                   }`}
                   onClick={() => !isUsed && selectionMode && handleCharacterClick(char)}
                 >
                   <CardContent className="p-2">
-                    <div className="aspect-square rounded bg-muted/50 overflow-hidden">
+                    <div className="aspect-square rounded bg-gradient-to-br from-background to-muted overflow-hidden flex items-center justify-center">
                       <img
                         src={char.image}
                         alt={char.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover scale-110"
                       />
                     </div>
-                    <p className="text-center mt-1 text-xs font-semibold truncate">
+                    <p className="text-center mt-1 text-xs font-bold truncate">
                       {char.name}
                     </p>
                   </CardContent>
