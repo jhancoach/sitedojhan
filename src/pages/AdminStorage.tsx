@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Upload, Image as ImageIcon, Trash2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useHasRole } from '@/hooks/useHasRole';
 
 type BucketType = 'safes' | 'aerial-views' | 'maps';
 
@@ -24,6 +25,7 @@ export default function AdminStorage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasRole, loading: roleLoading } = useHasRole('admin');
   const [selectedBucket, setSelectedBucket] = useState<BucketType>('safes');
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState<UploadedFile[]>([]);
@@ -32,10 +34,23 @@ export default function AdminStorage() {
   useEffect(() => {
     if (!user) {
       navigate('/auth');
-    } else {
+      return;
+    }
+    
+    if (!roleLoading && !hasRole) {
+      toast({
+        title: 'Acesso negado',
+        description: 'Você não tem permissão para acessar esta página.',
+        variant: 'destructive',
+      });
+      navigate('/');
+      return;
+    }
+    
+    if (!roleLoading && hasRole) {
       loadFiles();
     }
-  }, [user, navigate, selectedBucket]);
+  }, [user, hasRole, roleLoading, navigate, selectedBucket]);
 
   const loadFiles = async () => {
     try {
@@ -140,7 +155,15 @@ export default function AdminStorage() {
     });
   };
 
-  if (!user) {
+  if (!user || roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasRole) {
     return null;
   }
 
