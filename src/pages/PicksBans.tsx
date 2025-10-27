@@ -176,7 +176,7 @@ export default function PicksBans() {
             {/* Picks */}
             <div>
               <h3 className="text-secondary font-bold mb-3 text-lg">PICKS</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-3">
                 {teamA.picks.map((pick, index) => (
                   <Card 
                     key={index}
@@ -266,7 +266,7 @@ export default function PicksBans() {
             {/* Picks */}
             <div>
               <h3 className="text-primary font-bold mb-3 text-lg">PICKS</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-3">
                 {teamB.picks.map((pick, index) => (
                   <Card 
                     key={index}
