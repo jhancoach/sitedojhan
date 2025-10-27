@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface FreeAgentProfile {
   id: string;
   nome_completo: string;
-  foto_url: string;
   ano_nascimento: number;
   funcao: string;
   capitao: boolean;
@@ -44,7 +43,6 @@ export default function FreeAgent() {
 
   const [formData, setFormData] = useState({
     nome_completo: '',
-    foto_url: '',
     ano_nascimento: new Date().getFullYear() - 18,
     funcao: 'Rush 1',
     capitao: false,
@@ -96,7 +94,6 @@ export default function FreeAgent() {
         setMyProfile(data);
         setFormData({
           nome_completo: data.nome_completo,
-          foto_url: data.foto_url,
           ano_nascimento: data.ano_nascimento,
           funcao: data.funcao,
           capitao: data.capitao,
@@ -154,17 +151,6 @@ export default function FreeAgent() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setFormData({ ...formData, foto_url: reader.result as string });
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -235,20 +221,6 @@ export default function FreeAgent() {
                     value={formData.nome_completo}
                     onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
                   />
-                </div>
-
-                <div>
-                  <Label htmlFor="foto">Foto *</Label>
-                  <Input
-                    id="foto"
-                    type="file"
-                    accept="image/*"
-                    required={!myProfile}
-                    onChange={handlePhotoUpload}
-                  />
-                  {formData.foto_url && (
-                    <img src={formData.foto_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded" />
-                  )}
                 </div>
 
                 <div>
@@ -399,16 +371,9 @@ export default function FreeAgent() {
               {filteredProfiles.map((profile) => (
                 <Card key={profile.id} className="hover:shadow-glow-orange transition-all duration-300">
                   <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <img
-                        src={profile.foto_url}
-                        alt={profile.nome_completo}
-                        className="h-20 w-20 rounded-full object-cover"
-                      />
-                      <div>
-                        <h3 className="font-bold text-lg">{profile.nome_completo}</h3>
-                        <p className="text-sm text-muted-foreground">{profile.ano_nascimento}</p>
-                      </div>
+                    <div className="mb-4">
+                      <h3 className="font-bold text-lg">{profile.nome_completo}</h3>
+                      <p className="text-sm text-muted-foreground">{profile.ano_nascimento}</p>
                     </div>
                     
                     <div className="space-y-2 text-sm">
