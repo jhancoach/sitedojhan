@@ -124,14 +124,14 @@ export default function Safes() {
                     {safe.enumeration}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      onClick={() => handleDownload(safe.imageUrl)}
-                      size="sm"
-                      variant="outline"
+                    <a 
+                      href={safe.imageUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline break-all text-sm"
                     >
-                      <ExternalLink className="mr-2 h-3 w-3" />
-                      Abrir Link
-                    </Button>
+                      {safe.imageUrl}
+                    </a>
                   </TableCell>
                 </TableRow>
               ))}
