@@ -3,10 +3,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { activeCharacters, Character } from '@/data/characters';
 
 interface TeamData {
@@ -15,18 +13,26 @@ interface TeamData {
   picks: (Character | null)[];
 }
 
+type SelectionMode = {
+  team: 'A' | 'B';
+  type: 'ban' | 'pick';
+  pickIndex?: number;
+} | null;
+
 export default function PicksBans() {
   const [teamA, setTeamA] = useState<TeamData>({
-    name: 'Time A',
+    name: '',
     ban: null,
     picks: [null, null, null, null],
   });
 
   const [teamB, setTeamB] = useState<TeamData>({
-    name: 'Time B',
+    name: '',
     ban: null,
     picks: [null, null, null, null],
   });
+
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>(null);
 
   const getAllUsedCharacters = () => {
     const used = new Set<string>();
@@ -37,267 +43,325 @@ export default function PicksBans() {
     return used;
   };
 
-  const getAvailableCharacters = () => {
-    const used = getAllUsedCharacters();
-    return activeCharacters.filter(c => !used.has(c.name));
-  };
+  const usedCharacters = getAllUsedCharacters();
 
-  const updateTeam = (team: 'A' | 'B', field: 'name' | 'ban' | 'picks', value: any, pickIndex?: number) => {
+  const handleCharacterClick = (character: Character) => {
+    if (!selectionMode) return;
+
+    const { team, type, pickIndex } = selectionMode;
     const setter = team === 'A' ? setTeamA : setTeamB;
     const currentTeam = team === 'A' ? teamA : teamB;
 
-    if (field === 'picks' && pickIndex !== undefined) {
+    if (type === 'ban') {
+      setter({ ...currentTeam, ban: character });
+    } else if (type === 'pick' && pickIndex !== undefined) {
       const newPicks = [...currentTeam.picks];
-      newPicks[pickIndex] = value;
+      newPicks[pickIndex] = character;
       setter({ ...currentTeam, picks: newPicks });
-    } else {
-      setter({ ...currentTeam, [field]: value });
     }
+
+    setSelectionMode(null);
   };
 
   const clearAll = () => {
-    setTeamA({ name: 'Time A', ban: null, picks: [null, null, null, null] });
-    setTeamB({ name: 'Time B', ban: null, picks: [null, null, null, null] });
+    setTeamA({ name: '', ban: null, picks: [null, null, null, null] });
+    setTeamB({ name: '', ban: null, picks: [null, null, null, null] });
+    setSelectionMode(null);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold bg-gradient-fire bg-clip-text text-transparent">
-                PICKS & BANS
-              </h1>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Produzido por @jhanmedeiros
-            </div>
-          </div>
+  const handlePrint = () => {
+    window.print();
+  };
 
-          <div className="flex justify-end mb-6">
-            <Button onClick={clearAll} variant="outline">
-              Limpar Tudo
+  const removeCharacter = (team: 'A' | 'B', type: 'ban' | 'pick', pickIndex?: number) => {
+    const setter = team === 'A' ? setTeamA : setTeamB;
+    const currentTeam = team === 'A' ? teamA : teamB;
+
+    if (type === 'ban') {
+      setter({ ...currentTeam, ban: null });
+    } else if (type === 'pick' && pickIndex !== undefined) {
+      const newPicks = [...currentTeam.picks];
+      newPicks[pickIndex] = null;
+      setter({ ...currentTeam, picks: newPicks });
+    }
+  };
+
+  const availableCharacters = activeCharacters.filter(c => !usedCharacters.has(c.name));
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 print:mb-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-primary">
+              PICKS & BANS
+            </h1>
+            <span className="text-sm text-muted-foreground hidden md:block">
+              Produzido por @jhanmedeiros
+            </span>
+          </div>
+          <div className="flex gap-2 print:hidden">
+            <Button onClick={clearAll} variant="outline" size="sm">
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Resetar
+            </Button>
+            <Button onClick={handlePrint} size="sm">
+              Imprimir
             </Button>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Team A */}
-            <Card className="border-2 border-secondary">
-              <CardContent className="p-6">
-                <div className="mb-6">
-                  <Label htmlFor="teamA-name" className="text-lg font-bold text-secondary">
-                    TIME A
-                  </Label>
-                  <Input
-                    id="teamA-name"
-                    value={teamA.name}
-                    onChange={(e) => updateTeam('A', 'name', e.target.value)}
-                    className="mt-2 border-secondary"
-                    placeholder="Nome do Time A"
-                  />
-                </div>
+        {/* Teams Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Team A */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-secondary">TIME A</h2>
+              <Input
+                placeholder="Nome do time"
+                value={teamA.name}
+                onChange={(e) => setTeamA({ ...teamA, name: e.target.value })}
+                className="flex-1 border-secondary/50"
+              />
+            </div>
 
-                {/* Ban */}
-                <div className="mb-6">
-                  <Label className="text-md font-semibold">BAN</Label>
-                  <Select
-                    value={teamA.ban?.name || ''}
-                    onValueChange={(value) => {
-                      const char = activeCharacters.find(c => c.name === value);
-                      updateTeam('A', 'ban', char || null);
-                    }}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Selecione personagem..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableCharacters().map((char) => (
-                        <SelectItem key={char.name} value={char.name}>
-                          {char.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {teamA.ban && (
-                    <div className="mt-4 relative">
+            <div className="flex gap-2 print:hidden">
+              <Button
+                onClick={() => setSelectionMode({ team: 'A', type: 'ban' })}
+                variant="destructive"
+                size="sm"
+                className="flex-1"
+              >
+                Selecionar Ban
+              </Button>
+              <Button
+                onClick={() => setSelectionMode({ team: 'A', type: 'pick', pickIndex: teamA.picks.findIndex(p => p === null) })}
+                size="sm"
+                className="flex-1 bg-secondary hover:bg-secondary/90"
+              >
+                Selecionar Pick
+              </Button>
+            </div>
+
+            {/* Ban */}
+            <div>
+              <h3 className="text-destructive font-bold mb-2">BAN</h3>
+              <Card 
+                className={`border-2 ${selectionMode?.team === 'A' && selectionMode?.type === 'ban' ? 'border-destructive' : 'border-border'} bg-card/50`}
+                onClick={() => teamA.ban && removeCharacter('A', 'ban')}
+              >
+                <CardContent className="p-4">
+                  <div className="aspect-square rounded-lg bg-muted/50 flex items-center justify-center">
+                    {teamA.ban ? (
                       <img
                         src={teamA.ban.image}
                         alt={teamA.ban.name}
-                        className="w-full aspect-square object-contain bg-secondary/20 rounded-lg p-4"
+                        className="w-full h-full object-contain p-4"
                       />
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="absolute top-2 right-2"
-                        onClick={() => updateTeam('A', 'ban', null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                      <p className="text-center mt-2 font-semibold">{teamA.ban.name}</p>
-                    </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">BAN</span>
+                    )}
+                  </div>
+                  {teamA.ban && (
+                    <p className="text-center mt-2 font-semibold">{teamA.ban.name}</p>
                   )}
-                </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Picks */}
-                <div>
-                  <Label className="text-md font-semibold">PICKS</Label>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    {teamA.picks.map((pick, index) => (
-                      <div key={index}>
-                        <Select
-                          value={pick?.name || ''}
-                          onValueChange={(value) => {
-                            const char = activeCharacters.find(c => c.name === value);
-                            updateTeam('A', 'picks', char || null, index);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={`Pick ${index + 1}`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getAvailableCharacters().map((char) => (
-                              <SelectItem key={char.name} value={char.name}>
-                                {char.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {pick && (
-                          <div className="mt-2 relative">
-                            <img
-                              src={pick.image}
-                              alt={pick.name}
-                              className="w-full aspect-square object-contain bg-secondary/20 rounded p-2"
-                            />
-                            <Button
-                              size="icon"
-                              variant="destructive"
-                              className="absolute top-1 right-1 h-6 w-6"
-                              onClick={() => updateTeam('A', 'picks', null, index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                            <p className="text-center text-xs mt-1 font-semibold">{pick.name}</p>
-                          </div>
+            {/* Picks */}
+            <div>
+              <h3 className="text-secondary font-bold mb-2">PICKS</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {teamA.picks.map((pick, index) => (
+                  <Card 
+                    key={index}
+                    className={`border-2 ${selectionMode?.team === 'A' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-secondary' : 'border-border'} bg-card/50`}
+                    onClick={() => pick && removeCharacter('A', 'pick', index)}
+                  >
+                    <CardContent className="p-2">
+                      <div className="aspect-square rounded bg-muted/50 flex items-center justify-center">
+                        {pick ? (
+                          <img
+                            src={pick.image}
+                            alt={pick.name}
+                            className="w-full h-full object-contain p-1"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">PICK {index + 1}</span>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                      {pick && (
+                        <p className="text-center mt-1 text-xs font-semibold truncate">{pick.name}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
 
-            {/* Team B */}
-            <Card className="border-2 border-primary">
-              <CardContent className="p-6">
-                <div className="mb-6">
-                  <Label htmlFor="teamB-name" className="text-lg font-bold text-primary">
-                    TIME B
-                  </Label>
-                  <Input
-                    id="teamB-name"
-                    value={teamB.name}
-                    onChange={(e) => updateTeam('B', 'name', e.target.value)}
-                    className="mt-2 border-primary"
-                    placeholder="Nome do Time B"
-                  />
-                </div>
+          {/* Team B */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-primary">TIME B</h2>
+              <Input
+                placeholder="Nome do time"
+                value={teamB.name}
+                onChange={(e) => setTeamB({ ...teamB, name: e.target.value })}
+                className="flex-1 border-primary/50"
+              />
+            </div>
 
-                {/* Ban */}
-                <div className="mb-6">
-                  <Label className="text-md font-semibold">BAN</Label>
-                  <Select
-                    value={teamB.ban?.name || ''}
-                    onValueChange={(value) => {
-                      const char = activeCharacters.find(c => c.name === value);
-                      updateTeam('B', 'ban', char || null);
-                    }}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Selecione personagem..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableCharacters().map((char) => (
-                        <SelectItem key={char.name} value={char.name}>
-                          {char.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {teamB.ban && (
-                    <div className="mt-4 relative">
+            <div className="flex gap-2 print:hidden">
+              <Button
+                onClick={() => setSelectionMode({ team: 'B', type: 'ban' })}
+                variant="destructive"
+                size="sm"
+                className="flex-1"
+              >
+                Selecionar Ban
+              </Button>
+              <Button
+                onClick={() => setSelectionMode({ team: 'B', type: 'pick', pickIndex: teamB.picks.findIndex(p => p === null) })}
+                size="sm"
+                className="flex-1"
+              >
+                Selecionar Pick
+              </Button>
+            </div>
+
+            {/* Ban */}
+            <div>
+              <h3 className="text-destructive font-bold mb-2">BAN</h3>
+              <Card 
+                className={`border-2 ${selectionMode?.team === 'B' && selectionMode?.type === 'ban' ? 'border-destructive' : 'border-border'} bg-card/50`}
+                onClick={() => teamB.ban && removeCharacter('B', 'ban')}
+              >
+                <CardContent className="p-4">
+                  <div className="aspect-square rounded-lg bg-muted/50 flex items-center justify-center">
+                    {teamB.ban ? (
                       <img
                         src={teamB.ban.image}
                         alt={teamB.ban.name}
-                        className="w-full aspect-square object-contain bg-primary/20 rounded-lg p-4"
+                        className="w-full h-full object-contain p-4"
                       />
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="absolute top-2 right-2"
-                        onClick={() => updateTeam('B', 'ban', null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                      <p className="text-center mt-2 font-semibold">{teamB.ban.name}</p>
-                    </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">BAN</span>
+                    )}
+                  </div>
+                  {teamB.ban && (
+                    <p className="text-center mt-2 font-semibold">{teamB.ban.name}</p>
                   )}
-                </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Picks */}
-                <div>
-                  <Label className="text-md font-semibold">PICKS</Label>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    {teamB.picks.map((pick, index) => (
-                      <div key={index}>
-                        <Select
-                          value={pick?.name || ''}
-                          onValueChange={(value) => {
-                            const char = activeCharacters.find(c => c.name === value);
-                            updateTeam('B', 'picks', char || null, index);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={`Pick ${index + 1}`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getAvailableCharacters().map((char) => (
-                              <SelectItem key={char.name} value={char.name}>
-                                {char.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {pick && (
-                          <div className="mt-2 relative">
-                            <img
-                              src={pick.image}
-                              alt={pick.name}
-                              className="w-full aspect-square object-contain bg-primary/20 rounded p-2"
-                            />
-                            <Button
-                              size="icon"
-                              variant="destructive"
-                              className="absolute top-1 right-1 h-6 w-6"
-                              onClick={() => updateTeam('B', 'picks', null, index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                            <p className="text-center text-xs mt-1 font-semibold">{pick.name}</p>
-                          </div>
+            {/* Picks */}
+            <div>
+              <h3 className="text-primary font-bold mb-2">PICKS</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {teamB.picks.map((pick, index) => (
+                  <Card 
+                    key={index}
+                    className={`border-2 ${selectionMode?.team === 'B' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-primary' : 'border-border'} bg-card/50`}
+                    onClick={() => pick && removeCharacter('B', 'pick', index)}
+                  >
+                    <CardContent className="p-2">
+                      <div className="aspect-square rounded bg-muted/50 flex items-center justify-center">
+                        {pick ? (
+                          <img
+                            src={pick.image}
+                            alt={pick.name}
+                            className="w-full h-full object-contain p-1"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">PICK {index + 1}</span>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                      {pick && (
+                        <p className="text-center mt-1 text-xs font-semibold truncate">{pick.name}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Available Characters */}
+        <div className="print:hidden">
+          <h3 className="text-xl font-bold mb-4">
+            PERSONAGENS ({availableCharacters.length})
+          </h3>
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+            {activeCharacters.map((char) => {
+              const isUsed = usedCharacters.has(char.name);
+              const isSelectable = selectionMode && !isUsed;
+              
+              return (
+                <Card
+                  key={char.name}
+                  className={`cursor-pointer transition-all ${
+                    isUsed 
+                      ? 'opacity-30 cursor-not-allowed' 
+                      : isSelectable
+                      ? 'hover:scale-105 hover:shadow-glow-orange border-primary/50'
+                      : 'hover:scale-105'
+                  }`}
+                  onClick={() => !isUsed && selectionMode && handleCharacterClick(char)}
+                >
+                  <CardContent className="p-2">
+                    <div className="aspect-square rounded bg-muted/50 overflow-hidden">
+                      <img
+                        src={char.image}
+                        alt={char.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-center mt-1 text-xs font-semibold truncate">
+                      {char.name}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Print instruction */}
+        <div className="print:hidden text-center mt-8 text-sm text-muted-foreground">
+          {selectionMode ? (
+            <p className="text-primary font-semibold">
+              {selectionMode.type === 'ban' 
+                ? `Clique em um personagem para banir - TIME ${selectionMode.team}` 
+                : `Clique em um personagem para escolher - TIME ${selectionMode.team} PICK ${(selectionMode.pickIndex ?? 0) + 1}`
+              }
+            </p>
+          ) : (
+            <p>Clique em "Selecionar Ban" ou "Selecionar Pick" para começar</p>
+          )}
         </div>
       </main>
       <Footer />
+
+      <style>{`
+        @media print {
+          .print\\:hidden {
+            display: none !important;
+          }
+          .print\\:mb-4 {
+            margin-bottom: 1rem !important;
+          }
+          body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+        }
+      `}</style>
     </div>
   );
 }
