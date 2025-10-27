@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
@@ -24,10 +25,9 @@ const signUpSchema = z.object({
     .trim()
     .min(3, 'Nick no jogo deve ter no mínimo 3 caracteres')
     .max(50, 'Nick no jogo deve ter no máximo 50 caracteres'),
-  funcao_ff: z.string()
-    .trim()
-    .min(1, 'Função é obrigatória')
-    .max(50, 'Função deve ter no máximo 50 caracteres'),
+  funcao_ff: z.enum(['Jogador', 'Treinador', 'Analista', 'Coach', 'Gerente', 'Outro'], {
+    required_error: 'Função é obrigatória',
+  }),
   instagram: z.string()
     .trim()
     .max(100, 'Instagram deve ter no máximo 100 caracteres')
@@ -82,6 +82,7 @@ export default function Auth() {
             nick: validatedData.nick,
             apelido: validatedData.apelido,
             funcao_ff: validatedData.funcao_ff,
+            instagram: validatedData.instagram || '',
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -238,13 +239,23 @@ export default function Auth() {
                 </div>
                 <div>
                   <Label htmlFor="funcao_ff">Função no Free Fire *</Label>
-                  <Input
-                    id="funcao_ff"
-                    placeholder="Ex: Analista"
-                    required
+                  <Select
                     value={signUpData.funcao_ff}
-                    onChange={(e) => setSignUpData({ ...signUpData, funcao_ff: e.target.value })}
-                  />
+                    onValueChange={(value) => setSignUpData({ ...signUpData, funcao_ff: value })}
+                    required
+                  >
+                    <SelectTrigger id="funcao_ff">
+                      <SelectValue placeholder="Selecione sua função" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Jogador">Jogador</SelectItem>
+                      <SelectItem value="Treinador">Treinador</SelectItem>
+                      <SelectItem value="Analista">Analista</SelectItem>
+                      <SelectItem value="Coach">Coach</SelectItem>
+                      <SelectItem value="Gerente">Gerente</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="instagram">Instagram</Label>
