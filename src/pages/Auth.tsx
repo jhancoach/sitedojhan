@@ -8,6 +8,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { z } from 'zod';
+
+// Schemas de validação
+const signUpSchema = z.object({
+  apelido: z.string()
+    .trim()
+    .min(3, 'Usuário deve ter no mínimo 3 caracteres')
+    .max(30, 'Usuário deve ter no máximo 30 caracteres')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Usuário deve conter apenas letras, números e underscore'),
+  password: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .max(100, 'Senha deve ter no máximo 100 caracteres'),
+  nome: z.string()
+    .trim()
+    .min(1, 'Nome é obrigatório')
+    .max(50, 'Nome deve ter no máximo 50 caracteres'),
+  sobrenome: z.string()
+    .trim()
+    .min(1, 'Sobrenome é obrigatório')
+    .max(50, 'Sobrenome deve ter no máximo 50 caracteres'),
+  funcao_ff: z.string()
+    .trim()
+    .min(1, 'Função é obrigatória')
+    .max(50, 'Função deve ter no máximo 50 caracteres'),
+  instagram: z.string()
+    .trim()
+    .max(100, 'Instagram deve ter no máximo 100 caracteres')
+    .optional()
+    .or(z.literal('')),
+});
+
+const signInSchema = z.object({
+  username: z.string()
+    .trim()
+    .min(3, 'Usuário deve ter no mínimo 3 caracteres'),
+  password: z.string()
+    .min(1, 'Senha é obrigatória'),
+});
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -35,28 +73,30 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (!signUpData.apelido) {
-        throw new Error('Usuário é obrigatório');
-      }
+      // Validar dados do formulário
+      const validatedData = signUpSchema.parse(signUpData);
 
       // Gera email interno baseado no username
-      const internalEmail = `${signUpData.apelido.toLowerCase().replace(/\s+/g, '')}@jhanmedeiros.app`;
+      const internalEmail = `${validatedData.apelido.toLowerCase().replace(/\s+/g, '')}@jhanmedeiros.app`;
 
       const { error } = await supabase.auth.signUp({
         email: internalEmail,
-        password: signUpData.password,
+        password: validatedData.password,
         options: {
           data: {
-            nome: signUpData.nome,
-            sobrenome: signUpData.sobrenome,
-            apelido: signUpData.apelido,
-            funcao_ff: signUpData.funcao_ff,
+            nome: validatedData.nome,
+            sobrenome: validatedData.sobrenome,
+            apelido: validatedData.apelido,
+            funcao_ff: validatedData.funcao_ff,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Mensagem genérica para não revelar se usuário existe
+        throw new Error('Erro ao criar conta. Verifique os dados e tente novamente.');
+      }
 
       toast({
         title: 'Cadastro realizado!',
@@ -64,11 +104,21 @@ export default function Auth() {
       });
       navigate('/dashboard');
     } catch (error: any) {
-      toast({
-        title: 'Erro no cadastro',
-        description: error.message,
-        variant: 'destructive',
-      });
+      // Tratar erros de validação do zod
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: 'Dados inválidos',
+          description: firstError.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Erro no cadastro',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -79,23 +129,39 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Validar dados do formulário
+      const validatedData = signInSchema.parse(signInData);
+
       // Gera email interno baseado no username
-      const internalEmail = `${signInData.username.toLowerCase().replace(/\s+/g, '')}@jhanmedeiros.app`;
+      const internalEmail = `${validatedData.username.toLowerCase().replace(/\s+/g, '')}@jhanmedeiros.app`;
 
       const { error } = await supabase.auth.signInWithPassword({
         email: internalEmail,
-        password: signInData.password,
+        password: validatedData.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Mensagem genérica para não revelar se usuário existe
+        throw new Error('Credenciais inválidas. Verifique usuário e senha.');
+      }
 
       navigate('/dashboard');
     } catch (error: any) {
-      toast({
-        title: 'Erro no login',
-        description: error.message,
-        variant: 'destructive',
-      });
+      // Tratar erros de validação do zod
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: 'Dados inválidos',
+          description: firstError.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Erro no login',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
