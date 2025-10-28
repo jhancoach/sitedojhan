@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -36,28 +37,30 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/sobre" element={<Sobre />} />
-              <Route path="/free-agent" element={<FreeAgent />} />
-              <Route path="/mapas" element={<Mapas />} />
-              <Route path="/pets" element={<Pets />} />
-              <Route path="/personagens" element={<Personagens />} />
-              <Route path="/composicao" element={<Composicao />} />
-              <Route path="/visoes-aereas" element={<VisoesAereas />} />
-              <Route path="/safes" element={<Safes />} />
-              <Route path="/picks-bans" element={<PicksBans />} />
-              <Route path="/estatisticas" element={<Estatisticas />} />
-              <Route path="/feedback" element={<Feedback />} />
-              <Route path="/admin/storage" element={<AdminStorage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/sobre" element={<Sobre />} />
+                <Route path="/free-agent" element={<FreeAgent />} />
+                <Route path="/mapas" element={<Mapas />} />
+                <Route path="/pets" element={<Pets />} />
+                <Route path="/personagens" element={<Personagens />} />
+                <Route path="/composicao" element={<Composicao />} />
+                <Route path="/visoes-aereas" element={<VisoesAereas />} />
+                <Route path="/safes" element={<Safes />} />
+                <Route path="/picks-bans" element={<PicksBans />} />
+                <Route path="/estatisticas" element={<Estatisticas />} />
+                <Route path="/feedback" element={<Feedback />} />
+                <Route path="/admin/storage" element={<AdminStorage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </LanguageProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

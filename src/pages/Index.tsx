@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 export default function Index() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!loading && user) {
@@ -32,14 +34,13 @@ export default function Index() {
         />
         
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-fire bg-clip-text text-transparent">
-          Bem-vindo ao site do Jhan
+          {t('home.welcome')}
         </h1>
         
         <p className="text-lg md:text-xl text-foreground/80 italic px-4">
-          "Tudo o que fizerem, façam de todo o coração, como para o Senhor, não para os homens, 
-          sabendo que receberão do Senhor a recompensa da herança, pois é a Cristo, o Senhor, a quem vocês servem."
+          "{t('home.verse')}"
           <br />
-          <span className="font-semibold text-primary">- Colossenses 3:23-24</span>
+          <span className="font-semibold text-primary">- {t('home.verseRef')}</span>
         </p>
 
         <Button 
@@ -47,7 +48,7 @@ export default function Index() {
           onClick={() => navigate('/auth')}
           className="text-lg px-8 py-6 shadow-glow-orange"
         >
-          Acessar Plataforma
+          {t('home.accessPlatform')}
         </Button>
       </div>
     </div>

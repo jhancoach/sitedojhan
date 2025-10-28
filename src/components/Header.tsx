@@ -4,6 +4,8 @@ import { Menu, X, Youtube, Instagram, MessageSquare, ChevronDown } from 'lucide-
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHasRole } from '@/hooks/useHasRole';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from './LanguageSelector';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,29 +18,30 @@ export function Header() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole: isAdmin } = useHasRole('admin');
+  const { t } = useLanguage();
 
   const mainItems = [
-    { name: 'Início', path: '/dashboard' },
-    { name: 'Sobre', path: '/sobre' },
+    { name: t('nav.home'), path: '/dashboard' },
+    { name: t('nav.about'), path: '/sobre' },
   ];
 
   const downloadItems = [
-    { name: 'Mapas', path: '/mapas' },
-    { name: 'Visões Aéreas', path: '/visoes-aereas' },
-    { name: 'Safes', path: '/safes' },
-    { name: 'Personagens', path: '/personagens' },
-    { name: 'Pets', path: '/pets' },
+    { name: t('nav.maps'), path: '/mapas' },
+    { name: t('nav.aerialViews'), path: '/visoes-aereas' },
+    { name: t('nav.safes'), path: '/safes' },
+    { name: t('nav.characters'), path: '/personagens' },
+    { name: t('nav.pets'), path: '/pets' },
   ];
 
   const gameItems = [
-    { name: 'Monte Sua Composição', path: '/composicao' },
-    { name: 'Picks e Bans', path: '/picks-bans' },
-    { name: 'Estatísticas dos Jogadores', path: '/estatisticas' },
-    { name: 'Dúvidas e Sugestões', path: '/feedback' },
+    { name: t('nav.composition'), path: '/composicao' },
+    { name: t('nav.picksBans'), path: '/picks-bans' },
+    { name: t('nav.statistics'), path: '/estatisticas' },
+    { name: t('nav.feedback'), path: '/feedback' },
   ];
 
   const communityItems = [
-    { name: 'Free Agent', path: '/free-agent' },
+    { name: t('nav.freeAgent'), path: '/free-agent' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -67,7 +70,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-sm font-medium">
-                  Downloads <ChevronDown className="ml-1 h-4 w-4" />
+                  {t('nav.downloads')} <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-background z-50">
@@ -85,7 +88,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-sm font-medium">
-                  Jogo <ChevronDown className="ml-1 h-4 w-4" />
+                  {t('nav.game')} <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-background z-50">
@@ -124,12 +127,13 @@ export function Header() {
                     : 'text-foreground/80 hover:text-foreground hover:bg-accent'
                 }`}
               >
-                Admin
+                {t('nav.admin')}
               </Link>
             )}
 
             {/* Social Links & Auth - Right side */}
             <div className="ml-auto flex items-center space-x-3">
+              <LanguageSelector />
               <a href="https://www.youtube.com/@jhanmedeiros" target="_blank" rel="noopener noreferrer">
                 <Button variant="ghost" size="icon">
                   <Youtube className="h-5 w-5" />
@@ -154,7 +158,7 @@ export function Header() {
               </a>
               {user && (
                 <Button onClick={signOut} variant="outline">
-                  Sair
+                  {t('nav.logout')}
                 </Button>
               )}
             </div>
@@ -192,7 +196,7 @@ export function Header() {
 
             {/* Downloads Section */}
             <div className="pt-2 border-t border-border">
-              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">Downloads</p>
+              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.downloads')}</p>
               {downloadItems.map((item) => (
                 <Link
                   key={item.path}
@@ -211,7 +215,7 @@ export function Header() {
 
             {/* Game Section */}
             <div className="pt-2 border-t border-border">
-              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">Jogo</p>
+              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.game')}</p>
               {gameItems.map((item) => (
                 <Link
                   key={item.path}
@@ -230,7 +234,7 @@ export function Header() {
 
             {/* Community Section */}
             <div className="pt-2 border-t border-border">
-              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">Comunidade</p>
+              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.community')}</p>
               {communityItems.map((item) => (
                 <Link
                   key={item.path}
@@ -250,7 +254,7 @@ export function Header() {
             {/* Admin Section - Only for admins */}
             {user && isAdmin && (
               <div className="pt-2 border-t border-border">
-                <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">Administração</p>
+                <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.administration')}</p>
                 <Link
                   to="/admin/storage"
                   onClick={() => setIsMenuOpen(false)}
@@ -260,11 +264,12 @@ export function Header() {
                       : 'text-foreground/80 hover:text-foreground hover:bg-accent'
                   }`}
                 >
-                  Admin Storage
+                  {t('nav.adminStorage')}
                 </Link>
               </div>
             )}
             <div className="flex items-center space-x-2 pt-4 border-t border-border">
+              <LanguageSelector />
               <a href="https://www.youtube.com/@jhanmedeiros" target="_blank" rel="noopener noreferrer">
                 <Button variant="ghost" size="icon">
                   <Youtube className="h-5 w-5" />
@@ -289,7 +294,7 @@ export function Header() {
               </a>
               {user && (
                 <Button onClick={signOut} variant="outline" className="w-full mt-2">
-                  Sair
+                  {t('nav.logout')}
                 </Button>
               )}
             </div>
