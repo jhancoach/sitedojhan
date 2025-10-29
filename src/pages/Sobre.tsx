@@ -53,6 +53,22 @@ export default function Sobre() {
               <li>Coleta e recolhimento de dados diários de desempenho dos jogadores nos campeonatos</li>
               <li>Criação de Plataformas e acessibilidades de visualização e estudos</li>
             </ul>
+
+            <h2 className="text-2xl font-bold mt-8 mb-4">Missão, Visão e Valores</h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold text-primary">Missão</h3>
+                <p>Tocar vidas através da minha vida com Cristo</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-primary">Visão</h3>
+                <p>Inspirar as pessoas a serem suas melhores versões não apenas no jogo mas como na vida.</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-primary">Valores</h3>
+                <p>Agir com transparência, honestidade, fazer sempre o que é certo.</p>
+              </div>
+            </div>
           </div>
         </div>
       </main>

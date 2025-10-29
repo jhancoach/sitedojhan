@@ -50,6 +50,23 @@ export default function Index() {
         >
           {t('home.accessPlatform')}
         </Button>
+
+        <div className="mt-12 w-full">
+          <h2 className="text-2xl font-bold mb-6 bg-gradient-fire bg-clip-text text-transparent">
+            Últimos Vídeos do YouTube
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="aspect-video rounded-lg overflow-hidden shadow-glow-orange">
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube.com/embed?list=UULFOvJHcWOZ6pYCcv-Jjmj6bQ"
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

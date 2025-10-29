@@ -76,13 +76,17 @@ const translations: Record<Language, any> = {
       feedback: 'Dúvidas e Sugestões',
       freeAgent: 'Free Agent',
       adminStorage: 'Admin Storage',
-      administration: 'Administração'
+      administration: 'Administração',
+      loadouts: 'Carregamentos 3.0'
     },
     home: {
       welcome: 'Bem-vindo ao site do Jhan',
       verse: 'Tudo o que fizerem, façam de todo o coração, como para o Senhor, não para os homens, sabendo que receberão do Senhor a recompensa da herança, pois é a Cristo, o Senhor, a quem vocês servem.',
       verseRef: 'Colossenses 3:23-24',
       accessPlatform: 'Acessar Plataforma'
+    },
+    loadouts: {
+      title: 'Carregamentos 3.0'
     }
   },
   en: {
@@ -105,13 +109,17 @@ const translations: Record<Language, any> = {
       feedback: 'Questions & Suggestions',
       freeAgent: 'Free Agent',
       adminStorage: 'Admin Storage',
-      administration: 'Administration'
+      administration: 'Administration',
+      loadouts: 'Loadouts 3.0'
     },
     home: {
       welcome: "Welcome to Jhan's Website",
       verse: 'Whatever you do, work at it with all your heart, as working for the Lord, not for human masters, since you know that you will receive an inheritance from the Lord as a reward. It is the Lord Christ you are serving.',
       verseRef: 'Colossians 3:23-24',
       accessPlatform: 'Access Platform'
+    },
+    loadouts: {
+      title: 'Loadouts 3.0'
     }
   },
   es: {
@@ -134,13 +142,17 @@ const translations: Record<Language, any> = {
       feedback: 'Dudas y Sugerencias',
       freeAgent: 'Agente Libre',
       adminStorage: 'Almacenamiento Admin',
-      administration: 'Administración'
+      administration: 'Administración',
+      loadouts: 'Equipamientos 3.0'
     },
     home: {
       welcome: 'Bienvenido al sitio de Jhan',
       verse: 'Y todo lo que hagáis, hacedlo de corazón, como para el Señor y no para los hombres, sabiendo que del Señor recibiréis la recompensa de la herencia, porque a Cristo el Señor servís.',
       verseRef: 'Colosenses 3:23-24',
       accessPlatform: 'Acceder a la Plataforma'
+    },
+    loadouts: {
+      title: 'Equipamientos 3.0'
     }
   },
   th: {
@@ -163,13 +175,17 @@ const translations: Record<Language, any> = {
       feedback: 'คำถามและข้อเสนอแนะ',
       freeAgent: 'ตัวแทนอิสระ',
       adminStorage: 'ที่เก็บข้อมูลผู้ดูแล',
-      administration: 'การบริหาร'
+      administration: 'การบริหาร',
+      loadouts: 'การโหลด 3.0'
     },
     home: {
       welcome: 'ยินดีต้อนรับสู่เว็บไซต์ของ Jhan',
       verse: 'สิ่งใดก็ตามที่ท่านทำ จงทำด้วยสุดใจ ราวกับว่าทำเพื่อองค์พระผู้เป็นเจ้า มิใช่เพื่อมนุษย์ เพราะท่านรู้ว่าท่านจะได้รับมรดกจากพระเจ้าเป็นรางวัล ท่านรับใช้พระเยซูคริสต์องค์พระผู้เป็นเจ้า',
       verseRef: 'โคโลสี 3:23-24',
       accessPlatform: 'เข้าสู่แพลตฟอร์ม'
+    },
+    loadouts: {
+      title: 'การโหลด 3.0'
     }
   },
   id: {
@@ -192,13 +208,17 @@ const translations: Record<Language, any> = {
       feedback: 'Pertanyaan & Saran',
       freeAgent: 'Agen Bebas',
       adminStorage: 'Penyimpanan Admin',
-      administration: 'Administrasi'
+      administration: 'Administrasi',
+      loadouts: 'Loadout 3.0'
     },
     home: {
       welcome: 'Selamat Datang di Situs Jhan',
       verse: 'Apa pun yang kamu lakukan, lakukanlah dengan segenap hatimu, seperti untuk Tuhan dan bukan untuk manusia, karena kamu tahu bahwa kamu akan menerima warisan dari Tuhan sebagai upah. Kristus Tuhanlah yang kamu layani.',
       verseRef: 'Kolose 3:23-24',
       accessPlatform: 'Akses Platform'
+    },
+    loadouts: {
+      title: 'Loadout 3.0'
     }
   }
 };

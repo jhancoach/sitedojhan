@@ -31,6 +31,7 @@ export function Header() {
     { name: t('nav.safes'), path: '/safes' },
     { name: t('nav.characters'), path: '/personagens' },
     { name: t('nav.pets'), path: '/pets' },
+    { name: t('nav.loadouts'), path: '/carregamentos' },
   ];
 
   const gameItems = [

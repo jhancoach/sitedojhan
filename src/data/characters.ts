@@ -66,6 +66,7 @@ export const characters: Character[] = [
   { name: 'DIANA', image: 'https://i.ibb.co/B2GSzv0C/DIANA.png', type: 'PASSIVA' },
   { name: 'DBOAS', image: 'https://i.ibb.co/j9D94QMB/DBOAS.png', type: 'PASSIVA' },
   { name: 'RIN', image: 'https://i.ibb.co/sp3ZfjGx/RIN.png', type: 'PASSIVA' },
+  { name: 'NERO', image: 'https://i.ibb.co/9HSp4GsC/NERO.png', type: 'ATIVA' },
 ];
 
 export const activeCharacters = characters.filter(c => c.type === 'ATIVA');

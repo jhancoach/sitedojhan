@@ -10,7 +10,14 @@ import { PetSelector } from '@/components/PetSelector';
 import { Printer, X, Plus } from 'lucide-react';
 import { activeCharacters, passiveCharacters, Character } from '@/data/characters';
 import { pets, Pet } from '@/data/pets';
+import { loadouts } from '@/data/loadouts';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface PlayerComposition {
   name: string;
@@ -19,6 +26,7 @@ interface PlayerComposition {
   passive2: Character | null;
   passive3: Character | null;
   pet: Pet | null;
+  loadout: { name: string; image: string } | null;
 }
 
 type SelectionType = {
@@ -33,12 +41,14 @@ export default function Composicao() {
   const [currentSelection, setCurrentSelection] = useState<SelectionType>(null);
   const [petSelectionOpen, setPetSelectionOpen] = useState(false);
   const [currentPetPlayerIndex, setCurrentPetPlayerIndex] = useState<number | null>(null);
+  const [loadoutSelectionOpen, setLoadoutSelectionOpen] = useState(false);
+  const [currentLoadoutPlayerIndex, setCurrentLoadoutPlayerIndex] = useState<number | null>(null);
   
   const [players, setPlayers] = useState<PlayerComposition[]>([
-    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
-    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
-    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
-    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null, loadout: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null, loadout: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null, loadout: null },
+    { name: '', active: null, passive1: null, passive2: null, passive3: null, pet: null, loadout: null },
   ]);
 
   const updatePlayer = (index: number, field: keyof PlayerComposition, value: any) => {
@@ -137,6 +147,17 @@ export default function Composicao() {
     }
   };
 
+  const openLoadoutSelector = (playerIndex: number) => {
+    setCurrentLoadoutPlayerIndex(playerIndex);
+    setLoadoutSelectionOpen(true);
+  };
+
+  const handleLoadoutSelect = (loadout: { name: string; image: string }) => {
+    if (currentLoadoutPlayerIndex !== null) {
+      updatePlayer(currentLoadoutPlayerIndex, 'loadout', loadout);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -176,7 +197,7 @@ export default function Composicao() {
                   </div>
 
                   {/* Characters */}
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-6 gap-2">
                     {/* Active */}
                     <div>
                       <Label className="mb-2 block text-xs">Ativa</Label>
@@ -316,6 +337,52 @@ export default function Composicao() {
                         </Card>
                       )}
                     </div>
+
+                    {/* Loadout */}
+                    <div>
+                      <Label className="mb-2 block text-xs">Carreg.</Label>
+                      {player.loadout ? (
+                        <Card className="relative group hover:shadow-lg hover:shadow-accent/50 transition-all cursor-pointer">
+                          <CardContent className="p-2">
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              className="absolute -top-1 -right-1 h-5 w-5 z-10"
+                              onClick={() => removeCharacter(playerIndex, 'loadout')}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                            <div 
+                              className="aspect-square bg-accent/10 rounded overflow-hidden mb-1"
+                              onClick={() => openLoadoutSelector(playerIndex)}
+                            >
+                              <img
+                                src={player.loadout.image}
+                                alt={player.loadout.name}
+                                className="w-full h-full object-contain p-1"
+                              />
+                            </div>
+                            <p className="text-[10px] font-semibold text-center truncate">
+                              {player.loadout.name}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card 
+                          className="cursor-pointer hover:shadow-lg hover:shadow-accent/50 hover:border-accent transition-all"
+                          onClick={() => openLoadoutSelector(playerIndex)}
+                        >
+                          <CardContent className="p-2">
+                            <div className="aspect-square bg-accent/10 rounded flex items-center justify-center mb-1">
+                              <Plus className="h-8 w-8 text-accent/50" />
+                            </div>
+                            <p className="text-[10px] text-center text-muted-foreground">
+                              Carreg.
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -341,6 +408,39 @@ export default function Composicao() {
         onSelect={handlePetSelect}
         title={currentPetPlayerIndex !== null ? `Selecione Pet - Jogador ${currentPetPlayerIndex + 1}` : 'Selecione Pet'}
       />
+
+      <Dialog open={loadoutSelectionOpen} onOpenChange={setLoadoutSelectionOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {currentLoadoutPlayerIndex !== null ? `Selecione Carregamento - Jogador ${currentLoadoutPlayerIndex + 1}` : 'Selecione Carregamento'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+            {loadouts.map((loadout) => (
+              <Card
+                key={loadout.name}
+                className="cursor-pointer hover:border-accent transition-all hover:scale-105"
+                onClick={() => {
+                  handleLoadoutSelect(loadout);
+                  setLoadoutSelectionOpen(false);
+                }}
+              >
+                <CardContent className="p-3">
+                  <div className="aspect-square bg-accent/10 rounded overflow-hidden mb-2">
+                    <img
+                      src={loadout.image}
+                      alt={loadout.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-xs font-semibold text-center">{loadout.name}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         @media print {
