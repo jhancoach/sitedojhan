@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RotateCcw, Printer, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const playerSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
@@ -70,6 +71,7 @@ const defaultMapStats: MapStats = {
 };
 
 export default function Estatisticas() {
+  const { t } = useLanguage();
   const [showSummary, setShowSummary] = useState(false);
   const [eventType, setEventType] = useState<string>('');
   const [eventName, setEventName] = useState<string>('');
@@ -206,14 +208,14 @@ export default function Estatisticas() {
     return (
       <Card key={playerKey} className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-primary">Jogador {playerNumber}</CardTitle>
+          <CardTitle className="text-primary">{t('statistics.player')} {playerNumber}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor={`${playerKey}-nome`}>Nome do Jogador</Label>
+            <Label htmlFor={`${playerKey}-nome`}>{t('statistics.playerName')}</Label>
             <Input
               id={`${playerKey}-nome`}
-              placeholder="Digite o nome"
+              placeholder={t('statistics.enterName')}
               value={player.nome}
               onChange={(e) => handleInputChange(playerKey, 'nome', e.target.value)}
               className="bg-background border-input"
@@ -221,10 +223,10 @@ export default function Estatisticas() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`${playerKey}-foto`}>URL da Foto</Label>
+            <Label htmlFor={`${playerKey}-foto`}>{t('statistics.photoUrl')}</Label>
             <Input
               id={`${playerKey}-foto`}
-              placeholder="URL da imagem do jogador"
+              placeholder={t('statistics.playerPhotoUrl')}
               value={player.foto}
               onChange={(e) => handleInputChange(playerKey, 'foto', e.target.value)}
               className="bg-background border-input"
@@ -245,7 +247,7 @@ export default function Estatisticas() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor={`${playerKey}-kills`}>Kills</Label>
+              <Label htmlFor={`${playerKey}-kills`}>{t('statistics.kills')}</Label>
               <Input
                 id={`${playerKey}-kills`}
                 type="number"
@@ -257,7 +259,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${playerKey}-mortes`}>Mortes</Label>
+              <Label htmlFor={`${playerKey}-mortes`}>{t('statistics.deaths')}</Label>
               <Input
                 id={`${playerKey}-mortes`}
                 type="number"
@@ -269,7 +271,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${playerKey}-assistencias`}>Assistências</Label>
+              <Label htmlFor={`${playerKey}-assistencias`}>{t('statistics.assists')}</Label>
               <Input
                 id={`${playerKey}-assistencias`}
                 type="number"
@@ -281,7 +283,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${playerKey}-danoCausado`}>Dano Causado</Label>
+              <Label htmlFor={`${playerKey}-danoCausado`}>{t('statistics.damageDealt')}</Label>
               <Input
                 id={`${playerKey}-danoCausado`}
                 type="number"
@@ -293,7 +295,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${playerKey}-derrubados`}>Derrubados</Label>
+              <Label htmlFor={`${playerKey}-derrubados`}>{t('statistics.knockdowns')}</Label>
               <Input
                 id={`${playerKey}-derrubados`}
                 type="number"
@@ -305,7 +307,7 @@ export default function Estatisticas() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${playerKey}-salasJogadas`}>Salas Jogadas</Label>
+              <Label htmlFor={`${playerKey}-salasJogadas`}>{t('statistics.roomsPlayed')}</Label>
               <Input
                 id={`${playerKey}-salasJogadas`}
                 type="number"
@@ -331,14 +333,14 @@ export default function Estatisticas() {
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="text-center space-y-4 no-print">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Estatísticas do Time
+              {t('statistics.title')}
             </h1>
             <p className="text-muted-foreground">
-              Preencha os dados estatísticos coletivos e individuais
+              {t('statistics.subtitle')}
             </p>
             <div className="bg-muted/50 border border-border rounded-lg p-4 max-w-2xl mx-auto">
               <p className="text-sm text-muted-foreground italic">
-                💡 <span className="font-semibold">Observação:</span> Ferramenta desenvolvida principalmente para analistas que não possuem computador
+                💡 <span className="font-semibold">{t('statistics.note').split(':')[0]}:</span> {t('statistics.note').split(':')[1]}
               </p>
             </div>
           </div>
@@ -351,7 +353,7 @@ export default function Estatisticas() {
               className="gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              Resetar Dados
+              {t('statistics.resetData')}
             </Button>
 
             <Button
@@ -360,7 +362,7 @@ export default function Estatisticas() {
               className="gap-2"
             >
               <Printer className="w-4 h-4" />
-              Imprimir / Salvar PDF
+              {t('statistics.printPdf')}
             </Button>
 
             <Button
@@ -368,7 +370,7 @@ export default function Estatisticas() {
               className="gap-2"
             >
               <FileText className="w-4 h-4" />
-              Gerar Resumo
+              {t('statistics.generateSummary')}
             </Button>
           </div>
 
@@ -378,22 +380,22 @@ export default function Estatisticas() {
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="eventType">Tipo de Evento</Label>
+                    <Label htmlFor="eventType">{t('statistics.eventType')}</Label>
                     <Select value={eventType} onValueChange={setEventType}>
                       <SelectTrigger className="bg-background border-input">
-                        <SelectValue placeholder="Selecione o tipo" />
+                        <SelectValue placeholder={t('statistics.selectType')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="competicao">Competição</SelectItem>
-                        <SelectItem value="treino">Treino</SelectItem>
+                        <SelectItem value="competicao">{t('statistics.competition')}</SelectItem>
+                        <SelectItem value="treino">{t('statistics.training')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="eventName">Nome do Evento</Label>
+                    <Label htmlFor="eventName">{t('statistics.eventName')}</Label>
                     <Input
                       id="eventName"
-                      placeholder="Ex: Copa GWL, Treino 10h"
+                      placeholder={t('statistics.eventNamePlaceholder')}
                       value={eventName}
                       onChange={(e) => setEventName(e.target.value)}
                       className="bg-background border-input"
@@ -406,7 +408,7 @@ export default function Estatisticas() {
 
           {/* Map Stats */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-primary">Estatísticas por Mapa</h2>
+            <h2 className="text-2xl font-bold text-primary">{t('statistics.mapStats')}</h2>
             {['bermuda', 'purgatorio', 'alpine', 'novaTerra', 'kalahari', 'solara'].map((mapKey) => {
               const mapNames: Record<string, string> = {
                 bermuda: 'Bermuda',
@@ -425,7 +427,7 @@ export default function Estatisticas() {
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`${mapKey}-pontos`}>Pontos</Label>
+                        <Label htmlFor={`${mapKey}-pontos`}>{t('statistics.points')}</Label>
                         <Input
                           id={`${mapKey}-pontos`}
                           type="number"
@@ -436,7 +438,7 @@ export default function Estatisticas() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`${mapKey}-salas`}>Salas</Label>
+                        <Label htmlFor={`${mapKey}-salas`}>{t('statistics.rooms')}</Label>
                         <Input
                           id={`${mapKey}-salas`}
                           type="number"
@@ -447,7 +449,7 @@ export default function Estatisticas() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`${mapKey}-abates`}>Abates</Label>
+                        <Label htmlFor={`${mapKey}-abates`}>{t('statistics.kills')}</Label>
                         <Input
                           id={`${mapKey}-abates`}
                           type="number"
@@ -458,11 +460,11 @@ export default function Estatisticas() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`${mapKey}-mediaPontos`}>Média de Pontos</Label>
+                        <Label htmlFor={`${mapKey}-mediaPontos`}>{t('statistics.avgPoints')}</Label>
                         <Input
                           id={`${mapKey}-mediaPontos`}
                           type="number"
-                          placeholder="Auto"
+                          placeholder={t('statistics.auto')}
                           value={
                             parseInt(stats.salas) > 0
                               ? (parseInt(stats.pontos || '0') / parseInt(stats.salas)).toFixed(2)
@@ -473,7 +475,7 @@ export default function Estatisticas() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`${mapKey}-mediaAbates`}>Média de Abates</Label>
+                        <Label htmlFor={`${mapKey}-mediaAbates`}>{t('statistics.avgKills')}</Label>
                         <Input
                           id={`${mapKey}-mediaAbates`}
                           type="number"

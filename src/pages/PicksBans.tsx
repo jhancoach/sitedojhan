@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, X } from 'lucide-react';
 import { activeCharacters, Character } from '@/data/characters';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TeamData {
   name: string;
@@ -20,6 +21,8 @@ type SelectionMode = {
 } | null;
 
 export default function PicksBans() {
+  const { t } = useLanguage();
+  
   const [teamA, setTeamA] = useState<TeamData>({
     name: '',
     ban: null,
@@ -91,39 +94,34 @@ export default function PicksBans() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 print:mb-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-primary">
-              PICKS & BANS
-            </h1>
-            <span className="text-sm text-muted-foreground hidden md:block">
-              Produzido por @jhanmedeiros
-            </span>
-          </div>
+        <div className="flex items-center justify-between mb-4 print:mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-primary">
+            {t('picksBans.title')}
+          </h1>
           <div className="flex gap-2 print:hidden">
             <Button onClick={clearAll} variant="outline" size="sm">
               <RotateCcw className="mr-2 h-4 w-4" />
-              Resetar
+              {t('picksBans.reset')}
             </Button>
             <Button onClick={handlePrint} size="sm">
-              Imprimir
+              {t('picksBans.print')}
             </Button>
           </div>
         </div>
 
-        {/* Teams Section */}
-        <div className="space-y-6 mb-8">
-          {/* Team A */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-bold text-secondary w-24">TIME A</h2>
+        {/* Teams Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          {/* Team A - Blue */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-blue-500 w-20">{t('picksBans.teamA')}</h2>
               <Input
-                placeholder="Nome do time"
+                placeholder={t('picksBans.teamName')}
                 value={teamA.name}
                 onChange={(e) => setTeamA({ ...teamA, name: e.target.value })}
-                className="flex-1 border-secondary/50"
+                className="flex-1 border-blue-500/50 text-sm h-9"
               />
             </div>
 
@@ -132,78 +130,60 @@ export default function PicksBans() {
                 onClick={() => setSelectionMode({ team: 'A', type: 'ban' })}
                 variant="destructive"
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 text-xs"
               >
-                Selecionar Ban
+                {t('picksBans.selectBan')}
               </Button>
               <Button
                 onClick={() => setSelectionMode({ team: 'A', type: 'pick', pickIndex: teamA.picks.findIndex(p => p === null) })}
                 size="sm"
-                className="flex-1 bg-secondary hover:bg-secondary/90"
+                className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700"
               >
-                Selecionar Pick
+                {t('picksBans.selectPick')}
               </Button>
             </div>
 
-            {/* Bans and Picks in same row */}
-            <div className="flex gap-4 items-start">
-              {/* Ban */}
-              <div className="w-32">
-                <h3 className="text-destructive font-bold mb-2 text-sm">BAN</h3>
+            <div className="flex gap-2 items-start">
+              <div className="w-20">
+                <h3 className="text-destructive font-bold mb-1 text-xs">{t('picksBans.ban')}</h3>
                 <Card 
-                  className={`border-4 bg-destructive/20 ${selectionMode?.team === 'A' && selectionMode?.type === 'ban' ? 'border-destructive shadow-lg shadow-destructive/50' : 'border-destructive/50'} cursor-pointer hover:border-destructive transition-all relative`}
+                  className={`border-2 bg-destructive/20 ${selectionMode?.team === 'A' && selectionMode?.type === 'ban' ? 'border-destructive shadow-md shadow-destructive/50' : 'border-destructive/50'} cursor-pointer hover:border-destructive transition-all relative`}
                   onClick={() => teamA.ban && removeCharacter('A', 'ban')}
                 >
-                  <CardContent className="p-2 relative">
-                    {/* X translúcido */}
+                  <CardContent className="p-1 relative">
                     {teamA.ban && (
                       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                        <X className="w-16 h-16 text-white/40 stroke-[3]" />
+                        <X className="w-12 h-12 text-white/40 stroke-[3]" />
                       </div>
                     )}
-                    <div className="aspect-square rounded-lg bg-gradient-to-br from-destructive/30 to-destructive/10 flex items-center justify-center overflow-hidden">
+                    <div className="aspect-square rounded bg-gradient-to-br from-destructive/30 to-destructive/10 flex items-center justify-center overflow-hidden">
                       {teamA.ban ? (
-                        <img
-                          src={teamA.ban.image}
-                          alt={teamA.ban.name}
-                          className="w-full h-full object-contain p-2 opacity-70"
-                        />
+                        <img src={teamA.ban.image} alt={teamA.ban.name} className="w-full h-full object-contain p-1 opacity-70" />
                       ) : (
-                        <span className="text-muted-foreground text-xs">BAN</span>
+                        <span className="text-muted-foreground text-[10px]">{t('picksBans.ban')}</span>
                       )}
                     </div>
-                    {teamA.ban && (
-                      <p className="text-center mt-1 font-bold text-xs text-destructive">{teamA.ban.name}</p>
-                    )}
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Picks */}
               <div className="flex-1">
-                <h3 className="text-secondary font-bold mb-2 text-sm">PICKS</h3>
-                <div className="grid grid-cols-4 gap-2">
+                <h3 className="text-blue-500 font-bold mb-1 text-xs">{t('picksBans.picks')}</h3>
+                <div className="grid grid-cols-4 gap-1">
                   {teamA.picks.map((pick, index) => (
                     <Card 
                       key={index}
-                      className={`border-4 ${selectionMode?.team === 'A' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-secondary shadow-xl shadow-secondary/50' : 'border-border'} bg-card cursor-pointer hover:border-secondary/50 hover:shadow-lg transition-all`}
+                      className={`border-2 ${selectionMode?.team === 'A' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-blue-500 shadow-md shadow-blue-500/50' : 'border-border'} bg-card cursor-pointer hover:border-blue-500/50 transition-all`}
                       onClick={() => pick && removeCharacter('A', 'pick', index)}
                     >
-                      <CardContent className="p-2">
+                      <CardContent className="p-1">
                         <div className="aspect-square rounded bg-gradient-to-br from-background to-muted flex items-center justify-center overflow-hidden">
                           {pick ? (
-                            <img
-                              src={pick.image}
-                              alt={pick.name}
-                              className="w-full h-full object-contain p-1"
-                            />
+                            <img src={pick.image} alt={pick.name} className="w-full h-full object-contain" />
                           ) : (
-                            <span className="text-muted-foreground text-[10px] font-semibold">P{index + 1}</span>
+                            <span className="text-muted-foreground text-[8px] font-semibold">P{index + 1}</span>
                           )}
                         </div>
-                        {pick && (
-                          <p className="text-center mt-1 text-[10px] font-bold truncate">{pick.name}</p>
-                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -212,15 +192,15 @@ export default function PicksBans() {
             </div>
           </div>
 
-          {/* Team B */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-bold text-primary w-24">TIME B</h2>
+          {/* Team B - Orange */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-orange-500 w-20">{t('picksBans.teamB')}</h2>
               <Input
-                placeholder="Nome do time"
+                placeholder={t('picksBans.teamName')}
                 value={teamB.name}
                 onChange={(e) => setTeamB({ ...teamB, name: e.target.value })}
-                className="flex-1 border-primary/50"
+                className="flex-1 border-orange-500/50 text-sm h-9"
               />
             </div>
 
@@ -229,78 +209,60 @@ export default function PicksBans() {
                 onClick={() => setSelectionMode({ team: 'B', type: 'ban' })}
                 variant="destructive"
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 text-xs"
               >
-                Selecionar Ban
+                {t('picksBans.selectBan')}
               </Button>
               <Button
                 onClick={() => setSelectionMode({ team: 'B', type: 'pick', pickIndex: teamB.picks.findIndex(p => p === null) })}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-8 text-xs bg-orange-600 hover:bg-orange-700"
               >
-                Selecionar Pick
+                {t('picksBans.selectPick')}
               </Button>
             </div>
 
-            {/* Bans and Picks in same row */}
-            <div className="flex gap-4 items-start">
-              {/* Ban */}
-              <div className="w-32">
-                <h3 className="text-destructive font-bold mb-2 text-sm">BAN</h3>
+            <div className="flex gap-2 items-start">
+              <div className="w-20">
+                <h3 className="text-destructive font-bold mb-1 text-xs">{t('picksBans.ban')}</h3>
                 <Card 
-                  className={`border-4 bg-destructive/20 ${selectionMode?.team === 'B' && selectionMode?.type === 'ban' ? 'border-destructive shadow-lg shadow-destructive/50' : 'border-destructive/50'} cursor-pointer hover:border-destructive transition-all relative`}
+                  className={`border-2 bg-destructive/20 ${selectionMode?.team === 'B' && selectionMode?.type === 'ban' ? 'border-destructive shadow-md shadow-destructive/50' : 'border-destructive/50'} cursor-pointer hover:border-destructive transition-all relative`}
                   onClick={() => teamB.ban && removeCharacter('B', 'ban')}
                 >
-                  <CardContent className="p-2 relative">
-                    {/* X translúcido */}
+                  <CardContent className="p-1 relative">
                     {teamB.ban && (
                       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                        <X className="w-16 h-16 text-white/40 stroke-[3]" />
+                        <X className="w-12 h-12 text-white/40 stroke-[3]" />
                       </div>
                     )}
-                    <div className="aspect-square rounded-lg bg-gradient-to-br from-destructive/30 to-destructive/10 flex items-center justify-center overflow-hidden">
+                    <div className="aspect-square rounded bg-gradient-to-br from-destructive/30 to-destructive/10 flex items-center justify-center overflow-hidden">
                       {teamB.ban ? (
-                        <img
-                          src={teamB.ban.image}
-                          alt={teamB.ban.name}
-                          className="w-full h-full object-contain p-2 opacity-70"
-                        />
+                        <img src={teamB.ban.image} alt={teamB.ban.name} className="w-full h-full object-contain p-1 opacity-70" />
                       ) : (
-                        <span className="text-muted-foreground text-xs">BAN</span>
+                        <span className="text-muted-foreground text-[10px]">{t('picksBans.ban')}</span>
                       )}
                     </div>
-                    {teamB.ban && (
-                      <p className="text-center mt-1 font-bold text-xs text-destructive">{teamB.ban.name}</p>
-                    )}
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Picks */}
               <div className="flex-1">
-                <h3 className="text-primary font-bold mb-2 text-sm">PICKS</h3>
-                <div className="grid grid-cols-4 gap-2">
+                <h3 className="text-orange-500 font-bold mb-1 text-xs">{t('picksBans.picks')}</h3>
+                <div className="grid grid-cols-4 gap-1">
                   {teamB.picks.map((pick, index) => (
                     <Card 
                       key={index}
-                      className={`border-4 ${selectionMode?.team === 'B' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-primary shadow-xl shadow-primary/50' : 'border-border'} bg-card cursor-pointer hover:border-primary/50 hover:shadow-lg transition-all`}
+                      className={`border-2 ${selectionMode?.team === 'B' && selectionMode?.type === 'pick' && selectionMode?.pickIndex === index ? 'border-orange-500 shadow-md shadow-orange-500/50' : 'border-border'} bg-card cursor-pointer hover:border-orange-500/50 transition-all`}
                       onClick={() => pick && removeCharacter('B', 'pick', index)}
                     >
-                      <CardContent className="p-2">
+                      <CardContent className="p-1">
                         <div className="aspect-square rounded bg-gradient-to-br from-background to-muted flex items-center justify-center overflow-hidden">
                           {pick ? (
-                            <img
-                              src={pick.image}
-                              alt={pick.name}
-                              className="w-full h-full object-contain p-1"
-                            />
+                            <img src={pick.image} alt={pick.name} className="w-full h-full object-contain" />
                           ) : (
-                            <span className="text-muted-foreground text-[10px] font-semibold">P{index + 1}</span>
+                            <span className="text-muted-foreground text-[8px] font-semibold">P{index + 1}</span>
                           )}
                         </div>
-                        {pick && (
-                          <p className="text-center mt-1 text-[10px] font-bold truncate">{pick.name}</p>
-                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -312,10 +274,10 @@ export default function PicksBans() {
 
         {/* Available Characters */}
         <div className="print:hidden">
-          <h3 className="text-xl font-bold mb-4">
-            PERSONAGENS ({availableCharacters.length})
+          <h3 className="text-lg font-bold mb-2">
+            {t('picksBans.characters')} ({availableCharacters.length})
           </h3>
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16 gap-1">
             {activeCharacters.map((char) => {
               const isUsed = usedCharacters.has(char.name);
               const isSelectable = selectionMode && !isUsed;
@@ -323,26 +285,20 @@ export default function PicksBans() {
               return (
                 <Card
                   key={char.name}
-                  className={`cursor-pointer transition-all border-2 ${
+                  className={`cursor-pointer transition-all border ${
                     isUsed 
                       ? 'opacity-30 cursor-not-allowed' 
                       : isSelectable
-                      ? 'hover:scale-105 hover:shadow-lg hover:shadow-primary/50 border-primary'
+                      ? 'hover:scale-105 hover:shadow-md hover:shadow-primary/50 border-primary'
                       : 'hover:scale-105 border-border'
                   }`}
                   onClick={() => !isUsed && selectionMode && handleCharacterClick(char)}
                 >
-                  <CardContent className="p-2">
+                  <CardContent className="p-1">
                     <div className="aspect-square rounded bg-gradient-to-br from-background to-muted overflow-hidden flex items-center justify-center">
-                      <img
-                        src={char.image}
-                        alt={char.name}
-                        className="w-full h-full object-contain p-1"
-                      />
+                      <img src={char.image} alt={char.name} className="w-full h-full object-contain" />
                     </div>
-                    <p className="text-center mt-1 text-xs font-bold truncate">
-                      {char.name}
-                    </p>
+                    <p className="text-center mt-0.5 text-[8px] font-bold truncate">{char.name}</p>
                   </CardContent>
                 </Card>
               );
@@ -350,17 +306,17 @@ export default function PicksBans() {
           </div>
         </div>
 
-        {/* Print instruction */}
-        <div className="print:hidden text-center mt-8 text-sm text-muted-foreground">
+        {/* Instruction */}
+        <div className="print:hidden text-center mt-3 text-xs text-muted-foreground">
           {selectionMode ? (
             <p className="text-primary font-semibold">
               {selectionMode.type === 'ban' 
-                ? `Clique em um personagem para banir - TIME ${selectionMode.team}` 
-                : `Clique em um personagem para escolher - TIME ${selectionMode.team} PICK ${(selectionMode.pickIndex ?? 0) + 1}`
+                ? `${t('picksBans.selectBanInstruction')} - ${selectionMode.team === 'A' ? t('picksBans.teamA') : t('picksBans.teamB')}` 
+                : `${t('picksBans.selectPickInstruction')} - ${selectionMode.team === 'A' ? t('picksBans.teamA') : t('picksBans.teamB')} PICK ${(selectionMode.pickIndex ?? 0) + 1}`
               }
             </p>
           ) : (
-            <p>Clique em "Selecionar Ban" ou "Selecionar Pick" para começar</p>
+            <p>{t('picksBans.startInstruction')}</p>
           )}
         </div>
       </main>
