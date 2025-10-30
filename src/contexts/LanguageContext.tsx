@@ -728,7 +728,20 @@ const translations: Record<Language, any> = {
       adminMessages: 'ข้อความที่ได้รับ',
       viewMessages: 'ดูข้อความ',
       noMessages: 'ไม่พบข้อความ',
-      createdAt: 'วันที่'
+      createdAt: 'วันที่',
+      name: 'ชื่อ',
+      type: 'ประเภท'
+    },
+    footer: {
+      about: 'นักวิเคราะห์ข้อมูลและแผนที่ Free Fire ปัจจุบันอยู่ที่ Team Solid',
+      quickLinks: 'ลิงก์ด่วน',
+      about_link: 'เกี่ยวกับ',
+      freeAgent: 'ตัวแทนอิสระ',
+      maps: 'แผนที่',
+      picksBans: 'เลือกและแบน',
+      socialMedia: 'โซเชียลมีเดีย',
+      rights: 'สงวนลิขสิทธิ์',
+      verse: '"สิ่งใดก็ตามที่ท่านทำ จงทำด้วยสุดใจ ราวกับว่าทำเพื่อองค์พระผู้เป็นเจ้า"'
     }
   },
   id: {
@@ -887,7 +900,20 @@ const translations: Record<Language, any> = {
       adminMessages: 'Pesan yang Diterima',
       viewMessages: 'Lihat Pesan',
       noMessages: 'Tidak ada pesan yang ditemukan',
-      createdAt: 'Tanggal'
+      createdAt: 'Tanggal',
+      name: 'Nama',
+      type: 'Jenis'
+    },
+    footer: {
+      about: 'Analis data dan peta Free Fire. Saat ini di Team Solid.',
+      quickLinks: 'Tautan Cepat',
+      about_link: 'Tentang',
+      freeAgent: 'Agen Bebas',
+      maps: 'Peta',
+      picksBans: 'Pilih & Larangan',
+      socialMedia: 'Media Sosial',
+      rights: 'Hak cipta dilindungi.',
+      verse: '"Apa pun yang kamu lakukan, lakukanlah dengan segenap hatimu, seperti untuk Tuhan"'
     }
   }
 };

@@ -19,6 +19,7 @@ import Safes from "./pages/Safes";
 import PicksBans from "./pages/PicksBans";
 import Estatisticas from "./pages/Estatisticas";
 import Feedback from "./pages/Feedback";
+import FeedbackAdmin from "./pages/FeedbackAdmin";
 import Carregamentos from "./pages/Carregamentos";
 import AdminStorage from "./pages/AdminStorage";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => {
                 <Route path="/picks-bans" element={<PicksBans />} />
                 <Route path="/estatisticas" element={<Estatisticas />} />
                 <Route path="/feedback" element={<Feedback />} />
+                <Route path="/feedback-admin" element={<FeedbackAdmin />} />
                 <Route path="/carregamentos" element={<Carregamentos />} />
                 <Route path="/admin/storage" element={<AdminStorage />} />
                 <Route path="*" element={<NotFound />} />

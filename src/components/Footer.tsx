@@ -14,24 +14,24 @@ export function Footer() {
               Jhan Medeiros
             </h3>
             <p className="text-sm text-muted-foreground">
-              Analista de dados e mapas Free Fire. Atualmente na Team Solid.
+              {t('footer.about')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-bold mb-4">Links Rápidos</h3>
+            <h3 className="text-lg font-bold mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="/sobre" className="hover:text-primary transition-colors">Sobre</a></li>
-              <li><a href="/free-agent" className="hover:text-primary transition-colors">Free Agent</a></li>
-              <li><a href="/mapas" className="hover:text-primary transition-colors">Mapas</a></li>
-              <li><a href="/picks-bans" className="hover:text-primary transition-colors">Picks & Bans</a></li>
+              <li><a href="/sobre" className="hover:text-primary transition-colors">{t('footer.about_link')}</a></li>
+              <li><a href="/free-agent" className="hover:text-primary transition-colors">{t('footer.freeAgent')}</a></li>
+              <li><a href="/mapas" className="hover:text-primary transition-colors">{t('footer.maps')}</a></li>
+              <li><a href="/picks-bans" className="hover:text-primary transition-colors">{t('footer.picksBans')}</a></li>
             </ul>
           </div>
 
           {/* Social */}
           <div>
-            <h3 className="text-lg font-bold mb-4">Redes Sociais</h3>
+            <h3 className="text-lg font-bold mb-4">{t('footer.socialMedia')}</h3>
             <div className="flex space-x-4">
               <a 
                 href="https://www.youtube.com/@jhanmedeiros" 
@@ -72,9 +72,9 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Jhan Medeiros. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} Jhan Medeiros. {t('footer.rights')}</p>
           <p className="mt-2">
-            "Tudo o que fizerem, façam de todo o coração, como para o Senhor" - Colossenses 3:23-24
+            {t('footer.verse')} - {t('home.verseRef')}
           </p>
         </div>
       </div>

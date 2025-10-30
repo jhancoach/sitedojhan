@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -19,6 +20,9 @@ import {
 import { MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useHasRole } from '@/hooks/useHasRole';
+import { useNavigate } from 'react-router-dom';
 
 const feedbackSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
@@ -36,6 +40,9 @@ type FeedbackFormData = z.infer<typeof feedbackSchema>;
 
 export default function Feedback() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t } = useLanguage();
+  const { hasRole } = useHasRole('admin');
+  const navigate = useNavigate();
 
   const {
     register,
@@ -102,18 +109,29 @@ export default function Feedback() {
               </div>
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Fale Conosco
+              {t('feedback.title')}
             </h1>
             <p className="text-muted-foreground text-lg">
-              Tire suas dúvidas, envie sugestões ou deixe seu comentário
+              {t('feedback.description')}
             </p>
           </div>
 
+          {hasRole && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/feedback-admin')}
+              >
+                {t('feedback.viewMessages')}
+              </Button>
+            </div>
+          )}
+
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle>Envie sua mensagem</CardTitle>
+              <CardTitle>{t('feedback.sendMessage')}</CardTitle>
               <CardDescription>
-                Preencha o formulário abaixo e retornaremos o mais breve possível
+                {t('feedback.formDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>

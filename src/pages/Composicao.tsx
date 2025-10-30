@@ -12,6 +12,7 @@ import { activeCharacters, passiveCharacters, Character } from '@/data/character
 import { pets, Pet } from '@/data/pets';
 import { loadouts } from '@/data/loadouts';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ type SelectionType = {
 
 export default function Composicao() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const printRef = useRef<HTMLDivElement>(null);
   const [selectionOpen, setSelectionOpen] = useState(false);
   const [currentSelection, setCurrentSelection] = useState<SelectionType>(null);
@@ -164,16 +166,16 @@ export default function Composicao() {
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-fire bg-clip-text text-transparent">
-            Monte Sua Composição
+            {t('composition.title')}
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            Clique nos cards para selecionar personagens
+            {t('composition.description')}
           </p>
 
           <div className="flex justify-end mb-6 print:hidden">
             <Button onClick={handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
-              Imprimir / Salvar PDF
+              {t('composition.print')}
             </Button>
           </div>
 
@@ -182,17 +184,17 @@ export default function Composicao() {
               <Card key={playerIndex} className="animate-fade-in">
                 <CardContent className="p-4">
                   <h3 className="text-lg font-bold mb-4 text-primary">
-                    Jogador {playerIndex + 1}
+                    {t('composition.player')} {playerIndex + 1}
                   </h3>
 
                   {/* Name */}
                   <div className="mb-4">
-                    <Label htmlFor={`name-${playerIndex}`}>Nome do Jogador</Label>
+                    <Label htmlFor={`name-${playerIndex}`}>{t('composition.playerName')}</Label>
                     <Input
                       id={`name-${playerIndex}`}
                       value={player.name}
                       onChange={(e) => updatePlayer(playerIndex, 'name', e.target.value)}
-                      placeholder="Digite o nome..."
+                      placeholder={t('composition.namePlaceholder')}
                     />
                   </div>
 
@@ -200,7 +202,7 @@ export default function Composicao() {
                   <div className="grid grid-cols-6 gap-2">
                     {/* Active */}
                     <div>
-                      <Label className="mb-2 block text-xs">Ativa</Label>
+                      <Label className="mb-2 block text-xs">{t('composition.active')}</Label>
                       {player.active ? (
                         <Card className="relative group hover:shadow-lg hover:shadow-primary/50 transition-all cursor-pointer">
                           <CardContent className="p-2">
