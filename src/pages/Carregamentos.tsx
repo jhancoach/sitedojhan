@@ -41,7 +41,7 @@ export default function Carregamentos() {
                   size="sm"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download
+                  {t('maps.download')}
                 </Button>
               </CardContent>
             </Card>

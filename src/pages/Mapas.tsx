@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { maps } from '@/data/maps';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Mapas() {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const handleDownload = (url: string, name: string) => {
     window.open(url, '_blank');
@@ -18,10 +20,10 @@ export default function Mapas() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-fire bg-clip-text text-transparent">
-          Mapas Free Fire
+          {t('maps.title')}
         </h1>
         <p className="text-center text-muted-foreground mb-12">
-          {user?.email?.split('@')[0]}, clique nos mapas para fazer o download
+          {user?.email?.split('@')[0]}, {t('maps.description')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -41,7 +43,7 @@ export default function Mapas() {
                   className="w-full"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Download
+                  {t('maps.download')}
                 </Button>
               </CardContent>
             </Card>
