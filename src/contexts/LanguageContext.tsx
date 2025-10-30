@@ -212,7 +212,20 @@ const translations: Record<Language, any> = {
       adminMessages: 'Mensagens Recebidas',
       viewMessages: 'Ver Mensagens',
       noMessages: 'Nenhuma mensagem encontrada',
-      createdAt: 'Data'
+      createdAt: 'Data',
+      name: 'Nome',
+      type: 'Tipo'
+    },
+    footer: {
+      about: 'Analista de dados e mapas Free Fire. Atualmente na Team Solid.',
+      quickLinks: 'Links Rápidos',
+      about_link: 'Sobre',
+      freeAgent: 'Free Agent',
+      maps: 'Mapas',
+      picksBans: 'Picks & Bans',
+      socialMedia: 'Redes Sociais',
+      rights: 'Todos os direitos reservados.',
+      verse: '"Tudo o que fizerem, façam de todo o coração, como para o Senhor"'
     }
   },
   en: {
@@ -371,7 +384,20 @@ const translations: Record<Language, any> = {
       adminMessages: 'Received Messages',
       viewMessages: 'View Messages',
       noMessages: 'No messages found',
-      createdAt: 'Date'
+      createdAt: 'Date',
+      name: 'Name',
+      type: 'Type'
+    },
+    footer: {
+      about: 'Free Fire data and map analyst. Currently at Team Solid.',
+      quickLinks: 'Quick Links',
+      about_link: 'About',
+      freeAgent: 'Free Agent',
+      maps: 'Maps',
+      picksBans: 'Picks & Bans',
+      socialMedia: 'Social Media',
+      rights: 'All rights reserved.',
+      verse: '"Whatever you do, work at it with all your heart, as working for the Lord"'
     }
   },
   es: {
@@ -530,7 +556,20 @@ const translations: Record<Language, any> = {
       adminMessages: 'Mensajes Recibidos',
       viewMessages: 'Ver Mensajes',
       noMessages: 'No se encontraron mensajes',
-      createdAt: 'Fecha'
+      createdAt: 'Fecha',
+      name: 'Nombre',
+      type: 'Tipo'
+    },
+    footer: {
+      about: 'Analista de datos y mapas de Free Fire. Actualmente en Team Solid.',
+      quickLinks: 'Enlaces Rápidos',
+      about_link: 'Acerca de',
+      freeAgent: 'Agente Libre',
+      maps: 'Mapas',
+      picksBans: 'Selecciones y Baneos',
+      socialMedia: 'Redes Sociales',
+      rights: 'Todos los derechos reservados.',
+      verse: '"Y todo lo que hagáis, hacedlo de corazón, como para el Señor"'
     }
   },
   th: {

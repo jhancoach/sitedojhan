@@ -4,8 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { pets } from '@/data/pets';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Pets() {
+  const { t } = useLanguage();
+  
   const handleDownload = (url: string) => {
     window.open(url, '_blank');
   };
@@ -15,10 +18,10 @@ export default function Pets() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-fire bg-clip-text text-transparent">
-          Pets Free Fire
+          {t('pets.title')}
         </h1>
         <p className="text-center text-muted-foreground mb-12">
-          Clique nas imagens para fazer o download
+          {t('pets.description')}
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

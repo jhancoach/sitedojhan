@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download } from 'lucide-react';
 import { activeCharacters, passiveCharacters } from '@/data/characters';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Personagens() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('ativos');
 
   const handleDownload = (url: string) => {
@@ -19,10 +21,10 @@ export default function Personagens() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-fire bg-clip-text text-transparent">
-          Personagens Free Fire
+          {t('characters.title')}
         </h1>
         <p className="text-center text-muted-foreground mb-8">
-          Clique nas imagens para fazer o download
+          {t('characters.description')}
         </p>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

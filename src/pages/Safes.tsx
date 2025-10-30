@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ExternalLink } from 'lucide-react';
 import { safes, getUniqueMapNames, getUniqueSafeNames } from '@/data/safes';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Safes() {
+  const { t } = useLanguage();
   const [selectedMap, setSelectedMap] = useState<string>('all');
   const [selectedSafe, setSelectedSafe] = useState<string>('all');
 
@@ -60,10 +62,10 @@ export default function Safes() {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-fire bg-clip-text text-transparent">
-          Safes
+          {t('safes.title')}
         </h1>
         <p className="text-center text-muted-foreground mb-8">
-          Filtre por mapa e safe para acessar os links
+          {t('safes.description')}
         </p>
 
         {/* Filters */}

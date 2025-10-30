@@ -1,6 +1,9 @@
 import { Youtube, Instagram, MessageSquare } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function Footer() {
+  const { t } = useLanguage();
+  
   return (
     <footer className="border-t border-border bg-card mt-auto">
       <div className="container mx-auto px-4 py-8">
