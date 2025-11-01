@@ -38,6 +38,7 @@ export function Header() {
     { name: t('nav.composition'), path: '/composicao' },
     { name: t('nav.picksBans'), path: '/picks-bans' },
     { name: t('nav.statistics'), path: '/estatisticas' },
+    { name: t('nav.mapDraw'), path: '/sorteio-mapas' },
     { name: t('nav.feedback'), path: '/feedback' },
   ];
 

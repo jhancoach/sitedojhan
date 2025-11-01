@@ -73,6 +73,7 @@ const translations: Record<Language, any> = {
       composition: 'Monte Sua Composição',
       picksBans: 'Picks e Bans',
       statistics: 'Estatísticas dos Jogadores',
+      mapDraw: 'Sorteio de Mapas',
       feedback: 'Dúvidas e Sugestões',
       freeAgent: 'Free Agent',
       adminStorage: 'Admin Storage',
@@ -242,6 +243,20 @@ const translations: Record<Language, any> = {
       selectBanInstruction: 'Clique em um personagem para banir',
       selectPickInstruction: 'Clique em um personagem para escolher',
       startInstruction: 'Clique em "Selecionar Ban" ou "Selecionar Pick" para começar'
+    },
+    mapDraw: {
+      title: 'Sorteio de Mapas',
+      description: 'Sorteie mapas de forma aleatória para suas partidas',
+      singleMode: 'Sortear 1 Mapa',
+      sequenceMode: 'Sortear 6 Mapas',
+      selected: 'Mapa Selecionado',
+      clickToDraw: 'Clique no botão abaixo para sortear',
+      sequence: 'Sequência de Mapas',
+      map: 'Mapa',
+      drawButton: 'Sortear Mapas',
+      drawing: 'Sorteando...',
+      print: 'Imprimir',
+      availableMaps: 'Mapas Disponíveis'
     }
   },
   en: {
@@ -261,6 +276,7 @@ const translations: Record<Language, any> = {
       composition: 'Build Your Composition',
       picksBans: 'Picks & Bans',
       statistics: 'Player Statistics',
+      mapDraw: 'Map Draw',
       feedback: 'Questions & Suggestions',
       freeAgent: 'Free Agent',
       adminStorage: 'Admin Storage',
@@ -430,6 +446,20 @@ const translations: Record<Language, any> = {
       selectBanInstruction: 'Click a character to ban',
       selectPickInstruction: 'Click a character to pick',
       startInstruction: 'Click "Select Ban" or "Select Pick" to start'
+    },
+    mapDraw: {
+      title: 'Map Draw',
+      description: 'Randomly draw maps for your matches',
+      singleMode: 'Draw 1 Map',
+      sequenceMode: 'Draw 6 Maps',
+      selected: 'Selected Map',
+      clickToDraw: 'Click the button below to draw',
+      sequence: 'Map Sequence',
+      map: 'Map',
+      drawButton: 'Draw Maps',
+      drawing: 'Drawing...',
+      print: 'Print',
+      availableMaps: 'Available Maps'
     }
   },
   es: {
@@ -449,6 +479,7 @@ const translations: Record<Language, any> = {
       composition: 'Arma tu Composición',
       picksBans: 'Selecciones y Baneos',
       statistics: 'Estadísticas de Jugadores',
+      mapDraw: 'Sorteo de Mapas',
       feedback: 'Dudas y Sugerencias',
       freeAgent: 'Agente Libre',
       adminStorage: 'Almacenamiento Admin',
@@ -618,6 +649,20 @@ const translations: Record<Language, any> = {
       selectBanInstruction: 'Haz clic en un personaje para banear',
       selectPickInstruction: 'Haz clic en un personaje para elegir',
       startInstruction: 'Haz clic en "Seleccionar Ban" o "Seleccionar Pick" para comenzar'
+    },
+    mapDraw: {
+      title: 'Sorteo de Mapas',
+      description: 'Sortea mapas aleatoriamente para tus partidas',
+      singleMode: 'Sortear 1 Mapa',
+      sequenceMode: 'Sortear 6 Mapas',
+      selected: 'Mapa Seleccionado',
+      clickToDraw: 'Haz clic en el botón para sortear',
+      sequence: 'Secuencia de Mapas',
+      map: 'Mapa',
+      drawButton: 'Sortear Mapas',
+      drawing: 'Sorteando...',
+      print: 'Imprimir',
+      availableMaps: 'Mapas Disponibles'
     }
   },
   th: {
@@ -637,6 +682,7 @@ const translations: Record<Language, any> = {
       composition: 'สร้างองค์ประกอบของคุณ',
       picksBans: 'เลือกและแบน',
       statistics: 'สถิติผู้เล่น',
+      mapDraw: 'จับฉลากแผนที่',
       feedback: 'คำถามและข้อเสนอแนะ',
       freeAgent: 'ตัวแทนอิสระ',
       adminStorage: 'ที่เก็บข้อมูลผู้ดูแล',
@@ -806,6 +852,20 @@ const translations: Record<Language, any> = {
       selectBanInstruction: 'คลิกตัวละครเพื่อแบน',
       selectPickInstruction: 'คลิกตัวละครเพื่อเลือก',
       startInstruction: 'คลิก "เลือก Ban" หรือ "เลือก Pick" เพื่อเริ่ม'
+    },
+    mapDraw: {
+      title: 'จับฉลากแผนที่',
+      description: 'จับฉลากแผนที่แบบสุ่มสำหรับการแข่งขันของคุณ',
+      singleMode: 'จับฉลาก 1 แผนที่',
+      sequenceMode: 'จับฉลาก 6 แผนที่',
+      selected: 'แผนที่ที่เลือก',
+      clickToDraw: 'คลิกปุ่มด้านล่างเพื่อจับฉลาก',
+      sequence: 'ลำดับแผนที่',
+      map: 'แผนที่',
+      drawButton: 'จับฉลากแผนที่',
+      drawing: 'กำลังจับฉลาก...',
+      print: 'พิมพ์',
+      availableMaps: 'แผนที่ที่มี'
     }
   },
   id: {
@@ -825,6 +885,7 @@ const translations: Record<Language, any> = {
       composition: 'Buat Komposisi Anda',
       picksBans: 'Pilih & Larangan',
       statistics: 'Statistik Pemain',
+      mapDraw: 'Undian Peta',
       feedback: 'Pertanyaan & Saran',
       freeAgent: 'Agen Bebas',
       adminStorage: 'Penyimpanan Admin',
@@ -994,6 +1055,20 @@ const translations: Record<Language, any> = {
       selectBanInstruction: 'Klik karakter untuk ban',
       selectPickInstruction: 'Klik karakter untuk memilih',
       startInstruction: 'Klik "Pilih Ban" atau "Pilih Pick" untuk memulai'
+    },
+    mapDraw: {
+      title: 'Undian Peta',
+      description: 'Acak peta untuk pertandingan Anda',
+      singleMode: 'Undian 1 Peta',
+      sequenceMode: 'Undian 6 Peta',
+      selected: 'Peta Terpilih',
+      clickToDraw: 'Klik tombol di bawah untuk mengundi',
+      sequence: 'Urutan Peta',
+      map: 'Peta',
+      drawButton: 'Undi Peta',
+      drawing: 'Mengundi...',
+      print: 'Cetak',
+      availableMaps: 'Peta Tersedia'
     }
   }
 };

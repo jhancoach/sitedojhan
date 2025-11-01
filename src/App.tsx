@@ -22,6 +22,7 @@ import Feedback from "./pages/Feedback";
 import FeedbackAdmin from "./pages/FeedbackAdmin";
 import Carregamentos from "./pages/Carregamentos";
 import AdminStorage from "./pages/AdminStorage";
+import SorteioMapas from "./pages/SorteioMapas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ const App = () => {
                 <Route path="/feedback" element={<Feedback />} />
                 <Route path="/feedback-admin" element={<FeedbackAdmin />} />
                 <Route path="/carregamentos" element={<Carregamentos />} />
+                <Route path="/sorteio-mapas" element={<SorteioMapas />} />
                 <Route path="/admin/storage" element={<AdminStorage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
