@@ -8,74 +8,74 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 15 100% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 100% 55%;
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 275 80% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 25%;
+    --secondary-foreground: 45 100% 60%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 45 100% 50%;
+    --accent: 45 95% 65%;
     --accent-foreground: 0 0% 10%;
 
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 15 100% 55%;
+    --border: 0 0% 22%;
+    --input: 0 0% 18%;
+    --ring: 45 100% 55%;
 
     --radius: 1rem;
     
-    --gradient-fire: linear-gradient(135deg, hsl(15 100% 55%) 0%, hsl(45 100% 50%) 50%, hsl(275 80% 60%) 100%);
-    --gradient-blue: linear-gradient(135deg, hsl(200 100% 45%) 0%, hsl(275 80% 60%) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 5%) 0%, hsl(0 0% 2%) 100%);
+    --gradient-fire: linear-gradient(135deg, hsl(45 100% 55%) 0%, hsl(50 100% 65%) 50%, hsl(55 100% 75%) 100%);
+    --gradient-blue: linear-gradient(135deg, hsl(0 0% 25%) 0%, hsl(0 0% 15%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%) 0%, hsl(0 0% 4%) 100%);
     
-    --shadow-glow-orange: 0 0 40px hsla(15 100% 55% / 0.5), 0 0 80px hsla(45 100% 50% / 0.3);
-    --shadow-glow-blue: 0 0 40px hsla(200 100% 45% / 0.5), 0 0 80px hsla(275 80% 60% / 0.3);
+    --shadow-glow-orange: 0 0 40px hsla(45 100% 55% / 0.4), 0 0 60px hsla(45 100% 55% / 0.2);
+    --shadow-glow-blue: 0 0 30px hsla(0 0% 25% / 0.5), 0 0 50px hsla(0 0% 15% / 0.3);
     
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 15 100% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 100% 55%;
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 275 80% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 25%;
+    --secondary-foreground: 45 100% 60%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 45 100% 50%;
+    --accent: 45 95% 65%;
     --accent-foreground: 0 0% 10%;
 
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 15 100% 55%;
+    --border: 0 0% 22%;
+    --input: 0 0% 18%;
+    --ring: 45 100% 55%;
   }
 }
 
