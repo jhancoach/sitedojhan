@@ -4,7 +4,8 @@ import { Footer } from '@/components/Footer';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ExternalLink, Search } from 'lucide-react';
 import { safes, getUniqueMapNames, getUniqueSafeNames } from '@/data/safes';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -12,9 +13,36 @@ export default function Safes() {
   const { t } = useLanguage();
   const [selectedMap, setSelectedMap] = useState<string>('all');
   const [selectedSafe, setSelectedSafe] = useState<string>('all');
+  const [mapSearch, setMapSearch] = useState<string>('');
+  const [safeSearch, setSafeSearch] = useState<string>('');
 
   const mapNames = useMemo(() => getUniqueMapNames(), []);
   const safeNames = useMemo(() => getUniqueSafeNames(), []);
+
+  // Filtrar mapas baseado na pesquisa
+  const filteredMapNames = useMemo(() => {
+    return mapNames.filter(map => 
+      map.toLowerCase().includes(mapSearch.toLowerCase())
+    );
+  }, [mapNames, mapSearch]);
+
+  // Filtrar safes baseado no mapa selecionado e na pesquisa
+  const filteredSafeNames = useMemo(() => {
+    let safesToFilter = safeNames;
+    
+    // Se um mapa específico está selecionado, mostrar apenas safes daquele mapa
+    if (selectedMap !== 'all') {
+      const safesFromSelectedMap = safes
+        .filter(s => s.map === selectedMap)
+        .map(s => s.safe);
+      safesToFilter = [...new Set(safesFromSelectedMap)];
+    }
+    
+    // Aplicar filtro de pesquisa
+    return safesToFilter.filter(safe => 
+      safe.toLowerCase().includes(safeSearch.toLowerCase())
+    );
+  }, [safeNames, selectedMap, safeSearch]);
 
   const filteredSafes = useMemo(() => {
     const filtered = safes.filter((safe) => {
@@ -70,33 +98,55 @@ export default function Safes() {
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-2xl mx-auto">
-          <Select value={selectedMap} onValueChange={setSelectedMap}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione o mapa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Mapas</SelectItem>
-              {mapNames.map((map) => (
-                <SelectItem key={map} value={map}>
-                  {map} ({stats.byMap[map]} safes)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-full space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar mapa..."
+                value={mapSearch}
+                onChange={(e) => setMapSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={selectedMap} onValueChange={setSelectedMap}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione o mapa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Mapas</SelectItem>
+                {filteredMapNames.map((map) => (
+                  <SelectItem key={map} value={map}>
+                    {map} ({stats.byMap[map]} safes)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select value={selectedSafe} onValueChange={setSelectedSafe}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione a safe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as Safes</SelectItem>
-              {safeNames.map((safe) => (
-                <SelectItem key={safe} value={safe}>
-                  {safe} ({stats.bySafe[safe]} imagens)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-full space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar safe..."
+                value={safeSearch}
+                onChange={(e) => setSafeSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={selectedSafe} onValueChange={setSelectedSafe}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione a safe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Safes</SelectItem>
+                {filteredSafeNames.map((safe) => (
+                  <SelectItem key={safe} value={safe}>
+                    {safe} ({stats.bySafe[safe]} imagens)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Stats */}
