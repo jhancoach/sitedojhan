@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,23 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const MAPS = ['BERMUDA', 'PURGATÓRIO', 'ALPINE', 'NOVA TERRA', 'SOLARA', 'KALAHARI'];
 
-const MAP_COLORS = [
-  'from-primary/80 to-primary',
-  'from-yellow-500/80 to-yellow-600',
-  'from-orange-500/80 to-orange-600',
-  'from-red-500/80 to-red-600',
-  'from-purple-500/80 to-purple-600',
-  'from-blue-500/80 to-blue-600',
-];
-
 export default function SorteioMapas() {
   const { t } = useLanguage();
   const [mode, setMode] = useState<'single' | 'sequence'>('single');
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedMaps, setSelectedMaps] = useState<string[]>([]);
   const [currentMap, setCurrentMap] = useState<string>('');
-  const [rotation, setRotation] = useState(0);
-  const [finalRotation, setFinalRotation] = useState(0);
 
   const shuffleArray = (array: string[]) => {
     const shuffled = [...array];
@@ -40,46 +29,31 @@ export default function SorteioMapas() {
     setIsSpinning(true);
     setCurrentMap('');
     
-    if (mode === 'single') {
-      const availableMaps = MAPS.filter(map => !selectedMaps.includes(map));
-      if (availableMaps.length === 0) {
-        setSelectedMaps([]);
+    // Animation effect
+    let counter = 0;
+    const interval = setInterval(() => {
+      setCurrentMap(MAPS[Math.floor(Math.random() * MAPS.length)]);
+      counter++;
+      if (counter > 20) {
+        clearInterval(interval);
+        
+        if (mode === 'single') {
+          const availableMaps = MAPS.filter(map => !selectedMaps.includes(map));
+          if (availableMaps.length === 0) {
+            setSelectedMaps([]);
+          }
+          const randomMap = availableMaps[Math.floor(Math.random() * availableMaps.length)];
+          setCurrentMap(randomMap);
+          setSelectedMaps([randomMap]);
+        } else {
+          const shuffled = shuffleArray(MAPS);
+          setSelectedMaps(shuffled);
+          setCurrentMap(shuffled[0]);
+        }
+        
+        setIsSpinning(false);
       }
-      const targetMap = availableMaps.length > 0 
-        ? availableMaps[Math.floor(Math.random() * availableMaps.length)]
-        : MAPS[Math.floor(Math.random() * MAPS.length)];
-      
-      const targetIndex = MAPS.indexOf(targetMap);
-      const segmentAngle = 360 / MAPS.length;
-      const baseRotations = 5; // 5 voltas completas
-      const targetAngle = (targetIndex * segmentAngle);
-      const totalRotation = (baseRotations * 360) + (360 - targetAngle) + (segmentAngle / 2);
-      
-      setFinalRotation(rotation + totalRotation);
-      
-      setTimeout(() => {
-        setCurrentMap(targetMap);
-        setSelectedMaps([targetMap]);
-        setIsSpinning(false);
-        setRotation(rotation + totalRotation);
-      }, 4000);
-    } else {
-      const shuffled = shuffleArray(MAPS);
-      const targetIndex = MAPS.indexOf(shuffled[0]);
-      const segmentAngle = 360 / MAPS.length;
-      const baseRotations = 5;
-      const targetAngle = (targetIndex * segmentAngle);
-      const totalRotation = (baseRotations * 360) + (360 - targetAngle) + (segmentAngle / 2);
-      
-      setFinalRotation(rotation + totalRotation);
-      
-      setTimeout(() => {
-        setSelectedMaps(shuffled);
-        setCurrentMap(shuffled[0]);
-        setIsSpinning(false);
-        setRotation(rotation + totalRotation);
-      }, 4000);
-    }
+    }, 100);
   };
 
   const handlePrint = () => {
@@ -109,66 +83,21 @@ export default function SorteioMapas() {
 
               {/* Roulette Display */}
               <div className="relative mb-8">
-                {/* Pointer/Arrow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 -translate-y-2">
-                  <div className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[30px] border-t-primary drop-shadow-lg" />
-                </div>
-                
-                {/* Roulette Wheel */}
-                <div className="relative w-full max-w-md mx-auto aspect-square">
-                  <div className="absolute inset-0 rounded-full border-8 border-primary shadow-2xl overflow-hidden">
-                    <div 
-                      className="w-full h-full relative transition-transform duration-[4000ms] ease-out"
-                      style={{ 
-                        transform: `rotate(${isSpinning ? finalRotation : rotation}deg)`,
-                      }}
-                    >
-                      {MAPS.map((map, index) => {
-                        const angle = (360 / MAPS.length) * index;
-                        const nextAngle = (360 / MAPS.length) * (index + 1);
-                        
-                        return (
-                          <div
-                            key={map}
-                            className="absolute inset-0"
-                            style={{
-                              clipPath: `polygon(50% 50%, ${50 + 50 * Math.cos((angle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((angle - 90) * Math.PI / 180)}%, ${50 + 50 * Math.cos((nextAngle - 90) * Math.PI / 180)}% ${50 + 50 * Math.sin((nextAngle - 90) * Math.PI / 180)}%)`
-                            }}
-                          >
-                            <div className={`w-full h-full bg-gradient-to-br ${MAP_COLORS[index]} flex items-center justify-center`}>
-                              <div 
-                                className="absolute text-center font-bold text-white text-xs sm:text-sm drop-shadow-lg"
-                                style={{
-                                  transform: `rotate(${angle + (360 / MAPS.length / 2)}deg) translateY(-40%)`,
-                                  transformOrigin: 'center',
-                                }}
-                              >
-                                <span className="block" style={{ transform: 'rotate(90deg)' }}>
-                                  {map}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                <div className="min-h-[200px] flex items-center justify-center bg-gradient-dark rounded-lg p-8 border-2 border-primary">
+                  {currentMap ? (
+                    <div className={`text-center ${isSpinning ? 'animate-pulse' : 'animate-fade-in'}`}>
+                      <h2 className="text-5xl font-bold text-primary mb-2">{currentMap}</h2>
+                      {!isSpinning && mode === 'single' && (
+                        <p className="text-muted-foreground">{t('mapDraw.selected')}</p>
+                      )}
                     </div>
-                    
-                    {/* Center Circle */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-background border-4 border-primary rounded-full flex items-center justify-center shadow-lg z-10">
-                      <Shuffle className="h-8 w-8 text-primary" />
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      <Shuffle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p>{t('mapDraw.clickToDraw')}</p>
                     </div>
-                  </div>
+                  )}
                 </div>
-                
-                {/* Result Display */}
-                {currentMap && !isSpinning && (
-                  <div className="mt-6 text-center animate-fade-in">
-                    <h2 className="text-4xl font-bold text-primary mb-2">{currentMap}</h2>
-                    {mode === 'single' && (
-                      <p className="text-muted-foreground">{t('mapDraw.selected')}</p>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Sequence Display */}
