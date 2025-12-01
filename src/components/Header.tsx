@@ -39,6 +39,7 @@ export function Header() {
     { name: t('nav.picksBans'), path: '/picks-bans' },
     { name: t('nav.statistics'), path: '/estatisticas' },
     { name: t('nav.mapDraw'), path: '/sorteio-mapas' },
+    { name: t('nav.trainingCreator'), path: '/criador-treinos' },
     { name: t('nav.feedback'), path: '/feedback' },
   ];
 

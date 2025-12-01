@@ -74,6 +74,7 @@ const translations: Record<Language, any> = {
       picksBans: 'Picks e Bans',
       statistics: 'Estatísticas dos Jogadores',
       mapDraw: 'Sorteio de Mapas',
+      trainingCreator: 'Criador de Treinos',
       feedback: 'Dúvidas e Sugestões',
       freeAgent: 'Free Agent',
       adminStorage: 'Admin Storage',
@@ -257,6 +258,12 @@ const translations: Record<Language, any> = {
       drawing: 'Sorteando...',
       print: 'Imprimir',
       availableMaps: 'Mapas Disponíveis'
+    },
+    trainingCreator: {
+      title: 'Criador de Treinos',
+      description: 'A plataforma definitiva para organizar seus treinos. Planeje rotas, sorteie mapas e gere leaderboards automáticos.',
+      ideal: 'Ideal para Manager, Coachs, Analistas que buscam ter um treino organizado',
+      accessButton: 'Acessar Plataforma'
     }
   },
   en: {
@@ -277,6 +284,7 @@ const translations: Record<Language, any> = {
       picksBans: 'Picks & Bans',
       statistics: 'Player Statistics',
       mapDraw: 'Map Draw',
+      trainingCreator: 'Training Creator',
       feedback: 'Questions & Suggestions',
       freeAgent: 'Free Agent',
       adminStorage: 'Admin Storage',
@@ -460,6 +468,12 @@ const translations: Record<Language, any> = {
       drawing: 'Drawing...',
       print: 'Print',
       availableMaps: 'Available Maps'
+    },
+    trainingCreator: {
+      title: 'Training Creator',
+      description: 'The ultimate platform to organize your training sessions. Plan routes, draw maps, and generate automatic leaderboards.',
+      ideal: 'Ideal for Managers, Coaches, Analysts looking for organized training',
+      accessButton: 'Access Platform'
     }
   },
   es: {
@@ -480,6 +494,7 @@ const translations: Record<Language, any> = {
       picksBans: 'Selecciones y Baneos',
       statistics: 'Estadísticas de Jugadores',
       mapDraw: 'Sorteo de Mapas',
+      trainingCreator: 'Creador de Entrenamientos',
       feedback: 'Dudas y Sugerencias',
       freeAgent: 'Agente Libre',
       adminStorage: 'Almacenamiento Admin',
@@ -663,6 +678,12 @@ const translations: Record<Language, any> = {
       drawing: 'Sorteando...',
       print: 'Imprimir',
       availableMaps: 'Mapas Disponibles'
+    },
+    trainingCreator: {
+      title: 'Creador de Entrenamientos',
+      description: 'La plataforma definitiva para organizar tus entrenamientos. Planifica rutas, sortea mapas y genera clasificaciones automáticas.',
+      ideal: 'Ideal para Managers, Coaches, Analistas que buscan entrenamientos organizados',
+      accessButton: 'Acceder a la Plataforma'
     }
   },
   th: {
@@ -683,6 +704,7 @@ const translations: Record<Language, any> = {
       picksBans: 'เลือกและแบน',
       statistics: 'สถิติผู้เล่น',
       mapDraw: 'จับฉลากแผนที่',
+      trainingCreator: 'ผู้สร้างการฝึกซ้อม',
       feedback: 'คำถามและข้อเสนอแนะ',
       freeAgent: 'ตัวแทนอิสระ',
       adminStorage: 'ที่เก็บข้อมูลผู้ดูแล',
@@ -866,6 +888,12 @@ const translations: Record<Language, any> = {
       drawing: 'กำลังจับฉลาก...',
       print: 'พิมพ์',
       availableMaps: 'แผนที่ที่มี'
+    },
+    trainingCreator: {
+      title: 'ผู้สร้างการฝึกซ้อม',
+      description: 'แพลตฟอร์มที่สมบูรณ์แบบสำหรับการจัดการฝึกซ้อม วางแผนเส้นทาง จับฉลากแผนที่ และสร้างตารางคะแนนอัตโนมัติ',
+      ideal: 'เหมาะสำหรับผู้จัดการ โค้ช นักวิเคราะห์ที่ต้องการฝึกซ้อมที่เป็นระเบียบ',
+      accessButton: 'เข้าสู่แพลตฟอร์ม'
     }
   },
   id: {
@@ -886,6 +914,7 @@ const translations: Record<Language, any> = {
       picksBans: 'Pilih & Larangan',
       statistics: 'Statistik Pemain',
       mapDraw: 'Undian Peta',
+      trainingCreator: 'Pembuat Latihan',
       feedback: 'Pertanyaan & Saran',
       freeAgent: 'Agen Bebas',
       adminStorage: 'Penyimpanan Admin',
@@ -1069,6 +1098,12 @@ const translations: Record<Language, any> = {
       drawing: 'Mengundi...',
       print: 'Cetak',
       availableMaps: 'Peta Tersedia'
+    },
+    trainingCreator: {
+      title: 'Pembuat Latihan',
+      description: 'Platform terbaik untuk mengatur latihan Anda. Rencanakan rute, undi peta, dan buat papan peringkat otomatis.',
+      ideal: 'Ideal untuk Manajer, Pelatih, Analis yang mencari latihan terorganisir',
+      accessButton: 'Akses Platform'
     }
   }
 };
