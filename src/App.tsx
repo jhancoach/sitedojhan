@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Sobre from "./pages/Sobre";
-import FreeAgent from "./pages/FreeAgent";
 import Mapas from "./pages/Mapas";
 import Pets from "./pages/Pets";
 import Personagens from "./pages/Personagens";
@@ -50,7 +49,6 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/sobre" element={<Sobre />} />
-                <Route path="/free-agent" element={<FreeAgent />} />
                 <Route path="/mapas" element={<Mapas />} />
                 <Route path="/pets" element={<Pets />} />
                 <Route path="/personagens" element={<Personagens />} />
