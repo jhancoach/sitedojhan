@@ -41,7 +41,7 @@ export default function Sobre() {
               <li>FINALISTA LBFF 2023, WB 2024, WB 2024 SPLIT 1 E 2</li>
               <li>TOP 2 DA FASE CLASSIFICATÓRIA WB 2025</li>
               <li>TOP 2 DA FINAL SPLIT 2 WB 2025</li>
-              <li>MUNDIAL 2025 EM ANDAMENTO (TEAM SOLID)</li>
+              <li>TOP 5 MUNDIAL 2025 (TEAM SOLID)</li>
             </ul>
 
             <h2 className="text-2xl font-bold mt-8 mb-4">{t('about.workDescription')}</h2>

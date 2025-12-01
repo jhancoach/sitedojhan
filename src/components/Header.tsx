@@ -43,10 +43,6 @@ export function Header() {
     { name: t('nav.feedback'), path: '/feedback' },
   ];
 
-  const communityItems = [
-    { name: t('nav.freeAgent'), path: '/free-agent' },
-  ];
-
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -104,21 +100,6 @@ export function Header() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Comunidade */}
-            {communityItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-md ${
-                  isActive(item.path)
-                    ? 'bg-gradient-premium text-primary-foreground shadow-premium'
-                    : 'text-foreground/80 hover:text-foreground hover:bg-accent/10'
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
 
             {/* Admin Link - Only visible to admins */}
             {user && isAdmin && (
@@ -220,25 +201,6 @@ export function Header() {
             <div className="pt-2 border-t border-border">
               <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.game')}</p>
               {gameItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive(item.path)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground/80 hover:text-foreground hover:bg-accent'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-
-            {/* Community Section */}
-            <div className="pt-2 border-t border-border">
-              <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.community')}</p>
-              {communityItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
