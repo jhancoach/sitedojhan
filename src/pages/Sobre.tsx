@@ -1,6 +1,8 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Trophy, Medal, Target, Star } from 'lucide-react';
 
 export default function Sobre() {
   const { t } = useLanguage();
@@ -17,6 +19,78 @@ export default function Sobre() {
           <blockquote className="text-xl italic text-center border-l-4 border-primary pl-4 my-8">
             "{t('about.quote')}"
           </blockquote>
+
+          {/* Conquistas Destacadas */}
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-premium bg-clip-text text-transparent">
+              Conquistas Destacadas
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="glass-effect border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-gradient-premium">
+                      <Trophy className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <CardTitle className="text-xl">TOP 5 MUNDIAL 2025</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    Conquista histórica com a Team Solid no maior campeonato mundial de Free Fire
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-effect border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-gradient-royal">
+                      <Medal className="h-6 w-6 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">FINALISTA LBFF 2023</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    Top 4 Comissão Técnica com E1 Esports na Liga Brasileira de Free Fire
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-effect border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-gradient-ocean">
+                      <Target className="h-6 w-6 text-white" />
+                    </div>
+                    <CardTitle className="text-xl">TOP 2 SPLIT 2 WB 2025</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    Vice-campeão da final do segundo split do World Battle 2025
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-effect border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-gradient-premium">
+                      <Star className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <CardTitle className="text-xl">TOP 2 COPA FF 2024</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    Vice-campeão da Copa Free Fire 2024 com E1 Esports
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
 
           <div className="prose prose-lg dark:prose-invert max-w-none">
             <p className="text-lg" dangerouslySetInnerHTML={{ __html: t('about.intro') }} />
