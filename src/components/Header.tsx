@@ -50,7 +50,7 @@ export function Header() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 glass-effect">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-center">
           {/* Desktop Navigation - Centered */}
@@ -59,10 +59,10 @@ export function Header() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-md ${
                   isActive(item.path)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground/80 hover:text-foreground hover:bg-accent'
+                    ? 'bg-gradient-premium text-primary-foreground shadow-premium'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent/10'
                 }`}
               >
                 {item.name}
@@ -72,14 +72,14 @@ export function Header() {
             {/* Downloads Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-sm font-medium">
+                <Button variant="glass" className="text-sm font-medium">
                   {t('nav.downloads')} <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-background z-50">
+              <DropdownMenuContent className="glass-effect z-50 border-border/50">
                 {downloadItems.map((item) => (
                   <DropdownMenuItem key={item.path} asChild>
-                    <Link to={item.path} className="w-full cursor-pointer">
+                    <Link to={item.path} className="w-full cursor-pointer hover:text-primary transition-colors">
                       {item.name}
                     </Link>
                   </DropdownMenuItem>
@@ -90,14 +90,14 @@ export function Header() {
             {/* Jogo Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-sm font-medium">
+                <Button variant="glass" className="text-sm font-medium">
                   {t('nav.game')} <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-background z-50">
+              <DropdownMenuContent className="glass-effect z-50 border-border/50">
                 {gameItems.map((item) => (
                   <DropdownMenuItem key={item.path} asChild>
-                    <Link to={item.path} className="w-full cursor-pointer">
+                    <Link to={item.path} className="w-full cursor-pointer hover:text-primary transition-colors">
                       {item.name}
                     </Link>
                   </DropdownMenuItem>
@@ -110,10 +110,10 @@ export function Header() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+                className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-md ${
                   isActive(item.path)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground/80 hover:text-foreground hover:bg-accent'
+                    ? 'bg-gradient-premium text-primary-foreground shadow-premium'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent/10'
                 }`}
               >
                 {item.name}
@@ -124,10 +124,10 @@ export function Header() {
             {user && isAdmin && (
               <Link
                 to="/admin/storage"
-                className={`px-3 py-2 text-sm font-medium transition-colors rounded-md border border-primary/50 ${
+                className={`px-4 py-2 text-sm font-medium transition-all duration-300 rounded-md border border-primary/50 ${
                   isActive('/admin/storage')
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground/80 hover:text-foreground hover:bg-accent'
+                    ? 'bg-gradient-premium text-primary-foreground shadow-premium'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-accent/10 hover:border-primary'
                 }`}
               >
                 {t('nav.admin')}
@@ -138,29 +138,29 @@ export function Header() {
             <div className="ml-auto flex items-center space-x-3">
               <LanguageSelector />
               <a href="https://www.youtube.com/@jhanmedeiros" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon">
+                <Button variant="glass" size="icon" className="hover:text-primary transition-colors">
                   <Youtube className="h-5 w-5" />
                 </Button>
               </a>
               <a href="https://www.instagram.com/jhanmedeiros/" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon">
+                <Button variant="glass" size="icon" className="hover:text-primary transition-colors">
                   <Instagram className="h-5 w-5" />
                 </Button>
               </a>
               <a href="https://discord.gg/YU8uTRyz2Y" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon">
+                <Button variant="glass" size="icon" className="hover:text-accent transition-colors">
                   <MessageSquare className="h-5 w-5" />
                 </Button>
               </a>
               <a href="https://x.com/Jansey_Medeiros" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon">
+                <Button variant="glass" size="icon" className="hover:text-foreground transition-colors">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                   </svg>
                 </Button>
               </a>
               {user && (
-                <Button onClick={signOut} variant="outline">
+                <Button onClick={signOut} variant="outline" className="border-primary/30 hover:border-primary">
                   {t('nav.logout')}
                 </Button>
               )}
