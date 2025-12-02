@@ -787,7 +787,7 @@ export default function Mapeamento() {
                       {names.map((name) => (
                         <Draggable
                           key={name.id}
-                          position={{ x: name.x, y: name.y }}
+                          defaultPosition={{ x: name.x, y: name.y }}
                           onStop={(e, data) => handleDrag(name.id, { x: data.x, y: data.y })}
                           bounds="parent"
                           scale={zoom}
@@ -821,6 +821,7 @@ export default function Mapeamento() {
                           </div>
                         </Draggable>
                       ))}
+
 
 
 
