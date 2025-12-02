@@ -85,6 +85,8 @@ export default function Mapeamento() {
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 450;
 
+    console.log('Inicializando Fabric Canvas', { width, height });
+
     const canvas = new FabricCanvas(fabricCanvasRef.current, {
       width,
       height,
@@ -102,6 +104,8 @@ export default function Mapeamento() {
   useEffect(() => {
     if (!fabricCanvas) return;
 
+    console.log('Modo de desenho alterado para:', drawTool);
+
     // Limpar todos os event listeners anteriores
     fabricCanvas.off('mouse:down');
     fabricCanvas.off('mouse:move');
@@ -113,6 +117,7 @@ export default function Mapeamento() {
     if (drawTool === 'draw' && fabricCanvas.freeDrawingBrush) {
       fabricCanvas.freeDrawingBrush.color = drawColor;
       fabricCanvas.freeDrawingBrush.width = 3;
+      console.log('Modo desenho livre ativado');
     }
 
     if (drawTool === 'arrow') {
@@ -879,13 +884,13 @@ export default function Mapeamento() {
                       onMouseUp={handleMapMouseUp}
                       onMouseLeave={handleMapMouseUp}
                     >
-                      {/* Canvas Fabric para Desenhos - Camada inferior */}
+                       {/* Canvas Fabric para Desenhos - Camada inferior */}
                       <canvas
                         ref={fabricCanvasRef}
                         className="absolute inset-0 w-full h-full"
                         style={{ 
-                          pointerEvents: drawTool !== 'select' ? 'auto' : 'none',
-                          zIndex: 1
+                          pointerEvents: drawTool === 'select' ? 'none' : 'auto',
+                          zIndex: drawTool === 'select' ? 1 : 15,
                         }}
                       />
 
