@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check } from 'lucide-react';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
 import Draggable from 'react-draggable';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 
 interface MapData {
@@ -22,6 +23,8 @@ interface NameItem {
   x: number;
   y: number;
   color: string;
+  logo?: string;
+  type: 'text' | 'logo';
 }
 
 const maps: MapData[] = [
@@ -37,6 +40,12 @@ const textColors = [
   { label: 'Branco', value: '#FFFFFF' },
   { label: 'Amarelo', value: '#FFD700' },
   { label: 'Vermelho', value: '#FF0000' },
+  { label: 'Verde', value: '#00FF00' },
+  { label: 'Azul', value: '#00BFFF' },
+  { label: 'Rosa', value: '#FF69B4' },
+  { label: 'Laranja', value: '#FF8C00' },
+  { label: 'Roxo', value: '#9370DB' },
+  { label: 'Ciano', value: '#00FFFF' },
 ];
 
 export default function Mapeamento() {
@@ -47,16 +56,19 @@ export default function Mapeamento() {
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [itemType, setItemType] = useState<'text' | 'logo'>('text');
+  const [zoom, setZoom] = useState(1);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddName = () => {
-    if (!newName.trim()) {
+    if (!newName.trim() && itemType === 'text') {
       toast.error('Digite um nome válido');
       return;
     }
 
     if (names.length >= 15) {
-      toast.error('Máximo de 15 nomes atingido');
+      toast.error('Máximo de 15 itens atingido');
       return;
     }
 
@@ -66,11 +78,38 @@ export default function Mapeamento() {
       x: 50,
       y: 50,
       color: selectedColor,
+      type: 'text',
     };
 
     setNames([...names, newItem]);
     setNewName('');
-    toast.success('Nome adicionado');
+    toast.success('Item adicionado');
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (names.length >= 15) {
+      toast.error('Máximo de 15 itens atingido');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const newItem: NameItem = {
+        id: Date.now().toString(),
+        text: file.name,
+        x: 50,
+        y: 50,
+        color: selectedColor,
+        logo: event.target?.result as string,
+        type: 'logo',
+      };
+      setNames([...names, newItem]);
+      toast.success('Logo adicionado');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDuplicate = (id: string) => {
@@ -152,6 +191,61 @@ export default function Mapeamento() {
       console.error('Erro ao exportar:', error);
       toast.error('Erro ao exportar imagem');
     }
+  };
+
+  const handleExportPDF = async () => {
+    if (!canvasRef.current) {
+      toast.error('Selecione um mapa primeiro');
+      return;
+    }
+
+    try {
+      toast.info('Gerando PDF... Aguarde');
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const originalMap = selectedMap;
+      const originalNames = names;
+
+      for (let i = 0; i < maps.length; i++) {
+        setSelectedMap(maps[i]);
+        
+        // Aguardar renderização
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const canvas = await html2canvas(canvasRef.current, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#000000',
+          scale: 2,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        if (i > 0) pdf.addPage();
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      }
+
+      pdf.save('mapeamento-apresentacao.pdf');
+      
+      // Restaurar estado original
+      setSelectedMap(originalMap);
+      setNames(originalNames);
+      
+      toast.success('PDF gerado com sucesso');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
+
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.1, 2));
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.1, 0.5));
   };
 
   const handlePrint = () => {
@@ -249,45 +343,83 @@ export default function Mapeamento() {
                 </div>
               </div>
 
-              {/* Adicionar Nome */}
+              {/* Tipo de Item */}
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Adicionar Nome ({names.length}/15)
+                  Tipo de Item ({names.length}/15)
                 </label>
-                <div className="space-y-2">
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Digite o nome"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddName()}
-                  />
-                  <Select value={selectedColor} onValueChange={setSelectedColor}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {textColors.map((color) => (
-                        <SelectItem key={color.value} value={color.value}>
-                          <span style={{ color: color.value }}>● {color.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-2 mb-2">
                   <Button
-                    onClick={handleAddName}
+                    variant={itemType === 'text' ? 'default' : 'outline'}
+                    onClick={() => setItemType('text')}
                     className="w-full"
-                    disabled={names.length >= 15}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar
+                    <FileText className="h-4 w-4 mr-2" />
+                    Nome
+                  </Button>
+                  <Button
+                    variant={itemType === 'logo' ? 'default' : 'outline'}
+                    onClick={() => {
+                      setItemType('logo');
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={names.length >= 15}
+                    className="w-full"
+                  >
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Logo
                   </Button>
                 </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
               </div>
 
-              {/* Lista de Nomes */}
+              {/* Adicionar Nome */}
+              {itemType === 'text' && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Adicionar Nome
+                  </label>
+                  <div className="space-y-2">
+                    <Input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Digite o nome"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddName()}
+                    />
+                    <Select value={selectedColor} onValueChange={setSelectedColor}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {textColors.map((color) => (
+                          <SelectItem key={color.value} value={color.value}>
+                            <span style={{ color: color.value }}>● {color.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={handleAddName}
+                      className="w-full"
+                      disabled={names.length >= 15}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Lista de Itens */}
               {names.length > 0 && (
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Nomes Adicionados</label>
+                  <label className="text-sm font-medium mb-2 block">Itens Adicionados</label>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {names.map((name) => (
                       <div
@@ -317,20 +449,25 @@ export default function Mapeamento() {
                           </>
                         ) : (
                           <>
+                            {name.type === 'logo' && name.logo && (
+                              <img src={name.logo} alt={name.text} className="h-6 w-6 object-contain" />
+                            )}
                             <span
                               className="flex-1 truncate text-sm"
                               style={{ color: name.color }}
                             >
                               {name.text}
                             </span>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleStartEdit(name.id, name.text)}
-                              className="h-8 w-8"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            {name.type === 'text' && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleStartEdit(name.id, name.text)}
+                                className="h-8 w-8"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               size="icon"
                               variant="ghost"
@@ -356,12 +493,36 @@ export default function Mapeamento() {
                 </div>
               )}
 
+              {/* Controles de Zoom */}
+              {selectedMap && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Zoom</label>
+                  <div className="flex gap-2">
+                    <Button onClick={handleZoomOut} variant="outline" className="flex-1">
+                      <ZoomOut className="h-4 w-4 mr-2" />
+                      -
+                    </Button>
+                    <Button onClick={handleZoomIn} variant="outline" className="flex-1">
+                      <ZoomIn className="h-4 w-4 mr-2" />
+                      +
+                    </Button>
+                  </div>
+                  <div className="text-center text-sm text-muted-foreground mt-1">
+                    {Math.round(zoom * 100)}%
+                  </div>
+                </div>
+              )}
+
               {/* Botões de Exportação */}
               {selectedMap && (
                 <div className="space-y-2 pt-4 border-t">
                   <Button onClick={handleExportImage} className="w-full" variant="premium">
                     <Download className="h-4 w-4 mr-2" />
-                    Baixar Imagem
+                    Baixar Imagem Atual
+                  </Button>
+                  <Button onClick={handleExportPDF} className="w-full" variant="default">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Baixar PDF (Apresentação)
                   </Button>
                   <Button onClick={handlePrint} className="w-full" variant="outline">
                     <Printer className="h-4 w-4 mr-2" />
@@ -383,48 +544,68 @@ export default function Mapeamento() {
             <Card className="glass-effect">
               <CardContent className="p-4">
                 {selectedMap ? (
-                  <div
-                    ref={canvasRef}
-                    className="relative w-full bg-card rounded-lg overflow-hidden"
-                    style={{
-                      aspectRatio: '16/9',
-                      backgroundImage: `url(${selectedMap.url})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      minHeight: '500px',
-                    }}
-                  >
-                    {/* Nomes Arrastáveis */}
-                    {names.map((name) => (
-                      <Draggable
-                        key={name.id}
-                        position={{ x: name.x, y: name.y }}
-                        onStop={(e, data) => handleDrag(name.id, { x: data.x, y: data.y })}
-                        bounds="parent"
-                      >
-                        <div
-                          className="absolute cursor-move select-none px-3 py-1 rounded font-bold text-lg shadow-lg"
-                          style={{
-                            color: name.color,
-                            textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                            backgroundColor: 'rgba(0,0,0,0.3)',
-                            backdropFilter: 'blur(4px)',
-                          }}
-                        >
-                          {name.text}
-                        </div>
-                      </Draggable>
-                    ))}
-
-                    {/* Marca d'água */}
+                  <div className="relative w-full overflow-auto">
                     <div
-                      className="absolute bottom-4 right-4 text-white font-bold text-sm px-2 py-1 rounded"
+                      ref={canvasRef}
+                      className="relative bg-card rounded-lg overflow-hidden mx-auto"
                       style={{
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                        backgroundColor: 'rgba(0,0,0,0.5)',
+                        aspectRatio: '16/9',
+                        backgroundImage: `url(${selectedMap.url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        minHeight: '500px',
+                        transform: `scale(${zoom})`,
+                        transformOrigin: 'center',
+                        transition: 'transform 0.2s ease',
                       }}
                     >
-                      @jhanmedeiros
+                      {/* Itens Arrastáveis */}
+                      {names.map((name) => (
+                        <Draggable
+                          key={name.id}
+                          position={{ x: name.x, y: name.y }}
+                          onStop={(e, data) => handleDrag(name.id, { x: data.x, y: data.y })}
+                          bounds="parent"
+                          scale={zoom}
+                        >
+                          <div
+                            className="absolute cursor-move select-none px-3 py-1 rounded shadow-lg"
+                            style={{
+                              backgroundColor: 'rgba(0,0,0,0.3)',
+                              backdropFilter: 'blur(4px)',
+                            }}
+                          >
+                            {name.type === 'logo' && name.logo ? (
+                              <img 
+                                src={name.logo} 
+                                alt={name.text} 
+                                className="h-12 w-12 object-contain"
+                              />
+                            ) : (
+                              <span
+                                className="font-bold text-lg"
+                                style={{
+                                  color: name.color,
+                                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                                }}
+                              >
+                                {name.text}
+                              </span>
+                            )}
+                          </div>
+                        </Draggable>
+                      ))}
+
+                      {/* Marca d'água */}
+                      <div
+                        className="absolute bottom-4 right-4 text-white font-bold text-sm px-2 py-1 rounded"
+                        style={{
+                          textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                          backgroundColor: 'rgba(0,0,0,0.5)',
+                        }}
+                      >
+                        @jhanmedeiros
+                      </div>
                     </div>
                   </div>
                 ) : (
