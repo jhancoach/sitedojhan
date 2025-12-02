@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -584,68 +585,26 @@ export default function Mapeamento() {
     }
 
     try {
-      const container = canvasRef.current;
-      const rect = container.getBoundingClientRect();
-      
-      // Manter proporção 16:9 igual à tela
-      const exportWidth = 1920;
-      const exportHeight = 1080;
-      const scaleX = exportWidth / rect.width;
-      const scaleY = exportHeight / rect.height;
-      
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = exportWidth;
-      finalCanvas.height = exportHeight;
-      const ctx = finalCanvas.getContext('2d');
-      if (!ctx) return;
-      
-      // 1. Desenhar imagem de fundo do mapa
-      const mapImg = new Image();
-      mapImg.crossOrigin = 'anonymous';
-      
-      await new Promise<void>((resolve, reject) => {
-        mapImg.onload = () => resolve();
-        mapImg.onerror = reject;
-        mapImg.src = selectedMap.url;
+      // Capturar exatamente o que está na tela usando html2canvas
+      const canvas = await html2canvas(canvasRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1a1a2e',
+        scale: 2, // Alta resolução
       });
       
-      ctx.drawImage(mapImg, 0, 0, exportWidth, exportHeight);
-      
-      // 2. Desenhar os elementos do canvas de desenho (escalados)
-      if (drawingCanvasRef.current) {
-        ctx.drawImage(drawingCanvasRef.current, 0, 0, exportWidth, exportHeight);
-      }
-      
-      // 3. Desenhar os nomes dos times (posições escaladas proporcionalmente)
-      names.forEach((name) => {
-        const scaledX = name.x * scaleX;
-        const scaledY = name.y * scaleY;
-        const fontSize = Math.round(18 * Math.min(scaleX, scaleY));
-        
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.textAlign = 'center';
-        
-        const textMetrics = ctx.measureText(name.text);
-        const padding = 10 * Math.min(scaleX, scaleY);
-        const bgWidth = textMetrics.width + padding * 2;
-        const bgHeight = fontSize * 1.6;
-        
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(scaledX - bgWidth / 2, scaledY - bgHeight / 2, bgWidth, bgHeight);
-        
-        ctx.fillStyle = name.color;
-        ctx.fillText(name.text, scaledX, scaledY + fontSize * 0.35);
-      });
-      
-      // 4. Marca d'água no canto inferior direito
+      // Adicionar marca d'água se configurada
       if (watermark.trim()) {
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#ffd700';
-        ctx.textAlign = 'right';
-        ctx.fillText(watermark, exportWidth - 20, exportHeight - 15);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.font = 'bold 28px Arial';
+          ctx.fillStyle = '#ffd700';
+          ctx.textAlign = 'right';
+          ctx.fillText(watermark, canvas.width - 30, canvas.height - 20);
+        }
       }
-      
-      finalCanvas.toBlob((blob) => {
+
+      canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -671,30 +630,39 @@ export default function Mapeamento() {
     try {
       toast.info('Gerando PDF... Aguarde');
       const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth(); // 297mm
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // 210mm
-      const container = canvasRef.current;
-      const rect = container.getBoundingClientRect();
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Manter proporção 16:9 igual à tela
-      const exportWidth = 1920;
-      const exportHeight = 1080;
-      const scaleX = exportWidth / rect.width;
-      const scaleY = exportHeight / rect.height;
+      // Capturar exatamente o que está na tela usando html2canvas
+      const canvas = await html2canvas(canvasRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1a1a2e',
+        scale: 2,
+      });
       
-      // Calcular tamanho e posição para centralizar no PDF mantendo proporção
-      const imageRatio = exportWidth / exportHeight; // 16:9 = 1.78
-      const pdfRatio = pdfWidth / pdfHeight; // A4 landscape = 1.414
+      // Adicionar marca d'água se configurada
+      if (watermark.trim()) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.font = 'bold 28px Arial';
+          ctx.fillStyle = '#ffd700';
+          ctx.textAlign = 'right';
+          ctx.fillText(watermark, canvas.width - 30, canvas.height - 20);
+        }
+      }
+      
+      // Calcular tamanho mantendo proporção
+      const imageRatio = canvas.width / canvas.height;
+      const pdfRatio = pdfWidth / pdfHeight;
       
       let imgWidthMM, imgHeightMM, offsetX, offsetY;
       if (imageRatio > pdfRatio) {
-        // Imagem mais larga - ajustar pela largura
         imgWidthMM = pdfWidth;
         imgHeightMM = pdfWidth / imageRatio;
         offsetX = 0;
         offsetY = (pdfHeight - imgHeightMM) / 2;
       } else {
-        // Imagem mais alta - ajustar pela altura
         imgHeightMM = pdfHeight;
         imgWidthMM = pdfHeight * imageRatio;
         offsetX = (pdfWidth - imgWidthMM) / 2;
@@ -704,32 +672,32 @@ export default function Mapeamento() {
       // PÁGINA DE CAPA (se houver título)
       if (presentationTitle.trim()) {
         const coverCanvas = document.createElement('canvas');
-        coverCanvas.width = exportWidth;
-        coverCanvas.height = exportHeight;
+        coverCanvas.width = canvas.width;
+        coverCanvas.height = canvas.height;
         const coverCtx = coverCanvas.getContext('2d');
         if (coverCtx) {
           coverCtx.fillStyle = '#1a1a2e';
-          coverCtx.fillRect(0, 0, exportWidth, exportHeight);
+          coverCtx.fillRect(0, 0, coverCanvas.width, coverCanvas.height);
           
+          const fontSize = Math.round(coverCanvas.width * 0.04);
           coverCtx.fillStyle = '#ffd700';
-          coverCtx.font = 'bold 72px Arial';
+          coverCtx.font = `bold ${fontSize}px Arial`;
           coverCtx.textAlign = 'center';
           coverCtx.textBaseline = 'middle';
-          coverCtx.fillText(presentationTitle, exportWidth / 2, exportHeight / 2 - 40);
+          coverCtx.fillText(presentationTitle, coverCanvas.width / 2, coverCanvas.height / 2 - fontSize);
           
           coverCtx.fillStyle = '#ffffff';
-          coverCtx.font = '36px Arial';
-          coverCtx.fillText('Mapeamento Tático', exportWidth / 2, exportHeight / 2 + 40);
+          coverCtx.font = `${fontSize * 0.5}px Arial`;
+          coverCtx.fillText('Mapeamento Tático', coverCanvas.width / 2, coverCanvas.height / 2 + fontSize * 0.5);
           
           if (watermark.trim()) {
-            coverCtx.font = 'bold 24px Arial';
+            coverCtx.font = 'bold 28px Arial';
             coverCtx.fillStyle = '#ffd700';
             coverCtx.textAlign = 'right';
             coverCtx.textBaseline = 'bottom';
-            coverCtx.fillText(watermark, exportWidth - 30, exportHeight - 20);
+            coverCtx.fillText(watermark, coverCanvas.width - 30, coverCanvas.height - 20);
           }
           
-          // Fundo preto no PDF e imagem centralizada
           pdf.setFillColor(26, 26, 46);
           pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
           
@@ -739,64 +707,11 @@ export default function Mapeamento() {
         }
       }
       
-      // PÁGINA DO MAPA
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = exportWidth;
-      finalCanvas.height = exportHeight;
-      const ctx = finalCanvas.getContext('2d');
-      if (!ctx) return;
-      
-      // 1. Desenhar imagem de fundo do mapa
-      const mapImg = new Image();
-      mapImg.crossOrigin = 'anonymous';
-      
-      await new Promise<void>((resolve, reject) => {
-        mapImg.onload = () => resolve();
-        mapImg.onerror = reject;
-        mapImg.src = selectedMap.url;
-      });
-      
-      ctx.drawImage(mapImg, 0, 0, exportWidth, exportHeight);
-      
-      // 2. Desenhar os elementos do canvas de desenho (escalados)
-      if (drawingCanvasRef.current) {
-        ctx.drawImage(drawingCanvasRef.current, 0, 0, exportWidth, exportHeight);
-      }
-      
-      // 3. Desenhar os nomes dos times (posições escaladas proporcionalmente)
-      names.forEach((name) => {
-        const scaledX = name.x * scaleX;
-        const scaledY = name.y * scaleY;
-        const fontSize = Math.round(18 * Math.min(scaleX, scaleY));
-        
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.textAlign = 'center';
-        
-        const textMetrics = ctx.measureText(name.text);
-        const padding = 10 * Math.min(scaleX, scaleY);
-        const bgWidth = textMetrics.width + padding * 2;
-        const bgHeight = fontSize * 1.6;
-        
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(scaledX - bgWidth / 2, scaledY - bgHeight / 2, bgWidth, bgHeight);
-        
-        ctx.fillStyle = name.color;
-        ctx.fillText(name.text, scaledX, scaledY + fontSize * 0.35);
-      });
-      
-      // 4. Marca d'água no canto inferior direito
-      if (watermark.trim()) {
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#ffd700';
-        ctx.textAlign = 'right';
-        ctx.fillText(watermark, exportWidth - 20, exportHeight - 15);
-      }
-      
-      // Fundo preto no PDF
+      // PÁGINA DO MAPA (screenshot exato)
       pdf.setFillColor(26, 26, 46);
       pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
       
-      const imgData = finalCanvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', offsetX, offsetY, imgWidthMM, imgHeightMM);
       pdf.save(`mapeamento-${presentationTitle || selectedMap.name}.pdf`);
       
