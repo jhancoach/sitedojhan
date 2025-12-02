@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Canvas as FabricCanvas, Line, Path, IText } from 'fabric';
+import { Canvas as FabricCanvas, Line, Circle, IText } from 'fabric';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,7 +63,7 @@ export default function Mapeamento() {
   const [editingText, setEditingText] = useState('');
   const [itemType, setItemType] = useState<'text' | 'logo'>('text');
   const [zoom, setZoom] = useState(1);
-  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser'>('select');
+  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline'>('select');
   const [drawColor, setDrawColor] = useState('#FFFFFF');
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -161,6 +161,50 @@ export default function Mapeamento() {
         if (!isDrawing || !line || drawTool !== 'arrow') return;
         const pointer = fabricCanvas.getScenePoint(e.e);
         line.set({ x2: pointer.x, y2: pointer.y });
+        fabricCanvas.renderAll();
+      });
+
+      fabricCanvas.on('mouse:up', () => {
+        isDrawing = false;
+      });
+    }
+
+    if (drawTool === 'circle' || drawTool === 'circleOutline') {
+      let circle: Circle | null = null;
+      let isDrawing = false;
+      let startX = 0;
+      let startY = 0;
+
+      fabricCanvas.on('mouse:down', (e) => {
+        if (drawTool !== 'circle' && drawTool !== 'circleOutline') return;
+        isDrawing = true;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        startX = pointer.x;
+        startY = pointer.y;
+
+        circle = new Circle({
+          left: startX,
+          top: startY,
+          radius: 1,
+          originX: 'center',
+          originY: 'center',
+          stroke: drawColor,
+          strokeWidth: 3,
+          fill: drawTool === 'circle' ? drawColor : 'transparent',
+          opacity: drawTool === 'circle' ? 0.3 : 1,
+          selectable: true,
+        });
+
+        fabricCanvas.add(circle);
+      });
+
+      fabricCanvas.on('mouse:move', (e) => {
+        if (!isDrawing || !circle || (drawTool !== 'circle' && drawTool !== 'circleOutline')) return;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        const dx = pointer.x - startX;
+        const dy = pointer.y - startY;
+        const radius = Math.sqrt(dx * dx + dy * dy);
+        circle.set({ radius });
         fabricCanvas.renderAll();
       });
 
@@ -909,7 +953,11 @@ export default function Mapeamento() {
                         style={{ 
                           pointerEvents: drawTool === 'select' ? 'none' : 'auto',
                           zIndex: drawTool === 'select' ? 1 : 15,
-                          cursor: drawTool === 'draw' ? 'crosshair' : drawTool === 'eraser' ? 'pointer' : 'default',
+                          cursor: drawTool === 'draw' || drawTool === 'arrow' || drawTool === 'circle' || drawTool === 'circleOutline' || drawTool === 'text'
+                            ? 'crosshair'
+                            : drawTool === 'eraser'
+                              ? 'pointer'
+                              : 'default',
                         }}
                       />
 

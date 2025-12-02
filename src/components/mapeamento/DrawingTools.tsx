@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { MousePointer, Pencil, ArrowRight, Type, Eraser } from 'lucide-react';
+import { MousePointer, Pencil, ArrowRight, Type, Eraser, Circle, CircleDashed } from 'lucide-react';
 
 interface DrawingToolsProps {
-  activeTool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser';
-  onToolChange: (tool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser') => void;
+  activeTool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline';
+  onToolChange: (tool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline') => void;
   drawColor: string;
   onColorChange: (color: string) => void;
 }
@@ -57,6 +57,24 @@ export const DrawingTools = ({ activeTool, onToolChange, drawColor, onColorChang
           >
             <Type className="h-4 w-4 mr-2" />
             Anotação
+          </Button>
+          <Button
+            variant={activeTool === 'circle' ? 'default' : 'outline'}
+            onClick={() => onToolChange('circle')}
+            className="w-full"
+            size="sm"
+          >
+            <Circle className="h-4 w-4 mr-2" />
+            Círculo
+          </Button>
+          <Button
+            variant={activeTool === 'circleOutline' ? 'default' : 'outline'}
+            onClick={() => onToolChange('circleOutline')}
+            className="w-full"
+            size="sm"
+          >
+            <CircleDashed className="h-4 w-4 mr-2" />
+            Círculo vazio
           </Button>
           <Button
             variant={activeTool === 'eraser' ? 'default' : 'outline'}
