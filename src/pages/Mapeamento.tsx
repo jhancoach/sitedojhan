@@ -1604,11 +1604,26 @@ export default function Mapeamento() {
                       </div>
 
                       <div className="space-y-2 pt-2">
-                        <Button onClick={handleExportImage} className="w-full" variant="premium">
+                        {(names.length === 0 && currentDrawings.length === 0) && (
+                          <p className="text-xs text-muted-foreground text-center py-2 bg-muted/50 rounded-lg">
+                            Adicione nomes ou desenhos antes de baixar
+                          </p>
+                        )}
+                        <Button 
+                          onClick={handleExportImage} 
+                          className="w-full" 
+                          variant="premium"
+                          disabled={names.length === 0 && currentDrawings.length === 0}
+                        >
                           <Download className="h-4 w-4 mr-2" />
                           Baixar Imagem Atual
                         </Button>
-                        <Button onClick={handleExportPDF} className="w-full" variant="default">
+                        <Button 
+                          onClick={handleExportPDF} 
+                          className="w-full" 
+                          variant="default"
+                          disabled={names.length === 0 && currentDrawings.length === 0}
+                        >
                           <FileText className="h-4 w-4 mr-2" />
                           Baixar PDF (Com Capa)
                         </Button>
@@ -1617,7 +1632,12 @@ export default function Mapeamento() {
                           Imprimir
                         </Button>
                         {navigator.share && (
-                          <Button onClick={handleShare} className="w-full" variant="outline">
+                          <Button 
+                            onClick={handleShare} 
+                            className="w-full" 
+                            variant="outline"
+                            disabled={names.length === 0 && currentDrawings.length === 0}
+                          >
                             <Share2 className="h-4 w-4 mr-2" />
                             Compartilhar
                           </Button>
