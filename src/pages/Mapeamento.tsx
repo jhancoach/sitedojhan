@@ -582,17 +582,20 @@ export default function Mapeamento() {
     }
 
     try {
-      // Criar canvas final combinando mapa + desenhos + nomes
       const container = canvasRef.current;
       const rect = container.getBoundingClientRect();
       
+      // Usar resolução fixa 16:9 (1920x1080) para consistência
+      const exportWidth = 1920;
+      const exportHeight = 1080;
+      const scaleX = exportWidth / rect.width;
+      const scaleY = exportHeight / rect.height;
+      
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = rect.width * 2;
-      finalCanvas.height = rect.height * 2;
+      finalCanvas.width = exportWidth;
+      finalCanvas.height = exportHeight;
       const ctx = finalCanvas.getContext('2d');
       if (!ctx) return;
-      
-      ctx.scale(2, 2);
       
       // 1. Desenhar imagem de fundo do mapa
       const mapImg = new Image();
@@ -604,31 +607,34 @@ export default function Mapeamento() {
         mapImg.src = selectedMap.url;
       });
       
-      ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+      ctx.drawImage(mapImg, 0, 0, exportWidth, exportHeight);
       
-      // 2. Desenhar os elementos do canvas de desenho
+      // 2. Desenhar os elementos do canvas de desenho (escalados)
       if (drawingCanvasRef.current) {
-        ctx.drawImage(drawingCanvasRef.current, 0, 0, rect.width, rect.height);
+        ctx.drawImage(drawingCanvasRef.current, 0, 0, exportWidth, exportHeight);
       }
       
-      // 3. Desenhar os nomes dos times
+      // 3. Desenhar os nomes dos times (posições escaladas)
       names.forEach((name) => {
-        ctx.fillStyle = name.color;
-        ctx.font = 'bold 16px Arial';
+        const scaledX = name.x * scaleX;
+        const scaledY = name.y * scaleY;
+        const fontSize = Math.round(16 * Math.min(scaleX, scaleY));
+        
+        ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = 'center';
         
         // Fundo semi-transparente
         const textMetrics = ctx.measureText(name.text);
-        const padding = 8;
+        const padding = 8 * Math.min(scaleX, scaleY);
         const bgWidth = textMetrics.width + padding * 2;
-        const bgHeight = 24;
+        const bgHeight = fontSize * 1.5;
         
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(name.x - bgWidth / 2, name.y - bgHeight / 2, bgWidth, bgHeight);
+        ctx.fillRect(scaledX - bgWidth / 2, scaledY - bgHeight / 2, bgWidth, bgHeight);
         
         // Texto
         ctx.fillStyle = name.color;
-        ctx.fillText(name.text, name.x, name.y + 5);
+        ctx.fillText(name.text, scaledX, scaledY + fontSize * 0.3);
       });
       
       finalCanvas.toBlob((blob) => {
@@ -660,14 +666,17 @@ export default function Mapeamento() {
       const container = canvasRef.current;
       const rect = container.getBoundingClientRect();
       
-      // Criar canvas final combinando mapa + desenhos + nomes
+      // Usar resolução fixa 16:9 (1920x1080) para consistência
+      const exportWidth = 1920;
+      const exportHeight = 1080;
+      const scaleX = exportWidth / rect.width;
+      const scaleY = exportHeight / rect.height;
+      
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = rect.width * 2;
-      finalCanvas.height = rect.height * 2;
+      finalCanvas.width = exportWidth;
+      finalCanvas.height = exportHeight;
       const ctx = finalCanvas.getContext('2d');
       if (!ctx) return;
-      
-      ctx.scale(2, 2);
       
       // 1. Desenhar imagem de fundo do mapa
       const mapImg = new Image();
@@ -679,31 +688,34 @@ export default function Mapeamento() {
         mapImg.src = selectedMap.url;
       });
       
-      ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+      ctx.drawImage(mapImg, 0, 0, exportWidth, exportHeight);
       
-      // 2. Desenhar os elementos do canvas de desenho
+      // 2. Desenhar os elementos do canvas de desenho (escalados)
       if (drawingCanvasRef.current) {
-        ctx.drawImage(drawingCanvasRef.current, 0, 0, rect.width, rect.height);
+        ctx.drawImage(drawingCanvasRef.current, 0, 0, exportWidth, exportHeight);
       }
       
-      // 3. Desenhar os nomes dos times
+      // 3. Desenhar os nomes dos times (posições escaladas)
       names.forEach((name) => {
-        ctx.fillStyle = name.color;
-        ctx.font = 'bold 16px Arial';
+        const scaledX = name.x * scaleX;
+        const scaledY = name.y * scaleY;
+        const fontSize = Math.round(16 * Math.min(scaleX, scaleY));
+        
+        ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = 'center';
         
         // Fundo semi-transparente
         const textMetrics = ctx.measureText(name.text);
-        const padding = 8;
+        const padding = 8 * Math.min(scaleX, scaleY);
         const bgWidth = textMetrics.width + padding * 2;
-        const bgHeight = 24;
+        const bgHeight = fontSize * 1.5;
         
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(name.x - bgWidth / 2, name.y - bgHeight / 2, bgWidth, bgHeight);
+        ctx.fillRect(scaledX - bgWidth / 2, scaledY - bgHeight / 2, bgWidth, bgHeight);
         
         // Texto
         ctx.fillStyle = name.color;
-        ctx.fillText(name.text, name.x, name.y + 5);
+        ctx.fillText(name.text, scaledX, scaledY + fontSize * 0.3);
       });
       
       const imgData = finalCanvas.toDataURL('image/png');
