@@ -93,6 +93,11 @@ export default function Mapeamento() {
   useEffect(() => {
     if (!fabricCanvas) return;
 
+    // Limpar todos os event listeners anteriores
+    fabricCanvas.off('mouse:down');
+    fabricCanvas.off('mouse:move');
+    fabricCanvas.off('mouse:up');
+
     fabricCanvas.isDrawingMode = drawTool === 'draw';
     fabricCanvas.selection = drawTool === 'select';
 
@@ -153,6 +158,8 @@ export default function Mapeamento() {
       fabricCanvas.on('mouse:down', (e) => {
         if (drawTool !== 'eraser' || !e.target) return;
         fabricCanvas.remove(e.target);
+        fabricCanvas.renderAll();
+        toast.success('Elemento apagado');
       });
     }
   }, [drawTool, drawColor, fabricCanvas]);
@@ -758,14 +765,17 @@ export default function Mapeamento() {
                         transition: 'transform 0.2s ease',
                       }}
                     >
-                      {/* Canvas Fabric para Desenhos */}
+                      {/* Canvas Fabric para Desenhos - Camada inferior */}
                       <canvas
                         ref={fabricCanvasRef}
                         className="absolute inset-0 w-full h-full"
-                        style={{ pointerEvents: drawTool === 'select' ? 'auto' : 'all' }}
+                        style={{ 
+                          pointerEvents: drawTool !== 'select' ? 'auto' : 'none',
+                          zIndex: 1
+                        }}
                       />
 
-                      {/* Itens Arrastáveis */}
+                      {/* Itens Arrastáveis - Camada superior */}
                       {names.map((name) => (
                         <Draggable
                           key={name.id}
@@ -779,6 +789,8 @@ export default function Mapeamento() {
                             style={{
                               backgroundColor: 'rgba(0,0,0,0.3)',
                               backdropFilter: 'blur(4px)',
+                              zIndex: 10,
+                              pointerEvents: 'auto',
                             }}
                           >
                             {name.type === 'logo' && name.logo ? (
@@ -808,6 +820,7 @@ export default function Mapeamento() {
                         style={{
                           textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                           backgroundColor: 'rgba(0,0,0,0.5)',
+                          zIndex: 20,
                         }}
                       >
                         @jhanmedeiros
