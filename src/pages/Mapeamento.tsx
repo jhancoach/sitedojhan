@@ -984,6 +984,7 @@ export default function Mapeamento() {
   const handleNameTouchStart = (id: string, event: React.TouchEvent<HTMLDivElement>) => {
     if (!canvasRef.current) return;
     event.preventDefault();
+    event.stopPropagation(); // Previne zoom ao arrastar nomes
     const touch = event.touches[0];
     const rect = canvasRef.current.getBoundingClientRect();
     const pointerX = touch.clientX - rect.left;
