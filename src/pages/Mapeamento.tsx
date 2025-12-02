@@ -67,6 +67,8 @@ export default function Mapeamento() {
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [nameFontSize, setNameFontSize] = useState(18);
+  const [nameBorderColor, setNameBorderColor] = useState('#000000');
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -302,6 +304,14 @@ export default function Mapeamento() {
 
   const handleMapMouseUp = () => {
     setDraggingId(null);
+  };
+
+  const handleClearDrawings = () => {
+    if (!fabricCanvas) return;
+    fabricCanvas.clear();
+    fabricCanvas.backgroundColor = 'transparent';
+    fabricCanvas.renderAll();
+    toast.success('Desenhos limpos');
   };
 
   const handleSaveProject = async (projectName: string) => {
@@ -699,6 +709,51 @@ export default function Mapeamento() {
                     </div>
                   )}
 
+                  {/* Configuração de Aparência dos Nomes */}
+                  {names.length > 0 && (
+                    <div className="space-y-3 pt-3 border-t">
+                      <label className="text-sm font-medium block">Aparência dos Nomes</label>
+                      
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">
+                          Tamanho da Fonte: {nameFontSize}px
+                        </label>
+                        <input
+                          type="range"
+                          min="12"
+                          max="32"
+                          value={nameFontSize}
+                          onChange={(e) => setNameFontSize(Number(e.target.value))}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">
+                          Cor da Borda
+                        </label>
+                        <div className="flex gap-2">
+                          {[
+                            { label: 'Preto', value: '#000000' },
+                            { label: 'Branco', value: '#FFFFFF' },
+                            { label: 'Vermelho', value: '#FF0000' },
+                            { label: 'Azul', value: '#0000FF' },
+                          ].map((color) => (
+                            <button
+                              key={color.value}
+                              onClick={() => setNameBorderColor(color.value)}
+                              className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                nameBorderColor === color.value ? 'border-primary scale-110' : 'border-border'
+                              }`}
+                              style={{ backgroundColor: color.value }}
+                              title={color.label}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
 
                   {/* Zoom (Mapa) */}
                   {selectedMap && (
@@ -728,6 +783,23 @@ export default function Mapeamento() {
                     drawColor={drawColor}
                     onColorChange={setDrawColor}
                   />
+
+                  {/* Botão Limpar Desenhos */}
+                  {fabricCanvas && (
+                    <div>
+                      <Button 
+                        onClick={handleClearDrawings} 
+                        variant="destructive" 
+                        className="w-full"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Limpar Desenhos
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-1 text-center">
+                        Remove apenas linhas, setas e textos
+                      </p>
+                    </div>
+                  )}
 
                   {/* Zoom (Desenho) */}
                   {selectedMap && (
@@ -840,10 +912,11 @@ export default function Mapeamento() {
                             />
                           ) : (
                             <span
-                              className="font-bold text-lg"
+                              className="font-bold"
                               style={{
+                                fontSize: `${nameFontSize}px`,
                                 color: name.color,
-                                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                                textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
                               }}
                             >
                               {name.text}
