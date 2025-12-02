@@ -83,6 +83,8 @@ export default function Mapeamento() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentDrawing, setCurrentDrawing] = useState<DrawingElement | null>(null);
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
+  const [presentationTitle, setPresentationTitle] = useState('');
+  const [watermark, setWatermark] = useState('@seuinstagram');
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -585,11 +587,14 @@ export default function Mapeamento() {
       const container = canvasRef.current;
       const rect = container.getBoundingClientRect();
       
-      // Usar resolução fixa 16:9 (1920x1080) para consistência
-      const exportWidth = 1920;
-      const exportHeight = 1080;
-      const scaleX = exportWidth / rect.width;
-      const scaleY = exportHeight / rect.height;
+      // Dimensões com moldura (borda escura ao redor)
+      const borderSize = 40;
+      const mapWidth = 1920;
+      const mapHeight = 1080;
+      const exportWidth = mapWidth + borderSize * 2;
+      const exportHeight = mapHeight + borderSize * 2;
+      const scaleX = mapWidth / rect.width;
+      const scaleY = mapHeight / rect.height;
       
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = exportWidth;
@@ -597,7 +602,11 @@ export default function Mapeamento() {
       const ctx = finalCanvas.getContext('2d');
       if (!ctx) return;
       
-      // 1. Desenhar imagem de fundo do mapa
+      // 1. Fundo escuro (moldura)
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, exportWidth, exportHeight);
+      
+      // 2. Desenhar imagem de fundo do mapa
       const mapImg = new Image();
       mapImg.crossOrigin = 'anonymous';
       
@@ -607,23 +616,22 @@ export default function Mapeamento() {
         mapImg.src = selectedMap.url;
       });
       
-      ctx.drawImage(mapImg, 0, 0, exportWidth, exportHeight);
+      ctx.drawImage(mapImg, borderSize, borderSize, mapWidth, mapHeight);
       
-      // 2. Desenhar os elementos do canvas de desenho (escalados)
+      // 3. Desenhar os elementos do canvas de desenho (escalados)
       if (drawingCanvasRef.current) {
-        ctx.drawImage(drawingCanvasRef.current, 0, 0, exportWidth, exportHeight);
+        ctx.drawImage(drawingCanvasRef.current, borderSize, borderSize, mapWidth, mapHeight);
       }
       
-      // 3. Desenhar os nomes dos times (posições escaladas)
+      // 4. Desenhar os nomes dos times (posições escaladas)
       names.forEach((name) => {
-        const scaledX = name.x * scaleX;
-        const scaledY = name.y * scaleY;
+        const scaledX = borderSize + name.x * scaleX;
+        const scaledY = borderSize + name.y * scaleY;
         const fontSize = Math.round(16 * Math.min(scaleX, scaleY));
         
         ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = 'center';
         
-        // Fundo semi-transparente
         const textMetrics = ctx.measureText(name.text);
         const padding = 8 * Math.min(scaleX, scaleY);
         const bgWidth = textMetrics.width + padding * 2;
@@ -632,10 +640,17 @@ export default function Mapeamento() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(scaledX - bgWidth / 2, scaledY - bgHeight / 2, bgWidth, bgHeight);
         
-        // Texto
         ctx.fillStyle = name.color;
         ctx.fillText(name.text, scaledX, scaledY + fontSize * 0.3);
       });
+      
+      // 5. Marca d'água no canto inferior direito
+      if (watermark.trim()) {
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'right';
+        ctx.fillText(watermark, exportWidth - 20, exportHeight - 15);
+      }
       
       finalCanvas.toBlob((blob) => {
         if (blob) {
@@ -661,24 +676,72 @@ export default function Mapeamento() {
     }
 
     try {
-      toast.info('Gerando PDF do mapa atual... Aguarde');
+      toast.info('Gerando PDF... Aguarde');
       const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       const container = canvasRef.current;
       const rect = container.getBoundingClientRect();
       
-      // Usar resolução fixa 16:9 (1920x1080) para consistência
-      const exportWidth = 1920;
-      const exportHeight = 1080;
-      const scaleX = exportWidth / rect.width;
-      const scaleY = exportHeight / rect.height;
+      // Dimensões com moldura
+      const borderSize = 40;
+      const mapWidth = 1920;
+      const mapHeight = 1080;
+      const exportWidth = mapWidth + borderSize * 2;
+      const exportHeight = mapHeight + borderSize * 2;
+      const scaleX = mapWidth / rect.width;
+      const scaleY = mapHeight / rect.height;
       
+      // PÁGINA DE CAPA (se houver título)
+      if (presentationTitle.trim()) {
+        const coverCanvas = document.createElement('canvas');
+        coverCanvas.width = exportWidth;
+        coverCanvas.height = exportHeight;
+        const coverCtx = coverCanvas.getContext('2d');
+        if (coverCtx) {
+          // Fundo escuro
+          coverCtx.fillStyle = '#1a1a2e';
+          coverCtx.fillRect(0, 0, exportWidth, exportHeight);
+          
+          // Título centralizado
+          coverCtx.fillStyle = '#ffd700';
+          coverCtx.font = 'bold 72px Arial';
+          coverCtx.textAlign = 'center';
+          coverCtx.textBaseline = 'middle';
+          coverCtx.fillText(presentationTitle, exportWidth / 2, exportHeight / 2 - 40);
+          
+          // Subtítulo
+          coverCtx.fillStyle = '#ffffff';
+          coverCtx.font = '36px Arial';
+          coverCtx.fillText('Mapeamento Tático', exportWidth / 2, exportHeight / 2 + 40);
+          
+          // Marca d'água na capa
+          if (watermark.trim()) {
+            coverCtx.font = 'bold 24px Arial';
+            coverCtx.fillStyle = '#ffd700';
+            coverCtx.textAlign = 'right';
+            coverCtx.textBaseline = 'bottom';
+            coverCtx.fillText(watermark, exportWidth - 30, exportHeight - 20);
+          }
+          
+          const coverImgData = coverCanvas.toDataURL('image/png');
+          pdf.addImage(coverImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.addPage();
+        }
+      }
+      
+      // PÁGINA DO MAPA
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = exportWidth;
       finalCanvas.height = exportHeight;
       const ctx = finalCanvas.getContext('2d');
       if (!ctx) return;
       
-      // 1. Desenhar imagem de fundo do mapa
+      // 1. Fundo escuro (moldura)
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, exportWidth, exportHeight);
+      
+      // 2. Desenhar imagem de fundo do mapa
       const mapImg = new Image();
       mapImg.crossOrigin = 'anonymous';
       
@@ -688,23 +751,22 @@ export default function Mapeamento() {
         mapImg.src = selectedMap.url;
       });
       
-      ctx.drawImage(mapImg, 0, 0, exportWidth, exportHeight);
+      ctx.drawImage(mapImg, borderSize, borderSize, mapWidth, mapHeight);
       
-      // 2. Desenhar os elementos do canvas de desenho (escalados)
+      // 3. Desenhar os elementos do canvas de desenho (escalados)
       if (drawingCanvasRef.current) {
-        ctx.drawImage(drawingCanvasRef.current, 0, 0, exportWidth, exportHeight);
+        ctx.drawImage(drawingCanvasRef.current, borderSize, borderSize, mapWidth, mapHeight);
       }
       
-      // 3. Desenhar os nomes dos times (posições escaladas)
+      // 4. Desenhar os nomes dos times (posições escaladas)
       names.forEach((name) => {
-        const scaledX = name.x * scaleX;
-        const scaledY = name.y * scaleY;
+        const scaledX = borderSize + name.x * scaleX;
+        const scaledY = borderSize + name.y * scaleY;
         const fontSize = Math.round(16 * Math.min(scaleX, scaleY));
         
         ctx.font = `bold ${fontSize}px Arial`;
         ctx.textAlign = 'center';
         
-        // Fundo semi-transparente
         const textMetrics = ctx.measureText(name.text);
         const padding = 8 * Math.min(scaleX, scaleY);
         const bgWidth = textMetrics.width + padding * 2;
@@ -713,17 +775,21 @@ export default function Mapeamento() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(scaledX - bgWidth / 2, scaledY - bgHeight / 2, bgWidth, bgHeight);
         
-        // Texto
         ctx.fillStyle = name.color;
         ctx.fillText(name.text, scaledX, scaledY + fontSize * 0.3);
       });
       
-      const imgData = finalCanvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      // 5. Marca d'água no canto inferior direito
+      if (watermark.trim()) {
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'right';
+        ctx.fillText(watermark, exportWidth - 20, exportHeight - 15);
+      }
       
+      const imgData = finalCanvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`mapeamento-${selectedMap.name}.pdf`);
+      pdf.save(`mapeamento-${presentationTitle || selectedMap.name}.pdf`);
       
       toast.success('PDF gerado com sucesso');
     } catch (error) {
@@ -1171,25 +1237,48 @@ export default function Mapeamento() {
                   />
                   
                   {selectedMap && (
-                    <div className="space-y-2 pt-4 border-t">
-                      <Button onClick={handleExportImage} className="w-full" variant="premium">
-                        <Download className="h-4 w-4 mr-2" />
-                        Baixar Imagem Atual
-                      </Button>
-                      <Button onClick={handleExportPDF} className="w-full" variant="default">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Baixar PDF (Apresentação)
-                      </Button>
-                      <Button onClick={handlePrint} className="w-full" variant="outline">
-                        <Printer className="h-4 w-4 mr-2" />
-                        Imprimir
-                      </Button>
-                      {navigator.share && (
-                        <Button onClick={handleShare} className="w-full" variant="outline">
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Compartilhar
+                    <div className="space-y-4 pt-4 border-t">
+                      {/* Configurações da Apresentação */}
+                      <div className="space-y-3">
+                        <label className="text-sm font-medium">Título da Apresentação</label>
+                        <Input
+                          value={presentationTitle}
+                          onChange={(e) => setPresentationTitle(e.target.value)}
+                          placeholder="Ex: Liga LBFF - Semana 1"
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <label className="text-sm font-medium">Marca d'água</label>
+                        <Input
+                          value={watermark}
+                          onChange={(e) => setWatermark(e.target.value)}
+                          placeholder="@seuinstagram"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <Button onClick={handleExportImage} className="w-full" variant="premium">
+                          <Download className="h-4 w-4 mr-2" />
+                          Baixar Imagem Atual
                         </Button>
-                      )}
+                        <Button onClick={handleExportPDF} className="w-full" variant="default">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Baixar PDF (Com Capa)
+                        </Button>
+                        <Button onClick={handlePrint} className="w-full" variant="outline">
+                          <Printer className="h-4 w-4 mr-2" />
+                          Imprimir
+                        </Button>
+                        {navigator.share && (
+                          <Button onClick={handleShare} className="w-full" variant="outline">
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Compartilhar
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </TabsContent>
