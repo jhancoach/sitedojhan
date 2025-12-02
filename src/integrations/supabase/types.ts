@@ -92,6 +92,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mapeamento_projetos: {
+        Row: {
+          anotacoes: Json
+          created_at: string
+          desenhos: Json
+          id: string
+          itens: Json
+          mapa_nome: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anotacoes?: Json
+          created_at?: string
+          desenhos?: Json
+          id?: string
+          itens?: Json
+          mapa_nome: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anotacoes?: Json
+          created_at?: string
+          desenhos?: Json
+          id?: string
+          itens?: Json
+          mapa_nome?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           apelido: string | null
