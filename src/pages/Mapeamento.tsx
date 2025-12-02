@@ -96,6 +96,7 @@ export default function Mapeamento() {
   const [arrowStyle, setArrowStyle] = useState<'simple' | 'filled' | 'double'>('simple');
   const [showWatermark, setShowWatermark] = useState(true);
   const [showNameBackground, setShowNameBackground] = useState(true);
+  const [showWatermarkBackground, setShowWatermarkBackground] = useState(true);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1363,6 +1364,19 @@ export default function Mapeamento() {
                           className="w-full"
                           disabled={!showWatermark}
                         />
+                        {showWatermark && (
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs text-muted-foreground">Fundo na marca d'água</label>
+                            <label className="flex items-center gap-2 text-xs">
+                              <input
+                                type="checkbox"
+                                checked={showWatermarkBackground}
+                                onChange={(e) => setShowWatermarkBackground(e.target.checked)}
+                                className="rounded"
+                              />
+                            </label>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between py-2">
@@ -1453,7 +1467,7 @@ export default function Mapeamento() {
                       {names.map((name) => (
                         <div
                           key={name.id}
-                          className="absolute cursor-move select-none rounded flex items-center justify-center"
+                          className="absolute cursor-move select-none"
                           style={{
                             left: name.x,
                             top: name.y,
@@ -1462,7 +1476,10 @@ export default function Mapeamento() {
                             boxShadow: showNameBackground ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
                             zIndex: 10,
                             pointerEvents: 'auto',
-                            padding: showNameBackground ? '6px 12px' : '2px',
+                            padding: showNameBackground ? '4px 10px' : '0',
+                            borderRadius: '4px',
+                            display: 'inline-block',
+                            textAlign: 'center',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
@@ -1471,15 +1488,18 @@ export default function Mapeamento() {
                               src={name.logo}
                               alt={name.text}
                               className="h-12 w-12 object-contain"
+                              style={{ display: 'block' }}
                             />
                           ) : (
                             <span
-                              className="font-bold whitespace-nowrap"
+                              className="font-bold"
                               style={{
                                 fontSize: `${nameFontSize}px`,
                                 color: name.color,
                                 textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
-                                lineHeight: 1,
+                                lineHeight: '1.2',
+                                display: 'block',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               {name.text}
@@ -1494,14 +1514,17 @@ export default function Mapeamento() {
                       {/* Marca d'água */}
                       {showWatermark && watermark.trim() && (
                         <div
-                          className="absolute bottom-4 right-4 font-bold text-sm rounded flex items-center justify-center"
+                          className="absolute bottom-4 right-4 font-bold text-sm"
                           style={{
                             color: '#ffd700',
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            border: '1px solid rgba(255,215,0,0.3)',
+                            backgroundColor: showWatermarkBackground ? 'rgba(0,0,0,0.8)' : 'transparent',
+                            border: showWatermarkBackground ? '1px solid rgba(255,215,0,0.3)' : 'none',
                             zIndex: 20,
-                            padding: '6px 12px',
-                            lineHeight: 1,
+                            padding: showWatermarkBackground ? '4px 10px' : '0',
+                            borderRadius: '4px',
+                            textShadow: showWatermarkBackground ? 'none' : '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                            lineHeight: '1.2',
+                            display: 'inline-block',
                           }}
                         >
                           {watermark}
