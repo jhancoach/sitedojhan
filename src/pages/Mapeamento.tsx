@@ -122,22 +122,30 @@ export default function Mapeamento() {
 
   // Atualizar modo de desenho
   useEffect(() => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.log('❌ FabricCanvas não existe ainda');
+      return;
+    }
 
-    console.log('Modo de desenho alterado para:', drawTool);
+    console.log('✅ Modo de desenho alterado para:', drawTool, 'Cor:', drawColor);
 
     // Limpar todos os event listeners anteriores
     fabricCanvas.off('mouse:down');
     fabricCanvas.off('mouse:move');
     fabricCanvas.off('mouse:up');
 
-    fabricCanvas.isDrawingMode = drawTool === 'draw';
+    // Sempre desabilitar modo desenho livre primeiro
+    fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = drawTool === 'select';
 
-    if (drawTool === 'draw' && fabricCanvas.freeDrawingBrush) {
-      fabricCanvas.freeDrawingBrush.color = drawColor;
-      fabricCanvas.freeDrawingBrush.width = 3;
-      console.log('Modo desenho livre ativado');
+    if (drawTool === 'draw') {
+      fabricCanvas.isDrawingMode = true;
+      if (fabricCanvas.freeDrawingBrush) {
+        fabricCanvas.freeDrawingBrush.color = drawColor;
+        fabricCanvas.freeDrawingBrush.width = 3;
+      }
+      console.log('✏️ Modo desenho livre ativado, cor:', drawColor);
+      return; // Não adicionar mais event listeners para modo draw
     }
 
     if (drawTool === 'arrow') {
@@ -145,7 +153,7 @@ export default function Mapeamento() {
       let isDrawing = false;
 
       fabricCanvas.on('mouse:down', (e) => {
-        if (drawTool !== 'arrow') return;
+        console.log('🖱️ Mouse down - Arrow');
         isDrawing = true;
         const pointer = fabricCanvas.getScenePoint(e.e);
         
@@ -155,10 +163,11 @@ export default function Mapeamento() {
           selectable: true,
         });
         fabricCanvas.add(line);
+        console.log('➡️ Seta criada');
       });
 
       fabricCanvas.on('mouse:move', (e) => {
-        if (!isDrawing || !line || drawTool !== 'arrow') return;
+        if (!isDrawing || !line) return;
         const pointer = fabricCanvas.getScenePoint(e.e);
         line.set({ x2: pointer.x, y2: pointer.y });
         fabricCanvas.renderAll();
@@ -166,6 +175,7 @@ export default function Mapeamento() {
 
       fabricCanvas.on('mouse:up', () => {
         isDrawing = false;
+        console.log('✅ Seta finalizada');
       });
     }
 
@@ -176,7 +186,7 @@ export default function Mapeamento() {
       let startY = 0;
 
       fabricCanvas.on('mouse:down', (e) => {
-        if (drawTool !== 'circle' && drawTool !== 'circleOutline') return;
+        console.log('🖱️ Mouse down - Circle');
         isDrawing = true;
         const pointer = fabricCanvas.getScenePoint(e.e);
         startX = pointer.x;
@@ -196,10 +206,11 @@ export default function Mapeamento() {
         });
 
         fabricCanvas.add(circle);
+        console.log('⭕ Círculo criado');
       });
 
       fabricCanvas.on('mouse:move', (e) => {
-        if (!isDrawing || !circle || (drawTool !== 'circle' && drawTool !== 'circleOutline')) return;
+        if (!isDrawing || !circle) return;
         const pointer = fabricCanvas.getScenePoint(e.e);
         const dx = pointer.x - startX;
         const dy = pointer.y - startY;
@@ -210,12 +221,13 @@ export default function Mapeamento() {
 
       fabricCanvas.on('mouse:up', () => {
         isDrawing = false;
+        console.log('✅ Círculo finalizado');
       });
     }
 
     if (drawTool === 'text') {
       fabricCanvas.on('mouse:down', (e) => {
-        if (drawTool !== 'text') return;
+        console.log('🖱️ Mouse down - Text');
         const pointer = fabricCanvas.getScenePoint(e.e);
         
         const text = new IText('Clique para editar', {
@@ -229,12 +241,14 @@ export default function Mapeamento() {
         fabricCanvas.add(text);
         fabricCanvas.setActiveObject(text);
         text.enterEditing();
+        console.log('📝 Texto criado');
       });
     }
 
     if (drawTool === 'eraser') {
       fabricCanvas.on('mouse:down', (e) => {
-        if (drawTool !== 'eraser' || !e.target) return;
+        if (!e.target) return;
+        console.log('🗑️ Apagando elemento');
         fabricCanvas.remove(e.target);
         fabricCanvas.renderAll();
         toast.success('Elemento apagado');
@@ -844,6 +858,22 @@ export default function Mapeamento() {
                 </TabsContent>
 
                 <TabsContent value="draw" className="space-y-4 mt-4">
+                  {/* Tutorial */}
+                  <div className="bg-muted/50 border border-border rounded-lg p-3 space-y-2">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <span className="text-lg">💡</span>
+                      Tutorial Rápido
+                    </h3>
+                    <div className="text-xs space-y-1 text-muted-foreground">
+                      <p><strong>✏️ Linha:</strong> Clique, segure e arraste para desenhar livre</p>
+                      <p><strong>➡️ Seta:</strong> Clique no início, arraste até o fim e solte</p>
+                      <p><strong>⭕ Círculo:</strong> Clique no centro, arraste e solte (preenchido transparente)</p>
+                      <p><strong>○ Círculo vazio:</strong> Igual ao círculo, mas só contorno</p>
+                      <p><strong>📝 Anotação:</strong> Clique onde quer escrever e digite</p>
+                      <p><strong>🗑️ Apagar:</strong> Clique no desenho que quer remover</p>
+                    </div>
+                  </div>
+
                   <DrawingTools
                     activeTool={drawTool}
                     onToolChange={setDrawTool}
