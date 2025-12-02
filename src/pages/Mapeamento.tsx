@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye, FolderSync } from 'lucide-react';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye, FolderSync, Move } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -106,6 +106,7 @@ export default function Mapeamento() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showCopyDialog, setShowCopyDialog] = useState(false);
   const [copySourceMap, setCopySourceMap] = useState<string>('');
+  const [selectedNameId, setSelectedNameId] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -2088,6 +2089,7 @@ export default function Mapeamento() {
                           transformOrigin: 'center',
                           transition: 'transform 0.2s ease',
                         }}
+                        onClick={() => setSelectedNameId(null)}
                         onMouseMove={handleMapMouseMove}
                         onMouseUp={handleMapMouseUp}
                         onMouseLeave={handleMapMouseUp}
@@ -2135,51 +2137,96 @@ export default function Mapeamento() {
                       {currentNames.map((name) => (
                         <div
                           key={name.id}
-                          className="absolute cursor-move select-none"
+                          className="absolute select-none"
                           style={{
                             left: name.x,
                             top: name.y,
-                            backgroundColor: showNameBackground ? `rgba(0,0,0,${nameBackgroundOpacity})` : 'transparent',
-                            border: showNameBackground && nameBackgroundOpacity > 0 ? '1px solid rgba(255,255,255,0.2)' : 'none',
-                            boxShadow: showNameBackground ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
-                            zIndex: 10,
+                            zIndex: selectedNameId === name.id ? 15 : 10,
                             pointerEvents: 'auto',
-                            borderRadius: '4px',
-                            height: showNameBackground ? `${nameFontSize + 14}px` : 'auto',
-                            textAlign: 'center',
                           }}
-                          onMouseDown={(event) => handleNameMouseDown(name.id, event)}
-                          onTouchStart={(event) => handleNameTouchStart(name.id, event)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNameId(name.id);
+                          }}
+                          onTouchEnd={(e) => {
+                            if (!draggingId) {
+                              setSelectedNameId(name.id);
+                            }
+                          }}
                         >
-                          {name.type === 'logo' && name.logo ? (
-                            <img
-                              src={name.logo}
-                              alt={name.text}
+                          {/* Handle de arrastar - aparece quando selecionado */}
+                          {selectedNameId === name.id && (
+                            <div
+                              className="absolute -top-10 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground p-2 rounded-full shadow-lg cursor-move z-20 touch-none"
                               style={{ 
-                                display: 'block',
-                                height: '48px',
-                                width: '48px',
-                                objectFit: 'contain',
-                                margin: showNameBackground ? '4px 8px' : '0',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
                               }}
-                            />
-                          ) : (
-                            <span
-                              style={{
-                                display: 'block',
-                                fontSize: `${nameFontSize}px`,
-                                fontWeight: 'bold',
-                                color: name.color,
-                                textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
-                                whiteSpace: 'nowrap',
-                                lineHeight: showNameBackground ? `${nameFontSize + 14}px` : 'normal',
-                                paddingLeft: showNameBackground ? '12px' : '0',
-                                paddingRight: showNameBackground ? '12px' : '0',
+                              onMouseDown={(event) => {
+                                event.stopPropagation();
+                                handleNameMouseDown(name.id, event);
+                              }}
+                              onTouchStart={(event) => {
+                                event.stopPropagation();
+                                handleNameTouchStart(name.id, event);
                               }}
                             >
-                              {name.text}
-                            </span>
+                              <Move size={20} />
+                            </div>
                           )}
+                          
+                          <div
+                            className="cursor-pointer"
+                            style={{
+                              backgroundColor: showNameBackground ? `rgba(0,0,0,${nameBackgroundOpacity})` : 'transparent',
+                              border: selectedNameId === name.id 
+                                ? '2px solid hsl(var(--primary))' 
+                                : showNameBackground && nameBackgroundOpacity > 0 
+                                  ? '1px solid rgba(255,255,255,0.2)' 
+                                  : 'none',
+                              boxShadow: showNameBackground ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
+                              borderRadius: '4px',
+                              height: showNameBackground ? `${nameFontSize + 14}px` : 'auto',
+                              textAlign: 'center',
+                            }}
+                            onMouseDown={(event) => {
+                              event.stopPropagation();
+                              handleNameMouseDown(name.id, event);
+                            }}
+                            onTouchStart={(event) => {
+                              event.stopPropagation();
+                              handleNameTouchStart(name.id, event);
+                            }}
+                          >
+                            {name.type === 'logo' && name.logo ? (
+                              <img
+                                src={name.logo}
+                                alt={name.text}
+                                style={{ 
+                                  display: 'block',
+                                  height: '48px',
+                                  width: '48px',
+                                  objectFit: 'contain',
+                                  margin: showNameBackground ? '4px 8px' : '0',
+                                }}
+                              />
+                            ) : (
+                              <span
+                                style={{
+                                  display: 'block',
+                                  fontSize: `${nameFontSize}px`,
+                                  fontWeight: 'bold',
+                                  color: name.color,
+                                  textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
+                                  whiteSpace: 'nowrap',
+                                  lineHeight: showNameBackground ? `${nameFontSize + 14}px` : 'normal',
+                                  paddingLeft: showNameBackground ? '12px' : '0',
+                                  paddingRight: showNameBackground ? '12px' : '0',
+                                }}
+                              >
+                                {name.text}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
 
