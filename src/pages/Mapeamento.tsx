@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -90,6 +90,8 @@ export default function Mapeamento() {
   const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
   const [isDraggingDrawing, setIsDraggingDrawing] = useState(false);
   const [drawingDragStart, setDrawingDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [drawingHistory, setDrawingHistory] = useState<Record<string, DrawingElement[]>[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -243,27 +245,77 @@ export default function Mapeamento() {
     };
   };
 
+  // Função auxiliar: distância de ponto a segmento de reta
+  const distanceToLineSegment = (px: number, py: number, x1: number, y1: number, x2: number, y2: number): number => {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+    if (lenSq !== 0) param = dot / lenSq;
+    let xx, yy;
+    if (param < 0) { xx = x1; yy = y1; }
+    else if (param > 1) { xx = x2; yy = y2; }
+    else { xx = x1 + param * C; yy = y1 + param * D; }
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
   // Função para encontrar desenho clicado
   const findClickedDrawing = (pos: { x: number; y: number }): number => {
     return currentDrawings.findIndex(el => {
       if (el.type === 'circle' || el.type === 'circleOutline') {
         const dx = (el.x || 0) - pos.x;
         const dy = (el.y || 0) - pos.y;
-        return Math.sqrt(dx * dx + dy * dy) < (el.radius || 0) + 10;
+        return Math.sqrt(dx * dx + dy * dy) < (el.radius || 0) + 15;
       }
       if (el.type === 'line' && el.points) {
-        return el.points.some(p => Math.abs(p.x - pos.x) < 10 && Math.abs(p.y - pos.y) < 10);
+        for (let i = 0; i < el.points.length - 1; i++) {
+          const dist = distanceToLineSegment(pos.x, pos.y, el.points[i].x, el.points[i].y, el.points[i + 1].x, el.points[i + 1].y);
+          if (dist < 15) return true;
+        }
+        return false;
       }
       if (el.type === 'arrow') {
-        const dx = Math.abs((el.x || 0) - pos.x) + Math.abs((el.x2 || 0) - pos.x);
-        const dy = Math.abs((el.y || 0) - pos.y) + Math.abs((el.y2 || 0) - pos.y);
-        return dx < 50 && dy < 50;
+        const dist = distanceToLineSegment(pos.x, pos.y, el.x || 0, el.y || 0, el.x2 || 0, el.y2 || 0);
+        return dist < 20;
       }
       if (el.type === 'text') {
-        return Math.abs((el.x || 0) - pos.x) < 50 && Math.abs((el.y || 0) - pos.y) < 20;
+        return Math.abs((el.x || 0) - pos.x) < 60 && Math.abs((el.y || 0) - pos.y) < 25;
       }
       return false;
     });
+  };
+
+  // Salvar estado para histórico
+  const saveToHistory = (newDrawings: Record<string, DrawingElement[]>) => {
+    const newHistory = drawingHistory.slice(0, historyIndex + 1);
+    newHistory.push({ ...newDrawings });
+    setDrawingHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  // Desfazer
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const prevState = drawingHistory[historyIndex - 1];
+      setMapDrawings(prevState);
+      setHistoryIndex(historyIndex - 1);
+      toast.info('Desfeito');
+    }
+  };
+
+  // Refazer
+  const handleRedo = () => {
+    if (historyIndex < drawingHistory.length - 1) {
+      const nextState = drawingHistory[historyIndex + 1];
+      setMapDrawings(nextState);
+      setHistoryIndex(historyIndex + 1);
+      toast.info('Refeito');
+    }
   };
 
   // Handlers de desenho
@@ -291,7 +343,9 @@ export default function Mapeamento() {
       if (clickedIndex >= 0 && selectedMap) {
         const newDrawings = [...currentDrawings];
         newDrawings.splice(clickedIndex, 1);
-        setMapDrawings(prev => ({ ...prev, [selectedMap.name]: newDrawings }));
+        const newMapDrawings = { ...mapDrawings, [selectedMap.name]: newDrawings };
+        setMapDrawings(newMapDrawings);
+        saveToHistory(newMapDrawings);
         toast.success('Elemento apagado');
       }
       return;
@@ -308,10 +362,12 @@ export default function Mapeamento() {
           y: pos.y,
           text,
         };
-        setMapDrawings(prev => ({
-          ...prev,
-          [selectedMap.name]: [...(prev[selectedMap.name] || []), newElement],
-        }));
+        const newMapDrawings = {
+          ...mapDrawings,
+          [selectedMap.name]: [...(mapDrawings[selectedMap.name] || []), newElement],
+        };
+        setMapDrawings(newMapDrawings);
+        saveToHistory(newMapDrawings);
         toast.success('Texto adicionado');
       }
       return;
@@ -407,7 +463,8 @@ export default function Mapeamento() {
 
   const handleCanvasMouseUp = () => {
     // Finalizar movimento de desenho
-    if (isDraggingDrawing) {
+    if (isDraggingDrawing && selectedMap) {
+      saveToHistory(mapDrawings);
       setIsDraggingDrawing(false);
       setSelectedDrawingIndex(null);
       setDrawingDragStart(null);
@@ -421,10 +478,12 @@ export default function Mapeamento() {
     }
 
     // Salvar o desenho atual
-    setMapDrawings(prev => ({
-      ...prev,
-      [selectedMap.name]: [...(prev[selectedMap.name] || []), currentDrawing],
-    }));
+    const newMapDrawings = {
+      ...mapDrawings,
+      [selectedMap.name]: [...(mapDrawings[selectedMap.name] || []), currentDrawing],
+    };
+    setMapDrawings(newMapDrawings);
+    saveToHistory(newMapDrawings);
 
     console.log('✅ Desenho finalizado:', currentDrawing.type);
     toast.success('Desenho adicionado');
@@ -569,10 +628,12 @@ export default function Mapeamento() {
 
   const handleClearDrawings = () => {
     if (!selectedMap) return;
-    setMapDrawings(prev => ({
-      ...prev,
+    const newMapDrawings = {
+      ...mapDrawings,
       [selectedMap.name]: [],
-    }));
+    };
+    setMapDrawings(newMapDrawings);
+    saveToHistory(newMapDrawings);
     toast.success('Desenhos limpos');
   };
 
@@ -1165,6 +1226,30 @@ export default function Mapeamento() {
                     onColorChange={setDrawColor}
                   />
 
+                  {/* Botões Desfazer/Refazer */}
+                  {selectedMap && (
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleUndo} 
+                        variant="outline" 
+                        className="flex-1"
+                        disabled={historyIndex <= 0}
+                      >
+                        <Undo className="h-4 w-4 mr-2" />
+                        Desfazer
+                      </Button>
+                      <Button 
+                        onClick={handleRedo} 
+                        variant="outline" 
+                        className="flex-1"
+                        disabled={historyIndex >= drawingHistory.length - 1}
+                      >
+                        <Redo className="h-4 w-4 mr-2" />
+                        Refazer
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Botão Limpar Desenhos */}
                   {selectedMap && (
                     <div>
@@ -1294,7 +1379,9 @@ export default function Mapeamento() {
                             ? 'crosshair'
                             : drawTool === 'eraser'
                               ? 'pointer'
-                              : 'default',
+                              : drawTool === 'move'
+                                ? 'grab'
+                                : 'default',
                         }}
                         onMouseDown={handleCanvasMouseDown}
                         onMouseMove={handleCanvasMouseMove}
@@ -1306,14 +1393,17 @@ export default function Mapeamento() {
                       {names.map((name) => (
                         <div
                           key={name.id}
-                          className="absolute cursor-move select-none px-3 py-1 rounded shadow-lg"
+                          className="absolute cursor-move select-none rounded shadow-lg flex items-center justify-center"
                           style={{
                             left: name.x,
                             top: name.y,
+                            transform: 'translate(-50%, -50%)',
                             backgroundColor: `rgba(0,0,0,${nameBackgroundOpacity})`,
                             border: nameBackgroundOpacity > 0 ? '1px solid rgba(255,255,255,0.2)' : 'none',
                             zIndex: 10,
                             pointerEvents: 'auto',
+                            padding: '6px 12px',
+                            minWidth: 'max-content',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
@@ -1325,11 +1415,12 @@ export default function Mapeamento() {
                             />
                           ) : (
                             <span
-                              className="font-bold"
+                              className="font-bold whitespace-nowrap"
                               style={{
                                 fontSize: `${nameFontSize}px`,
                                 color: name.color,
                                 textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
+                                lineHeight: 1,
                               }}
                             >
                               {name.text}
@@ -1344,12 +1435,14 @@ export default function Mapeamento() {
                       {/* Marca d'água */}
                       {watermark.trim() && (
                         <div
-                          className="absolute bottom-4 right-4 font-bold text-sm px-3 py-1 rounded"
+                          className="absolute bottom-4 right-4 font-bold text-sm rounded flex items-center justify-center"
                           style={{
                             color: '#ffd700',
                             backgroundColor: 'rgba(0,0,0,0.8)',
                             border: '1px solid rgba(255,215,0,0.3)',
                             zIndex: 20,
+                            padding: '6px 12px',
+                            lineHeight: 1,
                           }}
                         >
                           {watermark}
