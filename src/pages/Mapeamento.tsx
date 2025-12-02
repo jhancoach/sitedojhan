@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Canvas as FabricCanvas, Line, Circle, IText } from 'fabric';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +28,19 @@ interface NameItem {
   color: string;
   logo?: string;
   type: 'text' | 'logo';
+}
+
+interface DrawingElement {
+  id: string;
+  type: 'line' | 'arrow' | 'circle' | 'circleOutline' | 'text';
+  color: string;
+  points?: { x: number; y: number }[];
+  x?: number;
+  y?: number;
+  x2?: number;
+  y2?: number;
+  radius?: number;
+  text?: string;
 }
 
 const maps: MapData[] = [
@@ -56,7 +68,7 @@ export default function Mapeamento() {
   const { user } = useAuth();
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
   const [names, setNames] = useState<NameItem[]>([]);
-  const [mapDrawings, setMapDrawings] = useState<Record<string, any>>({});
+  const [mapDrawings, setMapDrawings] = useState<Record<string, DrawingElement[]>>({});
   const [newName, setNewName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -65,218 +77,302 @@ export default function Mapeamento() {
   const [zoom, setZoom] = useState(1);
   const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline'>('select');
   const [drawColor, setDrawColor] = useState('#FFFFFF');
-  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [nameFontSize, setNameFontSize] = useState(18);
   const [nameBorderColor, setNameBorderColor] = useState('#000000');
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentDrawing, setCurrentDrawing] = useState<DrawingElement | null>(null);
+  const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
   
   const canvasRef = useRef<HTMLDivElement>(null);
-  const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    console.log('Nomes (globais):', names);
-    console.log('Desenhos do mapa', selectedMap?.name, ':', mapDrawings[selectedMap?.name || '']);
-  }, [names, mapDrawings, selectedMap]);
+  // Obter desenhos do mapa atual
+  const currentDrawings = selectedMap ? (mapDrawings[selectedMap.name] || []) : [];
 
-  // Inicializar Fabric Canvas e carregar desenhos do mapa selecionado
-  useEffect(() => {
-    if (!fabricCanvasRef.current || !canvasRef.current || !selectedMap) return;
+  // Renderizar todos os desenhos no canvas
+  const renderDrawings = useCallback(() => {
+    const canvas = drawingCanvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    const container = canvasRef.current;
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 450;
+    // Limpar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    console.log('Inicializando Fabric Canvas para', selectedMap.name, { width, height });
+    // Desenhar todos os elementos salvos
+    currentDrawings.forEach(element => {
+      ctx.strokeStyle = element.color;
+      ctx.fillStyle = element.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
-    const canvas = new FabricCanvas(fabricCanvasRef.current, {
-      width,
-      height,
-      backgroundColor: 'transparent',
+      switch (element.type) {
+        case 'line':
+          if (element.points && element.points.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(element.points[0].x, element.points[0].y);
+            element.points.forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.stroke();
+          }
+          break;
+        case 'arrow':
+          if (element.x !== undefined && element.y !== undefined && element.x2 !== undefined && element.y2 !== undefined) {
+            ctx.beginPath();
+            ctx.moveTo(element.x, element.y);
+            ctx.lineTo(element.x2, element.y2);
+            ctx.stroke();
+            // Desenhar ponta da seta
+            const angle = Math.atan2(element.y2 - element.y, element.x2 - element.x);
+            const headLength = 15;
+            ctx.beginPath();
+            ctx.moveTo(element.x2, element.y2);
+            ctx.lineTo(element.x2 - headLength * Math.cos(angle - Math.PI / 6), element.y2 - headLength * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(element.x2, element.y2);
+            ctx.lineTo(element.x2 - headLength * Math.cos(angle + Math.PI / 6), element.y2 - headLength * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+          }
+          break;
+        case 'circle':
+          if (element.x !== undefined && element.y !== undefined && element.radius !== undefined) {
+            ctx.beginPath();
+            ctx.arc(element.x, element.y, element.radius, 0, Math.PI * 2);
+            ctx.globalAlpha = 0.3;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.stroke();
+          }
+          break;
+        case 'circleOutline':
+          if (element.x !== undefined && element.y !== undefined && element.radius !== undefined) {
+            ctx.beginPath();
+            ctx.arc(element.x, element.y, element.radius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          break;
+        case 'text':
+          if (element.x !== undefined && element.y !== undefined && element.text) {
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText(element.text, element.x, element.y);
+          }
+          break;
+      }
     });
 
-    // Carregar desenhos salvos para este mapa específico
-    const savedDrawings = mapDrawings[selectedMap.name];
-    if (savedDrawings) {
-      canvas.loadFromJSON(savedDrawings, () => {
-        canvas.renderAll();
-        console.log('Desenhos carregados para', selectedMap.name);
-      });
-    }
+    // Desenhar elemento atual (em progresso)
+    if (currentDrawing) {
+      ctx.strokeStyle = currentDrawing.color;
+      ctx.fillStyle = currentDrawing.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
 
-    setFabricCanvas(canvas);
-
-    return () => {
-      // Salvar desenhos antes de destruir o canvas
-      if (canvas && selectedMap) {
-        const drawings = canvas.toJSON();
-        setMapDrawings(prev => ({
-          ...prev,
-          [selectedMap.name]: drawings,
-        }));
+      switch (currentDrawing.type) {
+        case 'line':
+          if (currentDrawing.points && currentDrawing.points.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(currentDrawing.points[0].x, currentDrawing.points[0].y);
+            currentDrawing.points.forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.stroke();
+          }
+          break;
+        case 'arrow':
+          if (currentDrawing.x !== undefined && currentDrawing.y !== undefined && currentDrawing.x2 !== undefined && currentDrawing.y2 !== undefined) {
+            ctx.beginPath();
+            ctx.moveTo(currentDrawing.x, currentDrawing.y);
+            ctx.lineTo(currentDrawing.x2, currentDrawing.y2);
+            ctx.stroke();
+          }
+          break;
+        case 'circle':
+        case 'circleOutline':
+          if (currentDrawing.x !== undefined && currentDrawing.y !== undefined && currentDrawing.radius !== undefined) {
+            ctx.beginPath();
+            ctx.arc(currentDrawing.x, currentDrawing.y, currentDrawing.radius, 0, Math.PI * 2);
+            if (currentDrawing.type === 'circle') {
+              ctx.globalAlpha = 0.3;
+              ctx.fill();
+              ctx.globalAlpha = 1;
+            }
+            ctx.stroke();
+          }
+          break;
       }
-      canvas.dispose();
-    };
-  }, [selectedMap]);
+    }
+  }, [currentDrawings, currentDrawing]);
 
-  // Atualizar modo de desenho
+  // Redimensionar e renderizar canvas quando mapa muda
   useEffect(() => {
-    if (!fabricCanvas) {
-      console.log('❌ FabricCanvas não existe ainda');
+    const canvas = drawingCanvasRef.current;
+    const container = canvasRef.current;
+    if (!canvas || !container || !selectedMap) return;
+
+    const updateSize = () => {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      renderDrawings();
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [selectedMap, renderDrawings]);
+
+  // Re-renderizar quando desenhos mudam
+  useEffect(() => {
+    renderDrawings();
+  }, [renderDrawings]);
+
+  // Obter posição do mouse relativa ao canvas
+  const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } => {
+    const canvas = drawingCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / zoom,
+      y: (e.clientY - rect.top) / zoom,
+    };
+  };
+
+  // Handlers de desenho
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (drawTool === 'select') return;
+    
+    const pos = getMousePos(e);
+    console.log('🖱️ Canvas click em', pos, 'ferramenta:', drawTool);
+
+    if (drawTool === 'eraser') {
+      // Encontrar e remover elemento clicado
+      const clickedIndex = currentDrawings.findIndex(el => {
+        if (el.type === 'circle' || el.type === 'circleOutline') {
+          const dx = (el.x || 0) - pos.x;
+          const dy = (el.y || 0) - pos.y;
+          return Math.sqrt(dx * dx + dy * dy) < (el.radius || 0) + 10;
+        }
+        if (el.type === 'line' && el.points) {
+          return el.points.some(p => Math.abs(p.x - pos.x) < 10 && Math.abs(p.y - pos.y) < 10);
+        }
+        if (el.type === 'arrow') {
+          const dx = Math.abs((el.x || 0) - pos.x) + Math.abs((el.x2 || 0) - pos.x);
+          const dy = Math.abs((el.y || 0) - pos.y) + Math.abs((el.y2 || 0) - pos.y);
+          return dx < 50 && dy < 50;
+        }
+        if (el.type === 'text') {
+          return Math.abs((el.x || 0) - pos.x) < 50 && Math.abs((el.y || 0) - pos.y) < 20;
+        }
+        return false;
+      });
+
+      if (clickedIndex >= 0 && selectedMap) {
+        const newDrawings = [...currentDrawings];
+        newDrawings.splice(clickedIndex, 1);
+        setMapDrawings(prev => ({ ...prev, [selectedMap.name]: newDrawings }));
+        toast.success('Elemento apagado');
+      }
       return;
-    }
-
-    console.log('✅ Modo de desenho alterado para:', drawTool, 'Cor:', drawColor);
-
-    // Limpar todos os event listeners anteriores
-    fabricCanvas.off();
-
-    // Sempre desabilitar modo desenho livre primeiro
-    fabricCanvas.isDrawingMode = false;
-    fabricCanvas.selection = drawTool === 'select';
-
-    if (drawTool === 'draw') {
-      let isDrawing = false;
-      let lastX = 0;
-      let lastY = 0;
-
-      fabricCanvas.on('mouse:down', (e) => {
-        isDrawing = true;
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        lastX = pointer.x;
-        lastY = pointer.y;
-      });
-
-      fabricCanvas.on('mouse:move', (e) => {
-        if (!isDrawing) return;
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        const line = new Line([lastX, lastY, pointer.x, pointer.y], {
-          stroke: drawColor,
-          strokeWidth: 3,
-          selectable: true,
-        });
-        fabricCanvas.add(line);
-        lastX = pointer.x;
-        lastY = pointer.y;
-        fabricCanvas.renderAll();
-      });
-
-      fabricCanvas.on('mouse:up', () => {
-        isDrawing = false;
-      });
-
-      console.log('✏️ Modo desenho livre custom ativado, cor:', drawColor);
-      return;
-    }
-
-    if (drawTool === 'arrow') {
-      let line: Line | null = null;
-      let isDrawing = false;
-
-      fabricCanvas.on('mouse:down', (e) => {
-        console.log('🖱️ Mouse down - Arrow');
-        isDrawing = true;
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        
-        line = new Line([pointer.x, pointer.y, pointer.x, pointer.y], {
-          stroke: drawColor,
-          strokeWidth: 3,
-          selectable: true,
-        });
-        fabricCanvas.add(line);
-        console.log('➡️ Seta criada');
-      });
-
-      fabricCanvas.on('mouse:move', (e) => {
-        if (!isDrawing || !line) return;
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        line.set({ x2: pointer.x, y2: pointer.y });
-        fabricCanvas.renderAll();
-      });
-
-      fabricCanvas.on('mouse:up', () => {
-        isDrawing = false;
-        console.log('✅ Seta finalizada');
-      });
-    }
-
-    if (drawTool === 'circle' || drawTool === 'circleOutline') {
-      let circle: Circle | null = null;
-      let isDrawing = false;
-      let startX = 0;
-      let startY = 0;
-
-      fabricCanvas.on('mouse:down', (e) => {
-        console.log('🖱️ Mouse down - Circle');
-        isDrawing = true;
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        startX = pointer.x;
-        startY = pointer.y;
-
-        circle = new Circle({
-          left: startX,
-          top: startY,
-          radius: 1,
-          originX: 'center',
-          originY: 'center',
-          stroke: drawColor,
-          strokeWidth: 3,
-          fill: drawTool === 'circle' ? drawColor : 'transparent',
-          opacity: drawTool === 'circle' ? 0.3 : 1,
-          selectable: true,
-        });
-
-        fabricCanvas.add(circle);
-        console.log('⭕ Círculo criado');
-      });
-
-      fabricCanvas.on('mouse:move', (e) => {
-        if (!isDrawing || !circle) return;
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        const dx = pointer.x - startX;
-        const dy = pointer.y - startY;
-        const radius = Math.sqrt(dx * dx + dy * dy);
-        circle.set({ radius });
-        fabricCanvas.renderAll();
-      });
-
-      fabricCanvas.on('mouse:up', () => {
-        isDrawing = false;
-        console.log('✅ Círculo finalizado');
-      });
     }
 
     if (drawTool === 'text') {
-      fabricCanvas.on('mouse:down', (e) => {
-        console.log('🖱️ Mouse down - Text');
-        const pointer = fabricCanvas.getScenePoint(e.e);
-        
-        const text = new IText('Clique para editar', {
-          left: pointer.x,
-          top: pointer.y,
-          fill: drawColor,
-          fontSize: 20,
-          fontWeight: 'bold',
-          selectable: true,
-        });
-        fabricCanvas.add(text);
-        fabricCanvas.setActiveObject(text);
-        text.enterEditing();
-        console.log('📝 Texto criado');
-      });
+      const text = prompt('Digite o texto:');
+      if (text && selectedMap) {
+        const newElement: DrawingElement = {
+          id: Date.now().toString(),
+          type: 'text',
+          color: drawColor,
+          x: pos.x,
+          y: pos.y,
+          text,
+        };
+        setMapDrawings(prev => ({
+          ...prev,
+          [selectedMap.name]: [...(prev[selectedMap.name] || []), newElement],
+        }));
+        toast.success('Texto adicionado');
+      }
+      return;
     }
 
-    if (drawTool === 'eraser') {
-      fabricCanvas.on('mouse:down', (e) => {
-        if (!e.target) return;
-        console.log('🗑️ Apagando elemento');
-        fabricCanvas.remove(e.target);
-        fabricCanvas.renderAll();
-        toast.success('Elemento apagado');
+    setIsDrawing(true);
+    setDrawStart(pos);
+
+    if (drawTool === 'draw') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'line',
+        color: drawColor,
+        points: [pos],
+      });
+    } else if (drawTool === 'arrow') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'arrow',
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        x2: pos.x,
+        y2: pos.y,
+      });
+    } else if (drawTool === 'circle' || drawTool === 'circleOutline') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: drawTool,
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        radius: 0,
       });
     }
-  }, [drawTool, drawColor, fabricCanvas]);
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !currentDrawing || !drawStart) return;
+    
+    const pos = getMousePos(e);
+
+    if (currentDrawing.type === 'line') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        points: [...(prev.points || []), pos],
+      } : null);
+    } else if (currentDrawing.type === 'arrow') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        x2: pos.x,
+        y2: pos.y,
+      } : null);
+    } else if (currentDrawing.type === 'circle' || currentDrawing.type === 'circleOutline') {
+      const dx = pos.x - drawStart.x;
+      const dy = pos.y - drawStart.y;
+      const radius = Math.sqrt(dx * dx + dy * dy);
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        radius,
+      } : null);
+    }
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (!isDrawing || !currentDrawing || !selectedMap) {
+      setIsDrawing(false);
+      return;
+    }
+
+    // Salvar o desenho atual
+    setMapDrawings(prev => ({
+      ...prev,
+      [selectedMap.name]: [...(prev[selectedMap.name] || []), currentDrawing],
+    }));
+
+    console.log('✅ Desenho finalizado:', currentDrawing.type);
+    toast.success('Desenho adicionado');
+
+    setIsDrawing(false);
+    setCurrentDrawing(null);
+    setDrawStart(null);
+  };
 
   const handleAddName = () => {
     if (!newName.trim() && itemType === 'text') {
@@ -412,10 +508,11 @@ export default function Mapeamento() {
   };
 
   const handleClearDrawings = () => {
-    if (!fabricCanvas) return;
-    fabricCanvas.clear();
-    fabricCanvas.backgroundColor = 'transparent';
-    fabricCanvas.renderAll();
+    if (!selectedMap) return;
+    setMapDrawings(prev => ({
+      ...prev,
+      [selectedMap.name]: [],
+    }));
     toast.success('Desenhos limpos');
   };
 
@@ -904,7 +1001,7 @@ export default function Mapeamento() {
                   />
 
                   {/* Botão Limpar Desenhos */}
-                  {fabricCanvas && (
+                  {selectedMap && (
                     <div>
                       <Button 
                         onClick={handleClearDrawings} 
@@ -998,9 +1095,9 @@ export default function Mapeamento() {
                       onMouseUp={handleMapMouseUp}
                       onMouseLeave={handleMapMouseUp}
                     >
-                       {/* Canvas Fabric para Desenhos */}
+                       {/* Canvas para Desenhos */}
                       <canvas
-                        ref={fabricCanvasRef}
+                        ref={drawingCanvasRef}
                         className="absolute inset-0 w-full h-full"
                         style={{ 
                           pointerEvents: drawTool === 'select' ? 'none' : 'auto',
@@ -1011,6 +1108,10 @@ export default function Mapeamento() {
                               ? 'pointer'
                               : 'default',
                         }}
+                        onMouseDown={handleCanvasMouseDown}
+                        onMouseMove={handleCanvasMouseMove}
+                        onMouseUp={handleCanvasMouseUp}
+                        onMouseLeave={handleCanvasMouseUp}
                       />
 
                       {/* Itens Arrastáveis - Nomes dos Times */}
