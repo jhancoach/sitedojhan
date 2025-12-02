@@ -1476,10 +1476,7 @@ export default function Mapeamento() {
                             boxShadow: showNameBackground ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
                             zIndex: 10,
                             pointerEvents: 'auto',
-                            padding: showNameBackground ? '4px 10px' : '0',
                             borderRadius: '4px',
-                            display: 'inline-block',
-                            textAlign: 'center',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
@@ -1487,23 +1484,28 @@ export default function Mapeamento() {
                             <img
                               src={name.logo}
                               alt={name.text}
-                              className="h-12 w-12 object-contain"
-                              style={{ display: 'block' }}
+                              style={{ 
+                                display: 'block',
+                                height: '48px',
+                                width: '48px',
+                                objectFit: 'contain',
+                                margin: showNameBackground ? '4px 8px' : '0',
+                              }}
                             />
                           ) : (
-                            <span
-                              className="font-bold"
+                            <div
                               style={{
                                 fontSize: `${nameFontSize}px`,
+                                fontWeight: 'bold',
                                 color: name.color,
                                 textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
-                                lineHeight: '1.2',
-                                display: 'block',
+                                lineHeight: 1,
+                                padding: showNameBackground ? '6px 12px' : '0',
                                 whiteSpace: 'nowrap',
                               }}
                             >
                               {name.text}
-                            </span>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -1514,20 +1516,29 @@ export default function Mapeamento() {
                       {/* Marca d'água */}
                       {showWatermark && watermark.trim() && (
                         <div
-                          className="absolute bottom-4 right-4 font-bold text-sm"
+                          className="absolute"
                           style={{
+                            bottom: '16px',
+                            right: '16px',
                             color: '#ffd700',
                             backgroundColor: showWatermarkBackground ? 'rgba(0,0,0,0.8)' : 'transparent',
                             border: showWatermarkBackground ? '1px solid rgba(255,215,0,0.3)' : 'none',
                             zIndex: 20,
-                            padding: showWatermarkBackground ? '4px 10px' : '0',
                             borderRadius: '4px',
                             textShadow: showWatermarkBackground ? 'none' : '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
-                            lineHeight: '1.2',
-                            display: 'inline-block',
                           }}
                         >
-                          {watermark}
+                          <div
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 'bold',
+                              lineHeight: 1,
+                              padding: showWatermarkBackground ? '6px 12px' : '0',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {watermark}
+                          </div>
                         </div>
                       )}
                     </div>
