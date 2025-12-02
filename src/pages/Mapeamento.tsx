@@ -369,6 +369,18 @@ export default function Mapeamento() {
     };
   };
 
+  // Obter posição do touch relativa ao canvas
+  const getTouchPos = (e: React.TouchEvent<HTMLCanvasElement>): { x: number; y: number } => {
+    const canvas = drawingCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    return {
+      x: (touch.clientX - rect.left) / zoom,
+      y: (touch.clientY - rect.top) / zoom,
+    };
+  };
+
   // Função auxiliar: distância de ponto a segmento de reta
   const distanceToLineSegment = (px: number, py: number, x1: number, y1: number, x2: number, y2: number): number => {
     const A = px - x1;
@@ -642,6 +654,209 @@ export default function Mapeamento() {
     saveToHistory(newMapDrawings);
 
     console.log('✅ Desenho finalizado:', currentDrawing.type);
+    toast.success('Desenho adicionado');
+
+    setIsDrawing(false);
+    setCurrentDrawing(null);
+    setDrawStart(null);
+  };
+
+  // Touch handlers para canvas de desenho
+  const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (drawTool === 'select') return;
+    e.preventDefault();
+    
+    const pos = getTouchPos(e);
+
+    if (drawTool === 'move') {
+      const clickedIndex = findClickedDrawing(pos);
+      if (clickedIndex >= 0) {
+        setSelectedDrawingIndex(clickedIndex);
+        setIsDraggingDrawing(true);
+        setDrawingDragStart(pos);
+        toast.info('Arraste para mover');
+      }
+      return;
+    }
+
+    if (drawTool === 'eraser') {
+      const clickedIndex = findClickedDrawing(pos);
+      if (clickedIndex >= 0 && selectedMap) {
+        const newDrawings = [...currentDrawings];
+        newDrawings.splice(clickedIndex, 1);
+        const newMapDrawings = { ...mapDrawings, [selectedMap.name]: newDrawings };
+        setMapDrawings(newMapDrawings);
+        saveToHistory(newMapDrawings);
+        toast.success('Elemento apagado');
+      }
+      return;
+    }
+
+    if (drawTool === 'text') {
+      const text = prompt('Digite o texto:');
+      if (text && selectedMap) {
+        const newElement: DrawingElement = {
+          id: Date.now().toString(),
+          type: 'text',
+          color: drawColor,
+          x: pos.x,
+          y: pos.y,
+          text,
+        };
+        const newMapDrawings = {
+          ...mapDrawings,
+          [selectedMap.name]: [...(mapDrawings[selectedMap.name] || []), newElement],
+        };
+        setMapDrawings(newMapDrawings);
+        saveToHistory(newMapDrawings);
+        toast.success('Texto adicionado');
+      }
+      return;
+    }
+
+    setIsDrawing(true);
+    setDrawStart(pos);
+
+    if (drawTool === 'draw') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'line',
+        color: drawColor,
+        points: [pos],
+      });
+    } else if (drawTool === 'arrow') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'arrow',
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        x2: pos.x,
+        y2: pos.y,
+      });
+    } else if (drawTool === 'circle' || drawTool === 'circleOutline') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: drawTool,
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        radius: 0,
+      });
+    } else if (drawTool === 'rectangle') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'rectangle',
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        width: 0,
+        height: 0,
+      });
+    } else if (drawTool === 'straightLine') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'straightLine',
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        x2: pos.x,
+        y2: pos.y,
+      });
+    }
+  };
+
+  const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 0) return;
+    e.preventDefault();
+    const pos = getTouchPos(e);
+
+    if (isDraggingDrawing && selectedDrawingIndex !== null && drawingDragStart && selectedMap) {
+      const deltaX = pos.x - drawingDragStart.x;
+      const deltaY = pos.y - drawingDragStart.y;
+      
+      setMapDrawings(prev => {
+        const drawings = [...(prev[selectedMap.name] || [])];
+        const el = { ...drawings[selectedDrawingIndex] };
+        
+        if (el.type === 'line' && el.points) {
+          el.points = el.points.map(p => ({ x: p.x + deltaX, y: p.y + deltaY }));
+        } else if (el.type === 'arrow') {
+          el.x = (el.x || 0) + deltaX;
+          el.y = (el.y || 0) + deltaY;
+          el.x2 = (el.x2 || 0) + deltaX;
+          el.y2 = (el.y2 || 0) + deltaY;
+        } else if (el.type === 'circle' || el.type === 'circleOutline' || el.type === 'text') {
+          el.x = (el.x || 0) + deltaX;
+          el.y = (el.y || 0) + deltaY;
+        }
+        
+        drawings[selectedDrawingIndex] = el;
+        return { ...prev, [selectedMap.name]: drawings };
+      });
+      
+      setDrawingDragStart(pos);
+      return;
+    }
+
+    if (!isDrawing || !currentDrawing || !drawStart) return;
+
+    if (currentDrawing.type === 'line') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        points: [...(prev.points || []), pos],
+      } : null);
+    } else if (currentDrawing.type === 'arrow') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        x2: pos.x,
+        y2: pos.y,
+      } : null);
+    } else if (currentDrawing.type === 'circle' || currentDrawing.type === 'circleOutline') {
+      const dx = pos.x - drawStart.x;
+      const dy = pos.y - drawStart.y;
+      const radius = Math.sqrt(dx * dx + dy * dy);
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        radius,
+      } : null);
+    } else if (currentDrawing.type === 'rectangle') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        width: pos.x - drawStart.x,
+        height: pos.y - drawStart.y,
+      } : null);
+    } else if (currentDrawing.type === 'straightLine') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        x2: pos.x,
+        y2: pos.y,
+      } : null);
+    }
+  };
+
+  const handleCanvasTouchEnd = () => {
+    if (isDraggingDrawing && selectedMap) {
+      saveToHistory(mapDrawings);
+      setIsDraggingDrawing(false);
+      setSelectedDrawingIndex(null);
+      setDrawingDragStart(null);
+      toast.success('Desenho movido');
+      return;
+    }
+
+    if (!isDrawing || !currentDrawing || !selectedMap) {
+      setIsDrawing(false);
+      return;
+    }
+
+    const newMapDrawings = {
+      ...mapDrawings,
+      [selectedMap.name]: [...(mapDrawings[selectedMap.name] || []), currentDrawing],
+    };
+    setMapDrawings(newMapDrawings);
+    saveToHistory(newMapDrawings);
+
     toast.success('Desenho adicionado');
 
     setIsDrawing(false);
@@ -1838,6 +2053,9 @@ export default function Mapeamento() {
                         onMouseMove={handleCanvasMouseMove}
                         onMouseUp={handleCanvasMouseUp}
                         onMouseLeave={handleCanvasMouseUp}
+                        onTouchStart={handleCanvasTouchStart}
+                        onTouchMove={handleCanvasTouchMove}
+                        onTouchEnd={handleCanvasTouchEnd}
                       />
 
                       {/* Itens Arrastáveis - Nomes dos Times */}
