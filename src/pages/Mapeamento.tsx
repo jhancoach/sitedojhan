@@ -44,6 +44,7 @@ interface DrawingElement {
   text?: string;
   width?: number;
   height?: number;
+  arrowStyle?: 'simple' | 'filled' | 'double' | 'dashed';
 }
 
 const maps: MapData[] = [
@@ -203,8 +204,9 @@ export default function Mapeamento() {
           break;
         case 'arrow':
           if (element.x !== undefined && element.y !== undefined && element.x2 !== undefined && element.y2 !== undefined) {
+            const elementArrowStyle = element.arrowStyle || 'simple';
             // Aplicar linha tracejada se estiver selecionado
-            if (arrowStyle === 'dashed') {
+            if (elementArrowStyle === 'dashed') {
               ctx.setLineDash([10, 5]);
             }
             ctx.beginPath();
@@ -215,9 +217,9 @@ export default function Mapeamento() {
             // Desenhar ponta da seta
             const angle = Math.atan2(element.y2 - element.y, element.x2 - element.x);
             const headLength = 10 + lineThickness * 2;
-            drawArrowHead(ctx, element.x2, element.y2, angle, arrowStyle, headLength);
+            drawArrowHead(ctx, element.x2, element.y2, angle, elementArrowStyle, headLength);
             // Seta dupla - desenhar também na origem
-            if (arrowStyle === 'double') {
+            if (elementArrowStyle === 'double') {
               const reverseAngle = angle + Math.PI;
               drawArrowHead(ctx, element.x, element.y, reverseAngle, 'simple', headLength);
             }
@@ -285,7 +287,8 @@ export default function Mapeamento() {
           break;
         case 'arrow':
           if (currentDrawing.x !== undefined && currentDrawing.y !== undefined && currentDrawing.x2 !== undefined && currentDrawing.y2 !== undefined) {
-            if (arrowStyle === 'dashed') {
+            const previewArrowStyle = currentDrawing.arrowStyle || arrowStyle;
+            if (previewArrowStyle === 'dashed') {
               ctx.setLineDash([10, 5]);
             }
             ctx.beginPath();
@@ -296,8 +299,8 @@ export default function Mapeamento() {
             // Preview da ponta
             const angle = Math.atan2(currentDrawing.y2 - currentDrawing.y, currentDrawing.x2 - currentDrawing.x);
             const headLength = 10 + lineThickness * 2;
-            drawArrowHead(ctx, currentDrawing.x2, currentDrawing.y2, angle, arrowStyle, headLength);
-            if (arrowStyle === 'double') {
+            drawArrowHead(ctx, currentDrawing.x2, currentDrawing.y2, angle, previewArrowStyle, headLength);
+            if (previewArrowStyle === 'double') {
               const reverseAngle = angle + Math.PI;
               drawArrowHead(ctx, currentDrawing.x, currentDrawing.y, reverseAngle, 'simple', headLength);
             }
@@ -417,9 +420,20 @@ export default function Mapeamento() {
         }
         return false;
       }
-      if (el.type === 'arrow') {
+      if (el.type === 'arrow' || el.type === 'straightLine') {
         const dist = distanceToLineSegment(pos.x, pos.y, el.x || 0, el.y || 0, el.x2 || 0, el.y2 || 0);
         return dist < 20;
+      }
+      if (el.type === 'rectangle') {
+        const x = el.x || 0;
+        const y = el.y || 0;
+        const w = el.width || 0;
+        const h = el.height || 0;
+        const minX = Math.min(x, x + w);
+        const maxX = Math.max(x, x + w);
+        const minY = Math.min(y, y + h);
+        const maxY = Math.max(y, y + h);
+        return pos.x >= minX - 10 && pos.x <= maxX + 10 && pos.y >= minY - 10 && pos.y <= maxY + 10;
       }
       if (el.type === 'text') {
         return Math.abs((el.x || 0) - pos.x) < 60 && Math.abs((el.y || 0) - pos.y) < 25;
@@ -530,6 +544,7 @@ export default function Mapeamento() {
         y: pos.y,
         x2: pos.x,
         y2: pos.y,
+        arrowStyle: arrowStyle,
       });
     } else if (drawTool === 'circle' || drawTool === 'circleOutline') {
       setCurrentDrawing({
@@ -736,6 +751,7 @@ export default function Mapeamento() {
         y: pos.y,
         x2: pos.x,
         y2: pos.y,
+        arrowStyle: arrowStyle,
       });
     } else if (drawTool === 'circle' || drawTool === 'circleOutline') {
       setCurrentDrawing({
