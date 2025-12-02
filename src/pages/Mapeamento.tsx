@@ -729,6 +729,133 @@ export default function Mapeamento() {
     }
   };
 
+  // Função helper para criar canvas com todos os elementos desenhados manualmente
+  const createExportCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    if (!canvasRef.current || !selectedMap) return null;
+    
+    const container = canvasRef.current;
+    const rect = container.getBoundingClientRect();
+    
+    const finalCanvas = document.createElement('canvas');
+    const scale = 2;
+    finalCanvas.width = rect.width * scale;
+    finalCanvas.height = rect.height * scale;
+    const ctx = finalCanvas.getContext('2d');
+    if (!ctx) return null;
+    
+    ctx.scale(scale, scale);
+    
+    // 1. Desenhar imagem de fundo do mapa
+    const mapImg = new Image();
+    mapImg.crossOrigin = 'anonymous';
+    
+    await new Promise<void>((resolve, reject) => {
+      mapImg.onload = () => resolve();
+      mapImg.onerror = reject;
+      mapImg.src = selectedMap.url;
+    });
+    
+    ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+    
+    // 2. Copiar os desenhos do canvas de desenho
+    if (drawingCanvasRef.current) {
+      ctx.drawImage(drawingCanvasRef.current, 0, 0, rect.width, rect.height);
+    }
+    
+    // 3. Desenhar os nomes dos times com posicionamento exato
+    for (const name of names) {
+      if (name.type === 'logo' && name.logo) {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve) => {
+          logoImg.onload = () => resolve();
+          logoImg.onerror = () => resolve();
+          logoImg.src = name.logo!;
+        });
+        
+        const logoSize = 48;
+        const padding = showNameBackground ? 8 : 0;
+        const bgWidth = logoSize + padding * 2;
+        const bgHeight = logoSize + padding * 2;
+        
+        if (showNameBackground) {
+          ctx.fillStyle = `rgba(0,0,0,${nameBackgroundOpacity})`;
+          ctx.beginPath();
+          ctx.roundRect(name.x, name.y, bgWidth, bgHeight, 4);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        
+        ctx.drawImage(logoImg, name.x + padding, name.y + padding, logoSize, logoSize);
+      } else {
+        ctx.font = `bold ${nameFontSize}px Arial`;
+        const textMetrics = ctx.measureText(name.text);
+        const textWidth = textMetrics.width;
+        const textHeight = nameFontSize;
+        const paddingX = showNameBackground ? 12 : 0;
+        const paddingY = showNameBackground ? 7 : 0;
+        const bgWidth = textWidth + paddingX * 2;
+        const bgHeight = textHeight + paddingY * 2;
+        
+        if (showNameBackground) {
+          ctx.fillStyle = `rgba(0,0,0,${nameBackgroundOpacity})`;
+          ctx.beginPath();
+          ctx.roundRect(name.x, name.y, bgWidth, bgHeight, 4);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        
+        ctx.fillStyle = nameBorderColor;
+        const offsets = [[2, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+        for (const [ox, oy] of offsets) {
+          ctx.fillText(name.text, name.x + paddingX + ox, name.y + paddingY + textHeight - 2 + oy);
+        }
+        
+        ctx.fillStyle = name.color;
+        ctx.fillText(name.text, name.x + paddingX, name.y + paddingY + textHeight - 2);
+      }
+    }
+    
+    // 4. Desenhar marca d'água
+    if (showWatermark && watermark.trim()) {
+      ctx.font = 'bold 14px Arial';
+      const wmMetrics = ctx.measureText(watermark);
+      const wmWidth = wmMetrics.width;
+      const wmHeight = 14;
+      const wmPaddingX = showWatermarkBackground ? 12 : 0;
+      const wmPaddingY = showWatermarkBackground ? 7 : 0;
+      const wmBgWidth = wmWidth + wmPaddingX * 2;
+      const wmBgHeight = wmHeight + wmPaddingY * 2;
+      const wmX = rect.width - wmBgWidth - 16;
+      const wmY = rect.height - wmBgHeight - 16;
+      
+      if (showWatermarkBackground) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.beginPath();
+        ctx.roundRect(wmX, wmY, wmBgWidth, wmBgHeight, 4);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#000';
+        const offsets = [[2, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+        for (const [ox, oy] of offsets) {
+          ctx.fillText(watermark, wmX + wmPaddingX + ox, wmY + wmPaddingY + wmHeight - 2 + oy);
+        }
+      }
+      
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText(watermark, wmX + wmPaddingX, wmY + wmPaddingY + wmHeight - 2);
+    }
+    
+    return finalCanvas;
+  };
+
   const handleExportImage = async () => {
     if (!canvasRef.current || !selectedMap) {
       toast.error('Selecione um mapa primeiro');
@@ -736,13 +863,11 @@ export default function Mapeamento() {
     }
 
     try {
-      // Capturar exatamente o que está na tela usando html2canvas
-      const canvas = await html2canvas(canvasRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2, // Alta resolução
-      });
+      const canvas = await createExportCanvas();
+      if (!canvas) {
+        toast.error('Erro ao criar canvas');
+        return;
+      }
 
       canvas.toBlob((blob) => {
         if (blob) {
@@ -773,13 +898,12 @@ export default function Mapeamento() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Capturar exatamente o que está na tela usando html2canvas
-      const canvas = await html2canvas(canvasRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2,
-      });
+      // Usar canvas manual ao invés de html2canvas
+      const canvas = await createExportCanvas();
+      if (!canvas) {
+        toast.error('Erro ao criar canvas');
+        return;
+      }
       
       // Calcular tamanho mantendo proporção
       const imageRatio = canvas.width / canvas.height;
@@ -836,7 +960,7 @@ export default function Mapeamento() {
         }
       }
       
-      // PÁGINA DO MAPA (screenshot exato)
+      // PÁGINA DO MAPA
       pdf.setFillColor(26, 26, 46);
       pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
       
