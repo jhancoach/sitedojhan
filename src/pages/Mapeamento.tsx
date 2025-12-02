@@ -137,13 +137,37 @@ export default function Mapeamento() {
     fabricCanvas.selection = drawTool === 'select';
 
     if (drawTool === 'draw') {
-      fabricCanvas.isDrawingMode = true;
-      if (fabricCanvas.freeDrawingBrush) {
-        fabricCanvas.freeDrawingBrush.color = drawColor;
-        fabricCanvas.freeDrawingBrush.width = 3;
-      }
-      console.log('✏️ Modo desenho livre ativado, cor:', drawColor);
-      return; // Não adicionar mais event listeners para modo draw
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      fabricCanvas.on('mouse:down', (e) => {
+        isDrawing = true;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        lastX = pointer.x;
+        lastY = pointer.y;
+      });
+
+      fabricCanvas.on('mouse:move', (e) => {
+        if (!isDrawing) return;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        const line = new Line([lastX, lastY, pointer.x, pointer.y], {
+          stroke: drawColor,
+          strokeWidth: 3,
+          selectable: true,
+        });
+        fabricCanvas.add(line);
+        lastX = pointer.x;
+        lastY = pointer.y;
+        fabricCanvas.renderAll();
+      });
+
+      fabricCanvas.on('mouse:up', () => {
+        isDrawing = false;
+      });
+
+      console.log('✏️ Modo desenho livre custom ativado, cor:', drawColor);
+      return;
     }
 
     if (drawTool === 'arrow') {
