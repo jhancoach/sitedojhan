@@ -1428,6 +1428,22 @@ export default function Mapeamento() {
     setLastPinchDistance(null);
   };
 
+  // Double tap para resetar zoom
+  const lastTapRef = useRef<number>(0);
+  const handleDoubleTap = (e: React.TouchEvent<HTMLDivElement>) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (e.touches.length === 1) {
+      if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+        // Double tap detectado - resetar zoom
+        setZoom(1);
+        toast.info('Zoom resetado para 100%');
+      }
+      lastTapRef.current = now;
+    }
+  };
+
   const handlePrint = () => {
     if (!selectedMap) {
       toast.error('Selecione um mapa primeiro');
@@ -2051,36 +2067,45 @@ export default function Mapeamento() {
             <Card className="glass-effect">
               <CardContent className="p-4">
                 {selectedMap ? (
-                  <div className="relative w-full overflow-auto">
-                    <div
-                      ref={canvasRef}
-                      className="relative bg-card rounded-lg overflow-hidden mx-auto"
-                      style={{
-                        aspectRatio: '16/9',
-                        backgroundImage: `url(${selectedMap.url})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        minHeight: '500px',
-                        transform: `scale(${zoom})`,
-                        transformOrigin: 'center',
-                        transition: 'transform 0.2s ease',
-                      }}
-                      onMouseMove={handleMapMouseMove}
-                      onMouseUp={handleMapMouseUp}
-                      onMouseLeave={handleMapMouseUp}
-                      onTouchStart={handlePinchStart}
-                      onTouchMove={(e) => {
-                        if (e.touches.length === 2) {
-                          handlePinchMove(e);
-                        } else {
-                          handleMapTouchMove(e);
-                        }
-                      }}
-                      onTouchEnd={(e) => {
-                        handlePinchEnd();
-                        handleMapTouchEnd();
-                      }}
-                    >
+                    <div className="relative w-full overflow-auto">
+                      {/* Indicador de Zoom */}
+                      {zoom !== 1 && (
+                        <div className="absolute top-2 right-2 z-20 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
+                          {Math.round(zoom * 100)}%
+                        </div>
+                      )}
+                      <div
+                        ref={canvasRef}
+                        className="relative bg-card rounded-lg overflow-hidden mx-auto"
+                        style={{
+                          aspectRatio: '16/9',
+                          backgroundImage: `url(${selectedMap.url})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          minHeight: '500px',
+                          transform: `scale(${zoom})`,
+                          transformOrigin: 'center',
+                          transition: 'transform 0.2s ease',
+                        }}
+                        onMouseMove={handleMapMouseMove}
+                        onMouseUp={handleMapMouseUp}
+                        onMouseLeave={handleMapMouseUp}
+                        onTouchStart={(e) => {
+                          handleDoubleTap(e);
+                          handlePinchStart(e);
+                        }}
+                        onTouchMove={(e) => {
+                          if (e.touches.length === 2) {
+                            handlePinchMove(e);
+                          } else {
+                            handleMapTouchMove(e);
+                          }
+                        }}
+                        onTouchEnd={(e) => {
+                          handlePinchEnd();
+                          handleMapTouchEnd();
+                        }}
+                      >
                        {/* Canvas para Desenhos */}
                       <canvas
                         ref={drawingCanvasRef}
