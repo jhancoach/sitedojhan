@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
-import Draggable from 'react-draggable';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Canvas as FabricCanvas, Line, Path, IText } from 'fabric';
@@ -66,6 +65,8 @@ export default function Mapeamento() {
   const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser'>('select');
   const [drawColor, setDrawColor] = useState('#FFFFFF');
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -269,8 +270,38 @@ export default function Mapeamento() {
     setEditingText('');
   };
 
-  const handleDrag = (id: string, data: { x: number; y: number }) => {
-    setNames(names.map(n => n.id === id ? { ...n, x: data.x, y: data.y } : n));
+  const handleDrag = (id: string, position: { x: number; y: number }) => {
+    setNames(prev => prev.map(n => n.id === id ? { ...n, x: position.x, y: position.y } : n));
+  };
+
+  const handleNameMouseDown = (id: string, event: React.MouseEvent<HTMLDivElement>) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const pointerX = event.clientX - rect.left;
+    const pointerY = event.clientY - rect.top;
+
+    const name = names.find(n => n.id === id);
+    if (!name) return;
+
+    setDraggingId(id);
+    setDragOffset({ x: pointerX - name.x, y: pointerY - name.y });
+  };
+
+  const handleMapMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!draggingId || !canvasRef.current) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const pointerX = event.clientX - rect.left;
+    const pointerY = event.clientY - rect.top;
+
+    const newX = pointerX - dragOffset.x;
+    const newY = pointerY - dragOffset.y;
+
+    handleDrag(draggingId, { x: newX, y: newY });
+  };
+
+  const handleMapMouseUp = () => {
+    setDraggingId(null);
   };
 
   const handleSaveProject = async (projectName: string) => {
@@ -772,6 +803,9 @@ export default function Mapeamento() {
                         transformOrigin: 'center',
                         transition: 'transform 0.2s ease',
                       }}
+                      onMouseMove={handleMapMouseMove}
+                      onMouseUp={handleMapMouseUp}
+                      onMouseLeave={handleMapMouseUp}
                     >
                       {/* Canvas Fabric para Desenhos - Camada inferior */}
                       <canvas
@@ -785,41 +819,37 @@ export default function Mapeamento() {
 
                       {/* Itens Arrastáveis - Nomes dos Times */}
                       {names.map((name) => (
-                        <Draggable
+                        <div
                           key={name.id}
-                          defaultPosition={{ x: name.x, y: name.y }}
-                          onStop={(e, data) => handleDrag(name.id, { x: data.x, y: data.y })}
-                          bounds="parent"
-                          scale={zoom}
+                          className="absolute cursor-move select-none px-3 py-1 rounded shadow-lg"
+                          style={{
+                            left: name.x,
+                            top: name.y,
+                            backgroundColor: 'rgba(0,0,0,0.3)',
+                            backdropFilter: 'blur(4px)',
+                            zIndex: 10,
+                            pointerEvents: 'auto',
+                          }}
+                          onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
-                          <div
-                            className="absolute cursor-move select-none px-3 py-1 rounded shadow-lg"
-                            style={{
-                              backgroundColor: 'rgba(0,0,0,0.3)',
-                              backdropFilter: 'blur(4px)',
-                              zIndex: 10,
-                              pointerEvents: 'auto',
-                            }}
-                          >
-                            {name.type === 'logo' && name.logo ? (
-                              <img
-                                src={name.logo}
-                                alt={name.text}
-                                className="h-12 w-12 object-contain"
-                              />
-                            ) : (
-                              <span
-                                className="font-bold text-lg"
-                                style={{
-                                  color: name.color,
-                                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                                }}
-                              >
-                                {name.text}
-                              </span>
-                            )}
-                          </div>
-                        </Draggable>
+                          {name.type === 'logo' && name.logo ? (
+                            <img
+                              src={name.logo}
+                              alt={name.text}
+                              className="h-12 w-12 object-contain"
+                            />
+                          ) : (
+                            <span
+                              className="font-bold text-lg"
+                              style={{
+                                color: name.color,
+                                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                              }}
+                            >
+                              {name.text}
+                            </span>
+                          )}
+                        </div>
                       ))}
 
 
