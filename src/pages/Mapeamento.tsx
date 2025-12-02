@@ -55,7 +55,7 @@ const textColors = [
 export default function Mapeamento() {
   const { user } = useAuth();
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
-  const [names, setNames] = useState<NameItem[]>([]);
+  const [mapData, setMapData] = useState<Record<string, { names: NameItem[], drawings: any }>>({});
   const [newName, setNewName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,15 +69,29 @@ export default function Mapeamento() {
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [nameFontSize, setNameFontSize] = useState(18);
   const [nameBorderColor, setNameBorderColor] = useState('#000000');
+
+  const names = selectedMap ? (mapData[selectedMap.name]?.names || []) : [];
+  const setNames = (newNames: NameItem[] | ((prev: NameItem[]) => NameItem[])) => {
+    if (!selectedMap) return;
+    setMapData(prev => ({
+      ...prev,
+      [selectedMap.name]: {
+        ...prev[selectedMap.name],
+        names: typeof newNames === 'function' ? newNames(prev[selectedMap.name]?.names || []) : newNames,
+        drawings: prev[selectedMap.name]?.drawings || null,
+      }
+    }));
+  };
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log('Nomes atualizados', names);
-  }, [names]);
-  // Inicializar Fabric Canvas
+    console.log('Dados do mapa atual:', selectedMap?.name, names);
+  }, [names, selectedMap]);
+
+  // Inicializar Fabric Canvas e carregar desenhos salvos
   useEffect(() => {
     if (!fabricCanvasRef.current || !canvasRef.current || !selectedMap) return;
 
@@ -85,7 +99,7 @@ export default function Mapeamento() {
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 450;
 
-    console.log('Inicializando Fabric Canvas', { width, height });
+    console.log('Inicializando Fabric Canvas para', selectedMap.name, { width, height });
 
     const canvas = new FabricCanvas(fabricCanvasRef.current, {
       width,
@@ -93,9 +107,30 @@ export default function Mapeamento() {
       backgroundColor: 'transparent',
     });
 
+    // Carregar desenhos salvos para este mapa
+    const savedDrawings = mapData[selectedMap.name]?.drawings;
+    if (savedDrawings) {
+      canvas.loadFromJSON(savedDrawings, () => {
+        canvas.renderAll();
+        console.log('Desenhos carregados para', selectedMap.name);
+      });
+    }
+
     setFabricCanvas(canvas);
 
     return () => {
+      // Salvar desenhos antes de destruir o canvas
+      if (canvas && selectedMap) {
+        const drawings = canvas.toJSON();
+        setMapData(prev => ({
+          ...prev,
+          [selectedMap.name]: {
+            ...prev[selectedMap.name],
+            names: prev[selectedMap.name]?.names || [],
+            drawings: drawings,
+          }
+        }));
+      }
       canvas.dispose();
     };
   }, [selectedMap]);
@@ -326,18 +361,18 @@ export default function Mapeamento() {
     }
 
     try {
-      const desenhos = fabricCanvas?.toJSON() || {};
+      const projectData = {
+        user_id: user.id,
+        nome: projectName,
+        mapa_nome: selectedMap.name,
+        itens: mapData as any,
+        anotacoes: [] as any,
+        desenhos: {} as any,
+      };
 
       const { error } = await supabase
         .from('mapeamento_projetos')
-        .insert({
-          user_id: user.id,
-          nome: projectName,
-          mapa_nome: selectedMap.name,
-          itens: names as any,
-          anotacoes: [] as any,
-          desenhos: desenhos as any,
-        });
+        .insert(projectData);
 
       if (error) throw error;
       
@@ -364,17 +399,9 @@ export default function Mapeamento() {
       const map = maps.find(m => m.name === data.mapa_nome);
       if (map) setSelectedMap(map);
 
-      const loadedItems = ((data.itens as any) || []) as NameItem[];
-      if (loadedItems.length > 0) {
-        console.log('Carregando itens do projeto', loadedItems);
-        setNames(loadedItems);
-      }
-      
-      if (fabricCanvas && data.desenhos) {
-        fabricCanvas.loadFromJSON(data.desenhos as any, () => {
-          fabricCanvas.renderAll();
-        });
-      }
+      // Carregar dados de todos os mapas
+      const loadedMapData = (data.itens as any) || {};
+      setMapData(loadedMapData);
 
       toast.success('Projeto carregado');
     } catch (error) {
