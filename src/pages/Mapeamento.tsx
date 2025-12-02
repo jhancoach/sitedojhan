@@ -525,7 +525,9 @@ export default function Mapeamento() {
               <CardTitle className="text-xl">Controles</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="map" className="w-full">
+              <Tabs defaultValue="map" className="w-full" onValueChange={(value) => {
+                if (value === 'map') setDrawTool('select');
+              }}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="map">Mapa</TabsTrigger>
                   <TabsTrigger value="draw">Desenho</TabsTrigger>
@@ -884,13 +886,14 @@ export default function Mapeamento() {
                       onMouseUp={handleMapMouseUp}
                       onMouseLeave={handleMapMouseUp}
                     >
-                       {/* Canvas Fabric para Desenhos - Camada inferior */}
+                       {/* Canvas Fabric para Desenhos */}
                       <canvas
                         ref={fabricCanvasRef}
                         className="absolute inset-0 w-full h-full"
                         style={{ 
                           pointerEvents: drawTool === 'select' ? 'none' : 'auto',
                           zIndex: drawTool === 'select' ? 1 : 15,
+                          cursor: drawTool === 'draw' ? 'crosshair' : drawTool === 'eraser' ? 'pointer' : 'default',
                         }}
                       />
 
