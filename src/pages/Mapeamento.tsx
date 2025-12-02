@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye } from 'lucide-react';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye, FolderSync } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -103,6 +103,8 @@ export default function Mapeamento() {
   const [exportScale, setExportScale] = useState(2);
   const [showPreview, setShowPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const [copySourceMap, setCopySourceMap] = useState<string>('');
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -112,6 +114,9 @@ export default function Mapeamento() {
   const currentNames = selectedMap ? (mapNames[selectedMap.name] || []) : [];
   const currentDrawings = selectedMap ? (mapDrawings[selectedMap.name] || []) : [];
 
+  // Mapas que têm nomes (para copiar)
+  const mapsWithNames = maps.filter(m => (mapNames[m.name] || []).length > 0 && m.name !== selectedMap?.name);
+
   // Função auxiliar para atualizar nomes do mapa atual
   const setCurrentNames = (updater: NameItem[] | ((prev: NameItem[]) => NameItem[])) => {
     if (!selectedMap) return;
@@ -119,6 +124,32 @@ export default function Mapeamento() {
       ...prev,
       [selectedMap.name]: typeof updater === 'function' ? updater(prev[selectedMap.name] || []) : updater,
     }));
+  };
+
+  // Função para copiar nomes de outro mapa
+  const handleCopyFromMap = () => {
+    if (!copySourceMap || !selectedMap) return;
+    
+    const sourceNames = mapNames[copySourceMap] || [];
+    if (sourceNames.length === 0) {
+      toast.error('Mapa de origem não tem nomes');
+      return;
+    }
+
+    // Cria cópias com novos IDs
+    const copiedNames = sourceNames.map(name => ({
+      ...name,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    }));
+
+    setMapNames(prev => ({
+      ...prev,
+      [selectedMap.name]: [...(prev[selectedMap.name] || []), ...copiedNames].slice(0, 15),
+    }));
+
+    toast.success(`${Math.min(copiedNames.length, 15 - currentNames.length)} nomes copiados de ${copySourceMap}`);
+    setShowCopyDialog(false);
+    setCopySourceMap('');
   };
 
   // Função para desenhar ponta de seta
@@ -1406,6 +1437,18 @@ export default function Mapeamento() {
                     </div>
                   )}
 
+                  {/* Copiar nomes de outro mapa */}
+                  {mapsWithNames.length > 0 && currentNames.length < 15 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCopyDialog(true)}
+                      className="w-full"
+                    >
+                      <FolderSync className="h-4 w-4 mr-2" />
+                      Copiar de outro mapa
+                    </Button>
+                  )}
+
                   {/* Configuração de Aparência dos Nomes */}
                   {currentNames.length > 0 && (
                     <div className="space-y-3 pt-3 border-t">
@@ -1887,6 +1930,41 @@ export default function Mapeamento() {
             <Button variant="premium" onClick={handleConfirmDownload}>
               <Download className="h-4 w-4 mr-2" />
               Confirmar Download
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Copiar Nomes */}
+      <Dialog open={showCopyDialog} onOpenChange={setShowCopyDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Copiar Nomes de Outro Mapa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione o mapa de origem para copiar os nomes para {selectedMap?.name}
+            </p>
+            <Select value={copySourceMap} onValueChange={setCopySourceMap}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o mapa" />
+              </SelectTrigger>
+              <SelectContent>
+                {mapsWithNames.map((map) => (
+                  <SelectItem key={map.name} value={map.name}>
+                    {map.name} ({(mapNames[map.name] || []).length} nomes)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowCopyDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCopyFromMap} disabled={!copySourceMap}>
+              <FolderSync className="h-4 w-4 mr-2" />
+              Copiar Nomes
             </Button>
           </DialogFooter>
         </DialogContent>
