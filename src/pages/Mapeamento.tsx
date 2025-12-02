@@ -785,36 +785,43 @@ export default function Mapeamento() {
 
                       {/* Itens Arrastáveis - Nomes dos Times */}
                       {names.map((name) => (
-                        <div
+                        <Draggable
                           key={name.id}
-                          className="absolute cursor-default select-none px-3 py-1 rounded shadow-lg"
-                          style={{
-                            left: name.x,
-                            top: name.y,
-                            backgroundColor: 'rgba(0,0,0,0.3)',
-                            backdropFilter: 'blur(4px)',
-                            zIndex: 10,
-                          }}
+                          position={{ x: name.x, y: name.y }}
+                          onStop={(e, data) => handleDrag(name.id, { x: data.x, y: data.y })}
+                          bounds="parent"
+                          scale={zoom}
                         >
-                          {name.type === 'logo' && name.logo ? (
-                            <img
-                              src={name.logo}
-                              alt={name.text}
-                              className="h-12 w-12 object-contain"
-                            />
-                          ) : (
-                            <span
-                              className="font-bold text-lg"
-                              style={{
-                                color: name.color,
-                                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                              }}
-                            >
-                              {name.text}
-                            </span>
-                          )}
-                        </div>
+                          <div
+                            className="absolute cursor-move select-none px-3 py-1 rounded shadow-lg"
+                            style={{
+                              backgroundColor: 'rgba(0,0,0,0.3)',
+                              backdropFilter: 'blur(4px)',
+                              zIndex: 10,
+                              pointerEvents: 'auto',
+                            }}
+                          >
+                            {name.type === 'logo' && name.logo ? (
+                              <img
+                                src={name.logo}
+                                alt={name.text}
+                                className="h-12 w-12 object-contain"
+                              />
+                            ) : (
+                              <span
+                                className="font-bold text-lg"
+                                style={{
+                                  color: name.color,
+                                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                                }}
+                              >
+                                {name.text}
+                              </span>
+                            )}
+                          </div>
+                        </Draggable>
                       ))}
+
 
 
                       {/* Marca d'água */}
