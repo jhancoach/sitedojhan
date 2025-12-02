@@ -215,27 +215,38 @@ export default function Mapeamento() {
               <CardTitle className="text-xl">Controles</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Seleção de Mapa */}
+              {/* Seleção de Mapa - Grid Visual */}
               <div>
                 <label className="text-sm font-medium mb-2 block">Selecione o Mapa</label>
-                <Select
-                  value={selectedMap?.name || ''}
-                  onValueChange={(value) => {
-                    const map = maps.find(m => m.name === value);
-                    setSelectedMap(map || null);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Escolha um mapa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {maps.map((map) => (
-                      <SelectItem key={map.name} value={map.name}>
-                        {map.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  {maps.map((map) => (
+                    <button
+                      key={map.name}
+                      onClick={() => setSelectedMap(map)}
+                      className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
+                        selectedMap?.name === map.name
+                          ? 'border-primary shadow-premium'
+                          : 'border-border/50 hover:border-primary/50'
+                      }`}
+                    >
+                      <img
+                        src={map.url}
+                        alt={map.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end">
+                        <span className="text-white font-bold text-xs p-2 w-full text-center">
+                          {map.name}
+                        </span>
+                      </div>
+                      {selectedMap?.name === map.name && (
+                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                          <Check className="h-8 w-8 text-primary drop-shadow-lg" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Adicionar Nome */}
