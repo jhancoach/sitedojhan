@@ -55,7 +55,8 @@ const textColors = [
 export default function Mapeamento() {
   const { user } = useAuth();
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
-  const [mapData, setMapData] = useState<Record<string, { names: NameItem[], drawings: any }>>({});
+  const [names, setNames] = useState<NameItem[]>([]);
+  const [mapDrawings, setMapDrawings] = useState<Record<string, any>>({});
   const [newName, setNewName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,29 +70,17 @@ export default function Mapeamento() {
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [nameFontSize, setNameFontSize] = useState(18);
   const [nameBorderColor, setNameBorderColor] = useState('#000000');
-
-  const names = selectedMap ? (mapData[selectedMap.name]?.names || []) : [];
-  const setNames = (newNames: NameItem[] | ((prev: NameItem[]) => NameItem[])) => {
-    if (!selectedMap) return;
-    setMapData(prev => ({
-      ...prev,
-      [selectedMap.name]: {
-        ...prev[selectedMap.name],
-        names: typeof newNames === 'function' ? newNames(prev[selectedMap.name]?.names || []) : newNames,
-        drawings: prev[selectedMap.name]?.drawings || null,
-      }
-    }));
-  };
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log('Dados do mapa atual:', selectedMap?.name, names);
-  }, [names, selectedMap]);
+    console.log('Nomes (globais):', names);
+    console.log('Desenhos do mapa', selectedMap?.name, ':', mapDrawings[selectedMap?.name || '']);
+  }, [names, mapDrawings, selectedMap]);
 
-  // Inicializar Fabric Canvas e carregar desenhos salvos
+  // Inicializar Fabric Canvas e carregar desenhos do mapa selecionado
   useEffect(() => {
     if (!fabricCanvasRef.current || !canvasRef.current || !selectedMap) return;
 
@@ -107,8 +96,8 @@ export default function Mapeamento() {
       backgroundColor: 'transparent',
     });
 
-    // Carregar desenhos salvos para este mapa
-    const savedDrawings = mapData[selectedMap.name]?.drawings;
+    // Carregar desenhos salvos para este mapa específico
+    const savedDrawings = mapDrawings[selectedMap.name];
     if (savedDrawings) {
       canvas.loadFromJSON(savedDrawings, () => {
         canvas.renderAll();
@@ -122,13 +111,9 @@ export default function Mapeamento() {
       // Salvar desenhos antes de destruir o canvas
       if (canvas && selectedMap) {
         const drawings = canvas.toJSON();
-        setMapData(prev => ({
+        setMapDrawings(prev => ({
           ...prev,
-          [selectedMap.name]: {
-            ...prev[selectedMap.name],
-            names: prev[selectedMap.name]?.names || [],
-            drawings: drawings,
-          }
+          [selectedMap.name]: drawings,
         }));
       }
       canvas.dispose();
@@ -365,9 +350,9 @@ export default function Mapeamento() {
         user_id: user.id,
         nome: projectName,
         mapa_nome: selectedMap.name,
-        itens: mapData as any,
+        itens: names as any,
         anotacoes: [] as any,
-        desenhos: {} as any,
+        desenhos: mapDrawings as any,
       };
 
       const { error } = await supabase
@@ -399,9 +384,13 @@ export default function Mapeamento() {
       const map = maps.find(m => m.name === data.mapa_nome);
       if (map) setSelectedMap(map);
 
-      // Carregar dados de todos os mapas
-      const loadedMapData = (data.itens as any) || {};
-      setMapData(loadedMapData);
+      // Carregar nomes (globais para todos os mapas)
+      const loadedNames = ((data.itens as any) || []) as NameItem[];
+      setNames(loadedNames);
+
+      // Carregar desenhos (específicos por mapa)
+      const loadedDrawings = (data.desenhos as any) || {};
+      setMapDrawings(loadedDrawings);
 
       toast.success('Projeto carregado');
     } catch (error) {
