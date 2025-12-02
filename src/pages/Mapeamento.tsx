@@ -318,7 +318,11 @@ export default function Mapeamento() {
       const map = maps.find(m => m.name === data.mapa_nome);
       if (map) setSelectedMap(map);
 
-      setNames((data.itens as any) || []);
+      const loadedItems = ((data.itens as any) || []) as NameItem[];
+      if (loadedItems.length > 0) {
+        console.log('Carregando itens do projeto', loadedItems);
+        setNames(loadedItems);
+      }
       
       if (fabricCanvas && data.desenhos) {
         fabricCanvas.loadFromJSON(data.desenhos as any, () => {
