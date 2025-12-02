@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Printer, Share2, Plus, Copy, Trash2 } from 'lucide-react';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check } from 'lucide-react';
 import Draggable from 'react-draggable';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
@@ -45,6 +45,8 @@ export default function Mapeamento() {
   const [names, setNames] = useState<NameItem[]>([]);
   const [newName, setNewName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleAddName = () => {
@@ -93,6 +95,28 @@ export default function Mapeamento() {
   const handleDelete = (id: string) => {
     setNames(names.filter(n => n.id !== id));
     toast.success('Nome removido');
+  };
+
+  const handleStartEdit = (id: string, currentText: string) => {
+    setEditingId(id);
+    setEditingText(currentText);
+  };
+
+  const handleSaveEdit = (id: string) => {
+    if (!editingText.trim()) {
+      toast.error('Nome não pode estar vazio');
+      return;
+    }
+
+    setNames(names.map(n => n.id === id ? { ...n, text: editingText.trim() } : n));
+    setEditingId(null);
+    setEditingText('');
+    toast.success('Nome atualizado');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingText('');
   };
 
   const handleDrag = (id: string, data: { x: number; y: number }) => {
@@ -259,27 +283,62 @@ export default function Mapeamento() {
                         key={name.id}
                         className="flex items-center gap-2 p-2 rounded-lg bg-card/50 border border-border"
                       >
-                        <span
-                          className="flex-1 truncate text-sm"
-                          style={{ color: name.color }}
-                        >
-                          {name.text}
-                        </span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDuplicate(name.id)}
-                          disabled={names.length >= 15}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDelete(name.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {editingId === name.id ? (
+                          <>
+                            <Input
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              className="flex-1 h-8 text-sm"
+                              autoFocus
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(name.id);
+                                if (e.key === 'Escape') handleCancelEdit();
+                              }}
+                            />
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleSaveEdit(name.id)}
+                              className="h-8 w-8"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span
+                              className="flex-1 truncate text-sm"
+                              style={{ color: name.color }}
+                            >
+                              {name.text}
+                            </span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleStartEdit(name.id, name.text)}
+                              className="h-8 w-8"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDuplicate(name.id)}
+                              disabled={names.length >= 15}
+                              className="h-8 w-8"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDelete(name.id)}
+                              className="h-8 w-8"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
