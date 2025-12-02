@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -583,14 +582,56 @@ export default function Mapeamento() {
     }
 
     try {
-      const canvas = await html2canvas(canvasRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2,
+      // Criar canvas final combinando mapa + desenhos + nomes
+      const container = canvasRef.current;
+      const rect = container.getBoundingClientRect();
+      
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = rect.width * 2;
+      finalCanvas.height = rect.height * 2;
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.scale(2, 2);
+      
+      // 1. Desenhar imagem de fundo do mapa
+      const mapImg = new Image();
+      mapImg.crossOrigin = 'anonymous';
+      
+      await new Promise<void>((resolve, reject) => {
+        mapImg.onload = () => resolve();
+        mapImg.onerror = reject;
+        mapImg.src = selectedMap.url;
       });
-
-      canvas.toBlob((blob) => {
+      
+      ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+      
+      // 2. Desenhar os elementos do canvas de desenho
+      if (drawingCanvasRef.current) {
+        ctx.drawImage(drawingCanvasRef.current, 0, 0, rect.width, rect.height);
+      }
+      
+      // 3. Desenhar os nomes dos times
+      names.forEach((name) => {
+        ctx.fillStyle = name.color;
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        
+        // Fundo semi-transparente
+        const textMetrics = ctx.measureText(name.text);
+        const padding = 8;
+        const bgWidth = textMetrics.width + padding * 2;
+        const bgHeight = 24;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(name.x - bgWidth / 2, name.y - bgHeight / 2, bgWidth, bgHeight);
+        
+        // Texto
+        ctx.fillStyle = name.color;
+        ctx.fillText(name.text, name.x, name.y + 5);
+      });
+      
+      finalCanvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -608,39 +649,69 @@ export default function Mapeamento() {
   };
 
   const handleExportPDF = async () => {
-    if (!canvasRef.current) {
+    if (!canvasRef.current || !selectedMap) {
       toast.error('Selecione um mapa primeiro');
       return;
     }
 
     try {
-      toast.info('Gerando PDF... Aguarde');
+      toast.info('Gerando PDF do mapa atual... Aguarde');
       const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const originalMap = selectedMap;
-
-      for (let i = 0; i < maps.length; i++) {
-        setSelectedMap(maps[i]);
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const canvas = await html2canvas(canvasRef.current, {
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#000000',
-          scale: 2,
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
-        if (i > 0) pdf.addPage();
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const container = canvasRef.current;
+      const rect = container.getBoundingClientRect();
+      
+      // Criar canvas final combinando mapa + desenhos + nomes
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = rect.width * 2;
+      finalCanvas.height = rect.height * 2;
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.scale(2, 2);
+      
+      // 1. Desenhar imagem de fundo do mapa
+      const mapImg = new Image();
+      mapImg.crossOrigin = 'anonymous';
+      
+      await new Promise<void>((resolve, reject) => {
+        mapImg.onload = () => resolve();
+        mapImg.onerror = reject;
+        mapImg.src = selectedMap.url;
+      });
+      
+      ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+      
+      // 2. Desenhar os elementos do canvas de desenho
+      if (drawingCanvasRef.current) {
+        ctx.drawImage(drawingCanvasRef.current, 0, 0, rect.width, rect.height);
       }
-
-      pdf.save('mapeamento-apresentacao.pdf');
-      setSelectedMap(originalMap);
+      
+      // 3. Desenhar os nomes dos times
+      names.forEach((name) => {
+        ctx.fillStyle = name.color;
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        
+        // Fundo semi-transparente
+        const textMetrics = ctx.measureText(name.text);
+        const padding = 8;
+        const bgWidth = textMetrics.width + padding * 2;
+        const bgHeight = 24;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(name.x - bgWidth / 2, name.y - bgHeight / 2, bgWidth, bgHeight);
+        
+        // Texto
+        ctx.fillStyle = name.color;
+        ctx.fillText(name.text, name.x, name.y + 5);
+      });
+      
+      const imgData = finalCanvas.toDataURL('image/png');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`mapeamento-${selectedMap.name}.pdf`);
       
       toast.success('PDF gerado com sucesso');
     } catch (error) {
@@ -672,14 +743,56 @@ export default function Mapeamento() {
     }
 
     try {
-      const canvas = await html2canvas(canvasRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2,
+      const container = canvasRef.current;
+      const rect = container.getBoundingClientRect();
+      
+      // Criar canvas final combinando mapa + desenhos + nomes
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = rect.width * 2;
+      finalCanvas.height = rect.height * 2;
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.scale(2, 2);
+      
+      // 1. Desenhar imagem de fundo do mapa
+      const mapImg = new Image();
+      mapImg.crossOrigin = 'anonymous';
+      
+      await new Promise<void>((resolve, reject) => {
+        mapImg.onload = () => resolve();
+        mapImg.onerror = reject;
+        mapImg.src = selectedMap.url;
+      });
+      
+      ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+      
+      // 2. Desenhar os elementos do canvas de desenho
+      if (drawingCanvasRef.current) {
+        ctx.drawImage(drawingCanvasRef.current, 0, 0, rect.width, rect.height);
+      }
+      
+      // 3. Desenhar os nomes dos times
+      names.forEach((name) => {
+        ctx.fillStyle = name.color;
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        
+        // Fundo semi-transparente
+        const textMetrics = ctx.measureText(name.text);
+        const padding = 8;
+        const bgWidth = textMetrics.width + padding * 2;
+        const bgHeight = 24;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(name.x - bgWidth / 2, name.y - bgHeight / 2, bgWidth, bgHeight);
+        
+        // Texto
+        ctx.fillStyle = name.color;
+        ctx.fillText(name.text, name.x, name.y + 5);
       });
 
-      canvas.toBlob(async (blob) => {
+      finalCanvas.toBlob(async (blob) => {
         if (blob && navigator.share) {
           const file = new File([blob], `mapeamento-${selectedMap.name}.png`, { type: 'image/png' });
           await navigator.share({
