@@ -1477,6 +1477,7 @@ export default function Mapeamento() {
                             zIndex: 10,
                             pointerEvents: 'auto',
                             borderRadius: '4px',
+                            display: 'table',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
@@ -1495,12 +1496,16 @@ export default function Mapeamento() {
                           ) : (
                             <div
                               style={{
+                                display: 'table-cell',
+                                verticalAlign: 'middle',
+                                textAlign: 'center',
                                 fontSize: `${nameFontSize}px`,
                                 fontWeight: 'bold',
                                 color: name.color,
                                 textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
-                                lineHeight: 1,
-                                padding: showNameBackground ? '6px 12px' : '0',
+                                height: `${nameFontSize + 12}px`,
+                                paddingLeft: showNameBackground ? '12px' : '0',
+                                paddingRight: showNameBackground ? '12px' : '0',
                                 whiteSpace: 'nowrap',
                               }}
                             >
@@ -1520,20 +1525,25 @@ export default function Mapeamento() {
                           style={{
                             bottom: '16px',
                             right: '16px',
-                            color: '#ffd700',
                             backgroundColor: showWatermarkBackground ? 'rgba(0,0,0,0.8)' : 'transparent',
                             border: showWatermarkBackground ? '1px solid rgba(255,215,0,0.3)' : 'none',
                             zIndex: 20,
                             borderRadius: '4px',
-                            textShadow: showWatermarkBackground ? 'none' : '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                            display: 'table',
                           }}
                         >
                           <div
                             style={{
+                              display: 'table-cell',
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
                               fontSize: '14px',
                               fontWeight: 'bold',
-                              lineHeight: 1,
-                              padding: showWatermarkBackground ? '6px 12px' : '0',
+                              color: '#ffd700',
+                              textShadow: showWatermarkBackground ? 'none' : '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                              height: '26px',
+                              paddingLeft: showWatermarkBackground ? '12px' : '0',
+                              paddingRight: showWatermarkBackground ? '12px' : '0',
                               whiteSpace: 'nowrap',
                             }}
                           >
