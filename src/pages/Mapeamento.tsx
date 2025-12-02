@@ -75,17 +75,21 @@ export default function Mapeamento() {
   const [editingText, setEditingText] = useState('');
   const [itemType, setItemType] = useState<'text' | 'logo'>('text');
   const [zoom, setZoom] = useState(1);
-  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline'>('select');
+  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move'>('select');
   const [drawColor, setDrawColor] = useState('#FFFFFF');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [nameFontSize, setNameFontSize] = useState(18);
   const [nameBorderColor, setNameBorderColor] = useState('#000000');
+  const [nameBackgroundOpacity, setNameBackgroundOpacity] = useState(0.85);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentDrawing, setCurrentDrawing] = useState<DrawingElement | null>(null);
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
   const [presentationTitle, setPresentationTitle] = useState('');
   const [watermark, setWatermark] = useState('@seuinstagram');
+  const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
+  const [isDraggingDrawing, setIsDraggingDrawing] = useState(false);
+  const [drawingDragStart, setDrawingDragStart] = useState<{ x: number; y: number } | null>(null);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -239,6 +243,29 @@ export default function Mapeamento() {
     };
   };
 
+  // Função para encontrar desenho clicado
+  const findClickedDrawing = (pos: { x: number; y: number }): number => {
+    return currentDrawings.findIndex(el => {
+      if (el.type === 'circle' || el.type === 'circleOutline') {
+        const dx = (el.x || 0) - pos.x;
+        const dy = (el.y || 0) - pos.y;
+        return Math.sqrt(dx * dx + dy * dy) < (el.radius || 0) + 10;
+      }
+      if (el.type === 'line' && el.points) {
+        return el.points.some(p => Math.abs(p.x - pos.x) < 10 && Math.abs(p.y - pos.y) < 10);
+      }
+      if (el.type === 'arrow') {
+        const dx = Math.abs((el.x || 0) - pos.x) + Math.abs((el.x2 || 0) - pos.x);
+        const dy = Math.abs((el.y || 0) - pos.y) + Math.abs((el.y2 || 0) - pos.y);
+        return dx < 50 && dy < 50;
+      }
+      if (el.type === 'text') {
+        return Math.abs((el.x || 0) - pos.x) < 50 && Math.abs((el.y || 0) - pos.y) < 20;
+      }
+      return false;
+    });
+  };
+
   // Handlers de desenho
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (drawTool === 'select') return;
@@ -246,27 +273,20 @@ export default function Mapeamento() {
     const pos = getMousePos(e);
     console.log('🖱️ Canvas click em', pos, 'ferramenta:', drawTool);
 
+    // Ferramenta MOVER
+    if (drawTool === 'move') {
+      const clickedIndex = findClickedDrawing(pos);
+      if (clickedIndex >= 0) {
+        setSelectedDrawingIndex(clickedIndex);
+        setIsDraggingDrawing(true);
+        setDrawingDragStart(pos);
+        toast.info('Arraste para mover');
+      }
+      return;
+    }
+
     if (drawTool === 'eraser') {
-      // Encontrar e remover elemento clicado
-      const clickedIndex = currentDrawings.findIndex(el => {
-        if (el.type === 'circle' || el.type === 'circleOutline') {
-          const dx = (el.x || 0) - pos.x;
-          const dy = (el.y || 0) - pos.y;
-          return Math.sqrt(dx * dx + dy * dy) < (el.radius || 0) + 10;
-        }
-        if (el.type === 'line' && el.points) {
-          return el.points.some(p => Math.abs(p.x - pos.x) < 10 && Math.abs(p.y - pos.y) < 10);
-        }
-        if (el.type === 'arrow') {
-          const dx = Math.abs((el.x || 0) - pos.x) + Math.abs((el.x2 || 0) - pos.x);
-          const dy = Math.abs((el.y || 0) - pos.y) + Math.abs((el.y2 || 0) - pos.y);
-          return dx < 50 && dy < 50;
-        }
-        if (el.type === 'text') {
-          return Math.abs((el.x || 0) - pos.x) < 50 && Math.abs((el.y || 0) - pos.y) < 20;
-        }
-        return false;
-      });
+      const clickedIndex = findClickedDrawing(pos);
 
       if (clickedIndex >= 0 && selectedMap) {
         const newDrawings = [...currentDrawings];
@@ -330,9 +350,38 @@ export default function Mapeamento() {
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !currentDrawing || !drawStart) return;
-    
     const pos = getMousePos(e);
+
+    // Mover desenho selecionado
+    if (isDraggingDrawing && selectedDrawingIndex !== null && drawingDragStart && selectedMap) {
+      const deltaX = pos.x - drawingDragStart.x;
+      const deltaY = pos.y - drawingDragStart.y;
+      
+      setMapDrawings(prev => {
+        const drawings = [...(prev[selectedMap.name] || [])];
+        const el = { ...drawings[selectedDrawingIndex] };
+        
+        if (el.type === 'line' && el.points) {
+          el.points = el.points.map(p => ({ x: p.x + deltaX, y: p.y + deltaY }));
+        } else if (el.type === 'arrow') {
+          el.x = (el.x || 0) + deltaX;
+          el.y = (el.y || 0) + deltaY;
+          el.x2 = (el.x2 || 0) + deltaX;
+          el.y2 = (el.y2 || 0) + deltaY;
+        } else if (el.type === 'circle' || el.type === 'circleOutline' || el.type === 'text') {
+          el.x = (el.x || 0) + deltaX;
+          el.y = (el.y || 0) + deltaY;
+        }
+        
+        drawings[selectedDrawingIndex] = el;
+        return { ...prev, [selectedMap.name]: drawings };
+      });
+      
+      setDrawingDragStart(pos);
+      return;
+    }
+
+    if (!isDrawing || !currentDrawing || !drawStart) return;
 
     if (currentDrawing.type === 'line') {
       setCurrentDrawing(prev => prev ? {
@@ -357,6 +406,15 @@ export default function Mapeamento() {
   };
 
   const handleCanvasMouseUp = () => {
+    // Finalizar movimento de desenho
+    if (isDraggingDrawing) {
+      setIsDraggingDrawing(false);
+      setSelectedDrawingIndex(null);
+      setDrawingDragStart(null);
+      toast.success('Desenho movido');
+      return;
+    }
+
     if (!isDrawing || !currentDrawing || !selectedMap) {
       setIsDrawing(false);
       return;
@@ -1023,6 +1081,20 @@ export default function Mapeamento() {
 
                       <div>
                         <label className="text-xs text-muted-foreground mb-1 block">
+                          Opacidade do Fundo: {Math.round(nameBackgroundOpacity * 100)}%
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={nameBackgroundOpacity * 100}
+                          onChange={(e) => setNameBackgroundOpacity(Number(e.target.value) / 100)}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">
                           Cor da Borda
                         </label>
                         <div className="flex gap-2">
@@ -1238,8 +1310,8 @@ export default function Mapeamento() {
                           style={{
                             left: name.x,
                             top: name.y,
-                            backgroundColor: 'rgba(0,0,0,0.85)',
-                            border: '1px solid rgba(255,255,255,0.2)',
+                            backgroundColor: `rgba(0,0,0,${nameBackgroundOpacity})`,
+                            border: nameBackgroundOpacity > 0 ? '1px solid rgba(255,255,255,0.2)' : 'none',
                             zIndex: 10,
                             pointerEvents: 'auto',
                           }}

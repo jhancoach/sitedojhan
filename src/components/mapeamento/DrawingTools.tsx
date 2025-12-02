@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { MousePointer, Pencil, ArrowRight, Type, Eraser, Circle, CircleDashed } from 'lucide-react';
+import { MousePointer, Pencil, ArrowRight, Type, Eraser, Circle, CircleDashed, Move } from 'lucide-react';
 
 interface DrawingToolsProps {
-  activeTool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline';
-  onToolChange: (tool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline') => void;
+  activeTool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move';
+  onToolChange: (tool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move') => void;
   drawColor: string;
   onColorChange: (color: string) => void;
 }
@@ -14,6 +14,7 @@ const drawColors = [
   { label: 'Vermelho', value: '#FF0000' },
   { label: 'Verde', value: '#00FF00' },
   { label: 'Azul', value: '#00BFFF' },
+  { label: 'Preto', value: '#000000' },
 ];
 
 export const DrawingTools = ({ activeTool, onToolChange, drawColor, onColorChange }: DrawingToolsProps) => {
@@ -30,6 +31,15 @@ export const DrawingTools = ({ activeTool, onToolChange, drawColor, onColorChang
           >
             <MousePointer className="h-4 w-4 mr-2" />
             Selecionar
+          </Button>
+          <Button
+            variant={activeTool === 'move' ? 'default' : 'outline'}
+            onClick={() => onToolChange('move')}
+            className="w-full"
+            size="sm"
+          >
+            <Move className="h-4 w-4 mr-2" />
+            Mover
           </Button>
           <Button
             variant={activeTool === 'draw' ? 'default' : 'outline'}
@@ -79,7 +89,7 @@ export const DrawingTools = ({ activeTool, onToolChange, drawColor, onColorChang
           <Button
             variant={activeTool === 'eraser' ? 'default' : 'outline'}
             onClick={() => onToolChange('eraser')}
-            className="w-full col-span-2"
+            className="w-full"
             size="sm"
           >
             <Eraser className="h-4 w-4 mr-2" />
