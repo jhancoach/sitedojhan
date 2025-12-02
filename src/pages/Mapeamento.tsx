@@ -589,20 +589,9 @@ export default function Mapeamento() {
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#1a1a2e',
+        backgroundColor: null,
         scale: 2, // Alta resolução
       });
-      
-      // Adicionar marca d'água se configurada
-      if (watermark.trim()) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.font = 'bold 28px Arial';
-          ctx.fillStyle = '#ffd700';
-          ctx.textAlign = 'right';
-          ctx.fillText(watermark, canvas.width - 30, canvas.height - 20);
-        }
-      }
 
       canvas.toBlob((blob) => {
         if (blob) {
@@ -637,20 +626,9 @@ export default function Mapeamento() {
       const canvas = await html2canvas(canvasRef.current, {
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#1a1a2e',
+        backgroundColor: null,
         scale: 2,
       });
-      
-      // Adicionar marca d'água se configurada
-      if (watermark.trim()) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.font = 'bold 28px Arial';
-          ctx.fillStyle = '#ffd700';
-          ctx.textAlign = 'right';
-          ctx.fillText(watermark, canvas.width - 30, canvas.height - 20);
-        }
-      }
       
       // Calcular tamanho mantendo proporção
       const imageRatio = canvas.width / canvas.height;
@@ -1260,8 +1238,8 @@ export default function Mapeamento() {
                           style={{
                             left: name.x,
                             top: name.y,
-                            backgroundColor: 'rgba(0,0,0,0.3)',
-                            backdropFilter: 'blur(4px)',
+                            backgroundColor: 'rgba(0,0,0,0.85)',
+                            border: '1px solid rgba(255,255,255,0.2)',
                             zIndex: 10,
                             pointerEvents: 'auto',
                           }}
@@ -1292,16 +1270,19 @@ export default function Mapeamento() {
 
 
                       {/* Marca d'água */}
-                      <div
-                        className="absolute bottom-4 right-4 text-white font-bold text-sm px-2 py-1 rounded"
-                        style={{
-                          textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                          backgroundColor: 'rgba(0,0,0,0.5)',
-                          zIndex: 20,
-                        }}
-                      >
-                        @jhanmedeiros
-                      </div>
+                      {watermark.trim() && (
+                        <div
+                          className="absolute bottom-4 right-4 font-bold text-sm px-3 py-1 rounded"
+                          style={{
+                            color: '#ffd700',
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            border: '1px solid rgba(255,215,0,0.3)',
+                            zIndex: 20,
+                          }}
+                        >
+                          {watermark}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
