@@ -667,6 +667,7 @@ export default function Mapeamento() {
   const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (drawTool === 'select') return;
     e.preventDefault();
+    e.stopPropagation();
     
     const pos = getTouchPos(e);
 
@@ -771,6 +772,7 @@ export default function Mapeamento() {
   const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (e.touches.length === 0) return;
     e.preventDefault();
+    e.stopPropagation();
     const pos = getTouchPos(e);
 
     if (isDraggingDrawing && selectedDrawingIndex !== null && drawingDragStart && selectedMap) {
@@ -837,7 +839,8 @@ export default function Mapeamento() {
     }
   };
 
-  const handleCanvasTouchEnd = () => {
+  const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.stopPropagation();
     if (isDraggingDrawing && selectedMap) {
       saveToHistory(mapDrawings);
       setIsDraggingDrawing(false);
