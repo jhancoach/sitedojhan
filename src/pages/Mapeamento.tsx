@@ -78,6 +78,7 @@ export default function Mapeamento() {
   const [editingText, setEditingText] = useState('');
   const [itemType, setItemType] = useState<'text' | 'logo'>('text');
   const [zoom, setZoom] = useState(1);
+  const [lastPinchDistance, setLastPinchDistance] = useState<number | null>(null);
   const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move' | 'rectangle' | 'straightLine'>('select');
   const [drawColor, setDrawColor] = useState('#FFFFFF');
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -1391,6 +1392,42 @@ export default function Mapeamento() {
     setZoom(prev => Math.max(prev - 0.1, 0.5));
   };
 
+  // Calcular distância entre dois toques
+  const getPinchDistance = (touches: React.TouchList): number => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Handler para início do pinch
+  const handlePinchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      setLastPinchDistance(getPinchDistance(e.touches));
+    }
+  };
+
+  // Handler para movimento do pinch (zoom)
+  const handlePinchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2 && lastPinchDistance !== null) {
+      e.preventDefault();
+      const currentDistance = getPinchDistance(e.touches);
+      const delta = currentDistance - lastPinchDistance;
+      
+      // Ajustar zoom baseado na diferença de distância
+      if (Math.abs(delta) > 5) {
+        const zoomDelta = delta > 0 ? 0.02 : -0.02;
+        setZoom(prev => Math.min(Math.max(prev + zoomDelta, 0.5), 2));
+        setLastPinchDistance(currentDistance);
+      }
+    }
+  };
+
+  // Handler para fim do pinch
+  const handlePinchEnd = () => {
+    setLastPinchDistance(null);
+  };
+
   const handlePrint = () => {
     if (!selectedMap) {
       toast.error('Selecione um mapa primeiro');
@@ -2031,8 +2068,18 @@ export default function Mapeamento() {
                       onMouseMove={handleMapMouseMove}
                       onMouseUp={handleMapMouseUp}
                       onMouseLeave={handleMapMouseUp}
-                      onTouchMove={handleMapTouchMove}
-                      onTouchEnd={handleMapTouchEnd}
+                      onTouchStart={handlePinchStart}
+                      onTouchMove={(e) => {
+                        if (e.touches.length === 2) {
+                          handlePinchMove(e);
+                        } else {
+                          handleMapTouchMove(e);
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        handlePinchEnd();
+                        handleMapTouchEnd();
+                      }}
                     >
                        {/* Canvas para Desenhos */}
                       <canvas
