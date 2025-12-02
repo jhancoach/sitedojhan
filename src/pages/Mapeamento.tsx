@@ -678,17 +678,20 @@ export default function Mapeamento() {
     try {
       toast.info('Gerando PDF... Aguarde');
       const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 297mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 210mm
       const container = canvasRef.current;
       const rect = container.getBoundingClientRect();
       
-      // Dimensões com moldura
-      const borderSize = 40;
-      const mapWidth = 1920;
-      const mapHeight = 1080;
-      const exportWidth = mapWidth + borderSize * 2;
-      const exportHeight = mapHeight + borderSize * 2;
+      // Usar proporção A4 landscape (297/210 ≈ 1.414)
+      const a4Ratio = pdfWidth / pdfHeight;
+      const exportHeight = 1080;
+      const exportWidth = Math.round(exportHeight * a4Ratio);
+      
+      // Dimensões do mapa dentro da moldura
+      const borderSize = 30;
+      const mapWidth = exportWidth - borderSize * 2;
+      const mapHeight = exportHeight - borderSize * 2;
       const scaleX = mapWidth / rect.width;
       const scaleY = mapHeight / rect.height;
       
@@ -705,23 +708,23 @@ export default function Mapeamento() {
           
           // Título centralizado
           coverCtx.fillStyle = '#ffd700';
-          coverCtx.font = 'bold 72px Arial';
+          coverCtx.font = 'bold 64px Arial';
           coverCtx.textAlign = 'center';
           coverCtx.textBaseline = 'middle';
           coverCtx.fillText(presentationTitle, exportWidth / 2, exportHeight / 2 - 40);
           
           // Subtítulo
           coverCtx.fillStyle = '#ffffff';
-          coverCtx.font = '36px Arial';
+          coverCtx.font = '32px Arial';
           coverCtx.fillText('Mapeamento Tático', exportWidth / 2, exportHeight / 2 + 40);
           
           // Marca d'água na capa
           if (watermark.trim()) {
-            coverCtx.font = 'bold 24px Arial';
+            coverCtx.font = 'bold 20px Arial';
             coverCtx.fillStyle = '#ffd700';
             coverCtx.textAlign = 'right';
             coverCtx.textBaseline = 'bottom';
-            coverCtx.fillText(watermark, exportWidth - 30, exportHeight - 20);
+            coverCtx.fillText(watermark, exportWidth - 20, exportHeight - 15);
           }
           
           const coverImgData = coverCanvas.toDataURL('image/png');
@@ -781,10 +784,10 @@ export default function Mapeamento() {
       
       // 5. Marca d'água no canto inferior direito
       if (watermark.trim()) {
-        ctx.font = 'bold 24px Arial';
+        ctx.font = 'bold 20px Arial';
         ctx.fillStyle = '#ffd700';
         ctx.textAlign = 'right';
-        ctx.fillText(watermark, exportWidth - 20, exportHeight - 15);
+        ctx.fillText(watermark, exportWidth - 15, exportHeight - 12);
       }
       
       const imgData = finalCanvas.toDataURL('image/png');
