@@ -765,6 +765,21 @@ export default function Mapeamento() {
     setDragOffset({ x: pointerX - name.x, y: pointerY - name.y });
   };
 
+  const handleNameTouchStart = (id: string, event: React.TouchEvent<HTMLDivElement>) => {
+    if (!canvasRef.current) return;
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const pointerX = touch.clientX - rect.left;
+    const pointerY = touch.clientY - rect.top;
+
+    const name = currentNames.find(n => n.id === id);
+    if (!name) return;
+
+    setDraggingId(id);
+    setDragOffset({ x: pointerX - name.x, y: pointerY - name.y });
+  };
+
   const handleMapMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!draggingId || !canvasRef.current) return;
 
@@ -778,7 +793,25 @@ export default function Mapeamento() {
     handleDrag(draggingId, { x: newX, y: newY });
   };
 
+  const handleMapTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!draggingId || !canvasRef.current) return;
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = canvasRef.current.getBoundingClientRect();
+    const pointerX = touch.clientX - rect.left;
+    const pointerY = touch.clientY - rect.top;
+
+    const newX = pointerX - dragOffset.x;
+    const newY = pointerY - dragOffset.y;
+
+    handleDrag(draggingId, { x: newX, y: newY });
+  };
+
   const handleMapMouseUp = () => {
+    setDraggingId(null);
+  };
+
+  const handleMapTouchEnd = () => {
     setDraggingId(null);
   };
 
@@ -1783,6 +1816,8 @@ export default function Mapeamento() {
                       onMouseMove={handleMapMouseMove}
                       onMouseUp={handleMapMouseUp}
                       onMouseLeave={handleMapMouseUp}
+                      onTouchMove={handleMapTouchMove}
+                      onTouchEnd={handleMapTouchEnd}
                     >
                        {/* Canvas para Desenhos */}
                       <canvas
@@ -1823,6 +1858,7 @@ export default function Mapeamento() {
                             textAlign: 'center',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
+                          onTouchStart={(event) => handleNameTouchStart(name.id, event)}
                         >
                           {name.type === 'logo' && name.logo ? (
                             <img
