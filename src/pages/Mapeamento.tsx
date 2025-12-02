@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -95,11 +96,13 @@ export default function Mapeamento() {
   const [drawingHistory, setDrawingHistory] = useState<Record<string, DrawingElement[]>[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [lineThickness, setLineThickness] = useState(3);
-  const [arrowStyle, setArrowStyle] = useState<'simple' | 'filled' | 'double'>('simple');
+  const [arrowStyle, setArrowStyle] = useState<'simple' | 'filled' | 'double' | 'dashed'>('simple');
   const [showWatermark, setShowWatermark] = useState(true);
   const [showNameBackground, setShowNameBackground] = useState(true);
   const [showWatermarkBackground, setShowWatermarkBackground] = useState(true);
   const [exportScale, setExportScale] = useState(2);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -109,8 +112,8 @@ export default function Mapeamento() {
   const currentDrawings = selectedMap ? (mapDrawings[selectedMap.name] || []) : [];
 
   // Função para desenhar ponta de seta
-  const drawArrowHead = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, style: 'simple' | 'filled' | 'double', headLength: number) => {
-    if (style === 'simple') {
+  const drawArrowHead = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, style: 'simple' | 'filled' | 'double' | 'dashed', headLength: number) => {
+    if (style === 'simple' || style === 'dashed') {
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x - headLength * Math.cos(angle - Math.PI / 6), y - headLength * Math.sin(angle - Math.PI / 6));
@@ -157,10 +160,15 @@ export default function Mapeamento() {
           break;
         case 'arrow':
           if (element.x !== undefined && element.y !== undefined && element.x2 !== undefined && element.y2 !== undefined) {
+            // Aplicar linha tracejada se estiver selecionado
+            if (arrowStyle === 'dashed') {
+              ctx.setLineDash([10, 5]);
+            }
             ctx.beginPath();
             ctx.moveTo(element.x, element.y);
             ctx.lineTo(element.x2, element.y2);
             ctx.stroke();
+            ctx.setLineDash([]); // Resetar para linha sólida
             // Desenhar ponta da seta
             const angle = Math.atan2(element.y2 - element.y, element.x2 - element.x);
             const headLength = 10 + lineThickness * 2;
@@ -234,10 +242,14 @@ export default function Mapeamento() {
           break;
         case 'arrow':
           if (currentDrawing.x !== undefined && currentDrawing.y !== undefined && currentDrawing.x2 !== undefined && currentDrawing.y2 !== undefined) {
+            if (arrowStyle === 'dashed') {
+              ctx.setLineDash([10, 5]);
+            }
             ctx.beginPath();
             ctx.moveTo(currentDrawing.x, currentDrawing.y);
             ctx.lineTo(currentDrawing.x2, currentDrawing.y2);
             ctx.stroke();
+            ctx.setLineDash([]);
             // Preview da ponta
             const angle = Math.atan2(currentDrawing.y2 - currentDrawing.y, currentDrawing.x2 - currentDrawing.x);
             const headLength = 10 + lineThickness * 2;
@@ -738,6 +750,43 @@ export default function Mapeamento() {
     setMapDrawings(newMapDrawings);
     saveToHistory(newMapDrawings);
     toast.success('Desenhos limpos');
+  };
+
+  const handlePreview = async () => {
+    if (!canvasRef.current || !selectedMap) {
+      toast.error('Selecione um mapa primeiro');
+      return;
+    }
+
+    if (names.length < 2) {
+      toast.error('Adicione pelo menos 2 nomes de times');
+      return;
+    }
+
+    try {
+      const canvas = await createExportCanvas();
+      if (!canvas) {
+        toast.error('Erro ao criar preview');
+        return;
+      }
+      setPreviewImage(canvas.toDataURL('image/png'));
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Erro ao gerar preview:', error);
+      toast.error('Erro ao gerar preview');
+    }
+  };
+
+  const handleConfirmDownload = () => {
+    if (previewImage) {
+      const link = document.createElement('a');
+      link.href = previewImage;
+      link.download = `mapeamento-${selectedMap?.name || 'mapa'}.png`;
+      link.click();
+      toast.success('Imagem baixada com sucesso');
+      setShowPreview(false);
+      setPreviewImage(null);
+    }
   };
 
   const handleSaveProject = async (projectName: string) => {
@@ -1604,16 +1653,25 @@ export default function Mapeamento() {
                       </div>
 
                       <div className="space-y-2 pt-2">
-                        {(names.length === 0 && currentDrawings.length === 0) && (
+                        {names.length < 2 && (
                           <p className="text-xs text-muted-foreground text-center py-2 bg-muted/50 rounded-lg">
-                            Adicione nomes ou desenhos antes de baixar
+                            Adicione pelo menos 2 nomes de times para baixar
                           </p>
                         )}
+                        <Button 
+                          onClick={handlePreview} 
+                          className="w-full" 
+                          variant="outline"
+                          disabled={names.length < 2}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Preview antes de Baixar
+                        </Button>
                         <Button 
                           onClick={handleExportImage} 
                           className="w-full" 
                           variant="premium"
-                          disabled={names.length === 0 && currentDrawings.length === 0}
+                          disabled={names.length < 2}
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Baixar Imagem Atual
@@ -1622,7 +1680,7 @@ export default function Mapeamento() {
                           onClick={handleExportPDF} 
                           className="w-full" 
                           variant="default"
-                          disabled={names.length === 0 && currentDrawings.length === 0}
+                          disabled={names.length < 2}
                         >
                           <FileText className="h-4 w-4 mr-2" />
                           Baixar PDF (Com Capa)
@@ -1636,7 +1694,7 @@ export default function Mapeamento() {
                             onClick={handleShare} 
                             className="w-full" 
                             variant="outline"
-                            disabled={names.length === 0 && currentDrawings.length === 0}
+                            disabled={names.length < 2}
                           >
                             <Share2 className="h-4 w-4 mr-2" />
                             Compartilhar
@@ -1796,6 +1854,33 @@ export default function Mapeamento() {
         </div>
       </main>
       <Footer />
+
+      {/* Dialog de Preview */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview da Imagem</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto">
+            {previewImage && (
+              <img 
+                src={previewImage} 
+                alt="Preview" 
+                className="w-full h-auto rounded-lg border"
+              />
+            )}
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              Cancelar
+            </Button>
+            <Button variant="premium" onClick={handleConfirmDownload}>
+              <Download className="h-4 w-4 mr-2" />
+              Confirmar Download
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         @media print {

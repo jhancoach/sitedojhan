@@ -10,8 +10,8 @@ interface DrawingToolsProps {
   onColorChange: (color: string) => void;
   lineThickness: number;
   onLineThicknessChange: (thickness: number) => void;
-  arrowStyle: 'simple' | 'filled' | 'double';
-  onArrowStyleChange: (style: 'simple' | 'filled' | 'double') => void;
+  arrowStyle: 'simple' | 'filled' | 'double' | 'dashed';
+  onArrowStyleChange: (style: 'simple' | 'filled' | 'double' | 'dashed') => void;
 }
 
 const drawColors = [
@@ -168,7 +168,7 @@ export const DrawingTools = ({
 
       <div>
         <label className="text-sm font-medium mb-2 block">Estilo da Seta</label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             variant={arrowStyle === 'simple' ? 'default' : 'outline'}
             onClick={() => onArrowStyleChange('simple')}
@@ -192,6 +192,14 @@ export const DrawingTools = ({
             className="w-full text-xs"
           >
             Dupla ↔
+          </Button>
+          <Button
+            variant={arrowStyle === 'dashed' ? 'default' : 'outline'}
+            onClick={() => onArrowStyleChange('dashed')}
+            size="sm"
+            className="w-full text-xs"
+          >
+            Tracejada - -→
           </Button>
         </div>
       </div>
