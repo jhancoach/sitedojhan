@@ -70,7 +70,7 @@ const textColors = [
 export default function Mapeamento() {
   const { user } = useAuth();
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
-  const [names, setNames] = useState<NameItem[]>([]);
+  const [mapNames, setMapNames] = useState<Record<string, NameItem[]>>({});
   const [mapDrawings, setMapDrawings] = useState<Record<string, DrawingElement[]>>({});
   const [newName, setNewName] = useState('');
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
@@ -108,8 +108,18 @@ export default function Mapeamento() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Obter desenhos do mapa atual
+  // Obter nomes e desenhos do mapa atual
+  const currentNames = selectedMap ? (mapNames[selectedMap.name] || []) : [];
   const currentDrawings = selectedMap ? (mapDrawings[selectedMap.name] || []) : [];
+
+  // Função auxiliar para atualizar nomes do mapa atual
+  const setCurrentNames = (updater: NameItem[] | ((prev: NameItem[]) => NameItem[])) => {
+    if (!selectedMap) return;
+    setMapNames(prev => ({
+      ...prev,
+      [selectedMap.name]: typeof updater === 'function' ? updater(prev[selectedMap.name] || []) : updater,
+    }));
+  };
 
   // Função para desenhar ponta de seta
   const drawArrowHead = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, style: 'simple' | 'filled' | 'double' | 'dashed', headLength: number) => {
@@ -614,7 +624,7 @@ export default function Mapeamento() {
       return;
     }
 
-    if (names.length >= 15) {
+    if (currentNames.length >= 15) {
       toast.error('Máximo de 15 itens atingido');
       return;
     }
@@ -630,7 +640,7 @@ export default function Mapeamento() {
 
     console.log('Adding name item', newItem);
 
-    setNames([...names, newItem]);
+    setCurrentNames([...currentNames, newItem]);
     setNewName('');
     toast.success('Item adicionado');
   };
@@ -639,7 +649,7 @@ export default function Mapeamento() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (names.length >= 15) {
+    if (currentNames.length >= 15) {
       toast.error('Máximo de 15 itens atingido');
       return;
     }
@@ -655,19 +665,19 @@ export default function Mapeamento() {
         logo: event.target?.result as string,
         type: 'logo',
       };
-      setNames([...names, newItem]);
+      setCurrentNames(prev => [...prev, newItem]);
       toast.success('Logo adicionado');
     };
     reader.readAsDataURL(file);
   };
 
   const handleDuplicate = (id: string) => {
-    if (names.length >= 15) {
+    if (currentNames.length >= 15) {
       toast.error('Máximo de 15 itens atingido');
       return;
     }
 
-    const original = names.find(n => n.id === id);
+    const original = currentNames.find(n => n.id === id);
     if (original) {
       const duplicate: NameItem = {
         ...original,
@@ -675,13 +685,13 @@ export default function Mapeamento() {
         x: original.x + 20,
         y: original.y + 20,
       };
-      setNames([...names, duplicate]);
+      setCurrentNames([...currentNames, duplicate]);
       toast.success('Item duplicado');
     }
   };
 
   const handleDelete = (id: string) => {
-    setNames(names.filter(n => n.id !== id));
+    setCurrentNames(currentNames.filter(n => n.id !== id));
     toast.success('Item removido');
   };
 
@@ -696,7 +706,7 @@ export default function Mapeamento() {
       return;
     }
 
-    setNames(names.map(n => n.id === id ? { ...n, text: editingText.trim() } : n));
+    setCurrentNames(currentNames.map(n => n.id === id ? { ...n, text: editingText.trim() } : n));
     setEditingId(null);
     setEditingText('');
     toast.success('Nome atualizado');
@@ -708,7 +718,7 @@ export default function Mapeamento() {
   };
 
   const handleDrag = (id: string, position: { x: number; y: number }) => {
-    setNames(prev => prev.map(n => n.id === id ? { ...n, x: position.x, y: position.y } : n));
+    setCurrentNames(prev => prev.map(n => n.id === id ? { ...n, x: position.x, y: position.y } : n));
   };
 
   const handleNameMouseDown = (id: string, event: React.MouseEvent<HTMLDivElement>) => {
@@ -717,7 +727,7 @@ export default function Mapeamento() {
     const pointerX = event.clientX - rect.left;
     const pointerY = event.clientY - rect.top;
 
-    const name = names.find(n => n.id === id);
+    const name = currentNames.find(n => n.id === id);
     if (!name) return;
 
     setDraggingId(id);
@@ -758,7 +768,7 @@ export default function Mapeamento() {
       return;
     }
 
-    if (names.length < 2) {
+    if (currentNames.length < 2) {
       toast.error('Adicione pelo menos 2 nomes de times');
       return;
     }
@@ -800,7 +810,7 @@ export default function Mapeamento() {
         user_id: user.id,
         nome: projectName,
         mapa_nome: selectedMap.name,
-        itens: names as any,
+        itens: mapNames as any,
         anotacoes: [] as any,
         desenhos: mapDrawings as any,
       };
@@ -834,9 +844,9 @@ export default function Mapeamento() {
       const map = maps.find(m => m.name === data.mapa_nome);
       if (map) setSelectedMap(map);
 
-      // Carregar nomes (globais para todos os mapas)
-      const loadedNames = ((data.itens as any) || []) as NameItem[];
-      setNames(loadedNames);
+      // Carregar nomes (por mapa)
+      const loadedNames = ((data.itens as any) || {}) as Record<string, NameItem[]>;
+      setMapNames(loadedNames);
 
       // Carregar desenhos (específicos por mapa)
       const loadedDrawings = (data.desenhos as any) || {};
@@ -882,7 +892,7 @@ export default function Mapeamento() {
     }
     
     // 3. Desenhar os nomes dos times com posicionamento exato
-    for (const name of names) {
+    for (const name of currentNames) {
       if (name.type === 'logo' && name.logo) {
         const logoImg = new Image();
         logoImg.crossOrigin = 'anonymous';
@@ -1147,7 +1157,7 @@ export default function Mapeamento() {
       }
       
       // 3. Desenhar os nomes dos times
-      names.forEach((name) => {
+      currentNames.forEach((name) => {
         ctx.fillStyle = name.color;
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
@@ -1252,7 +1262,7 @@ export default function Mapeamento() {
                   {/* Tipo de Item */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">
-                      Adicionar Item ({names.length}/15)
+                      Adicionar Item ({currentNames.length}/15)
                     </label>
                     <div className="grid grid-cols-2 gap-2 mb-2">
                       <Button
@@ -1269,7 +1279,7 @@ export default function Mapeamento() {
                           setItemType('logo');
                           fileInputRef.current?.click();
                         }}
-                        disabled={names.length >= 15}
+                        disabled={currentNames.length >= 15}
                         className="w-full"
                       >
                         <ImageIcon className="h-4 w-4 mr-2" />
@@ -1310,7 +1320,7 @@ export default function Mapeamento() {
                         <Button
                           onClick={handleAddName}
                           className="w-full"
-                          disabled={names.length >= 15}
+                          disabled={currentNames.length >= 15}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Adicionar
@@ -1320,11 +1330,11 @@ export default function Mapeamento() {
                   )}
 
                   {/* Lista de Itens */}
-                  {names.length > 0 && (
+                  {currentNames.length > 0 && (
                     <div>
                       <label className="text-sm font-medium mb-2 block">Itens no Mapa</label>
                       <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {names.map((name) => (
+                        {currentNames.map((name) => (
                           <div
                             key={name.id}
                             className="flex items-center gap-2 p-2 rounded-lg bg-card/50 border border-border"
@@ -1375,7 +1385,7 @@ export default function Mapeamento() {
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => handleDuplicate(name.id)}
-                                  disabled={names.length >= 15}
+                                  disabled={currentNames.length >= 15}
                                   className="h-8 w-8"
                                 >
                                   <Copy className="h-4 w-4" />
@@ -1397,7 +1407,7 @@ export default function Mapeamento() {
                   )}
 
                   {/* Configuração de Aparência dos Nomes */}
-                  {names.length > 0 && (
+                  {currentNames.length > 0 && (
                     <div className="space-y-3 pt-3 border-t">
                       <label className="text-sm font-medium block">Aparência dos Nomes</label>
                       
@@ -1653,7 +1663,7 @@ export default function Mapeamento() {
                       </div>
 
                       <div className="space-y-2 pt-2">
-                        {names.length < 2 && (
+                        {currentNames.length < 2 && (
                           <p className="text-xs text-muted-foreground text-center py-2 bg-muted/50 rounded-lg">
                             Adicione pelo menos 2 nomes de times para baixar
                           </p>
@@ -1662,7 +1672,7 @@ export default function Mapeamento() {
                           onClick={handlePreview} 
                           className="w-full" 
                           variant="outline"
-                          disabled={names.length < 2}
+                          disabled={currentNames.length < 2}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Preview antes de Baixar
@@ -1671,7 +1681,7 @@ export default function Mapeamento() {
                           onClick={handleExportImage} 
                           className="w-full" 
                           variant="premium"
-                          disabled={names.length < 2}
+                          disabled={currentNames.length < 2}
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Baixar Imagem Atual
@@ -1680,7 +1690,7 @@ export default function Mapeamento() {
                           onClick={handleExportPDF} 
                           className="w-full" 
                           variant="default"
-                          disabled={names.length < 2}
+                          disabled={currentNames.length < 2}
                         >
                           <FileText className="h-4 w-4 mr-2" />
                           Baixar PDF (Com Capa)
@@ -1694,7 +1704,7 @@ export default function Mapeamento() {
                             onClick={handleShare} 
                             className="w-full" 
                             variant="outline"
-                            disabled={names.length < 2}
+                            disabled={currentNames.length < 2}
                           >
                             <Share2 className="h-4 w-4 mr-2" />
                             Compartilhar
@@ -1753,7 +1763,7 @@ export default function Mapeamento() {
                       />
 
                       {/* Itens Arrastáveis - Nomes dos Times */}
-                      {names.map((name) => (
+                      {currentNames.map((name) => (
                         <div
                           key={name.id}
                           className="absolute cursor-move select-none"
