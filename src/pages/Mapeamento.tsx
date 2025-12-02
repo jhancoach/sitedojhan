@@ -1477,7 +1477,8 @@ export default function Mapeamento() {
                             zIndex: 10,
                             pointerEvents: 'auto',
                             borderRadius: '4px',
-                            padding: showNameBackground ? '6px 12px' : '0',
+                            height: showNameBackground ? `${nameFontSize + 14}px` : 'auto',
+                            textAlign: 'center',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
@@ -1490,16 +1491,21 @@ export default function Mapeamento() {
                                 height: '48px',
                                 width: '48px',
                                 objectFit: 'contain',
+                                margin: showNameBackground ? '4px 8px' : '0',
                               }}
                             />
                           ) : (
                             <span
                               style={{
+                                display: 'block',
                                 fontSize: `${nameFontSize}px`,
                                 fontWeight: 'bold',
                                 color: name.color,
                                 textShadow: `2px 2px 4px ${nameBorderColor}, -1px -1px 0 ${nameBorderColor}, 1px -1px 0 ${nameBorderColor}, -1px 1px 0 ${nameBorderColor}, 1px 1px 0 ${nameBorderColor}`,
                                 whiteSpace: 'nowrap',
+                                lineHeight: showNameBackground ? `${nameFontSize + 14}px` : 'normal',
+                                paddingLeft: showNameBackground ? '12px' : '0',
+                                paddingRight: showNameBackground ? '12px' : '0',
                               }}
                             >
                               {name.text}
@@ -1522,16 +1528,21 @@ export default function Mapeamento() {
                             border: showWatermarkBackground ? '1px solid rgba(255,215,0,0.3)' : 'none',
                             zIndex: 20,
                             borderRadius: '4px',
-                            padding: showWatermarkBackground ? '6px 12px' : '0',
+                            height: showWatermarkBackground ? '28px' : 'auto',
+                            textAlign: 'center',
                           }}
                         >
                           <span
                             style={{
+                              display: 'block',
                               fontSize: '14px',
                               fontWeight: 'bold',
                               color: '#ffd700',
                               textShadow: showWatermarkBackground ? 'none' : '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
                               whiteSpace: 'nowrap',
+                              lineHeight: showWatermarkBackground ? '28px' : 'normal',
+                              paddingLeft: showWatermarkBackground ? '12px' : '0',
+                              paddingRight: showWatermarkBackground ? '12px' : '0',
                             }}
                           >
                             {watermark}
