@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { MousePointer, Pencil, ArrowRight, Type, Eraser, Circle, CircleDashed, Move } from 'lucide-react';
+import { MousePointer, Pencil, ArrowRight, Type, Eraser, Circle, CircleDashed, Move, Square, Minus } from 'lucide-react';
+
+export type DrawToolType = 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move' | 'rectangle' | 'straightLine';
 
 interface DrawingToolsProps {
-  activeTool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move';
-  onToolChange: (tool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move') => void;
+  activeTool: DrawToolType;
+  onToolChange: (tool: DrawToolType) => void;
   drawColor: string;
   onColorChange: (color: string) => void;
   lineThickness: number;
@@ -98,6 +100,24 @@ export const DrawingTools = ({
           >
             <CircleDashed className="h-4 w-4 mr-2" />
             Círculo vazio
+          </Button>
+          <Button
+            variant={activeTool === 'rectangle' ? 'default' : 'outline'}
+            onClick={() => onToolChange('rectangle')}
+            className="w-full"
+            size="sm"
+          >
+            <Square className="h-4 w-4 mr-2" />
+            Retângulo
+          </Button>
+          <Button
+            variant={activeTool === 'straightLine' ? 'default' : 'outline'}
+            onClick={() => onToolChange('straightLine')}
+            className="w-full"
+            size="sm"
+          >
+            <Minus className="h-4 w-4 mr-2" />
+            Linha Reta
           </Button>
           <Button
             variant={activeTool === 'eraser' ? 'default' : 'outline'}

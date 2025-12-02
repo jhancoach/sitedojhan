@@ -32,7 +32,7 @@ interface NameItem {
 
 interface DrawingElement {
   id: string;
-  type: 'line' | 'arrow' | 'circle' | 'circleOutline' | 'text';
+  type: 'line' | 'arrow' | 'circle' | 'circleOutline' | 'text' | 'rectangle' | 'straightLine';
   color: string;
   points?: { x: number; y: number }[];
   x?: number;
@@ -41,6 +41,8 @@ interface DrawingElement {
   y2?: number;
   radius?: number;
   text?: string;
+  width?: number;
+  height?: number;
 }
 
 const maps: MapData[] = [
@@ -75,7 +77,7 @@ export default function Mapeamento() {
   const [editingText, setEditingText] = useState('');
   const [itemType, setItemType] = useState<'text' | 'logo'>('text');
   const [zoom, setZoom] = useState(1);
-  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move'>('select');
+  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move' | 'rectangle' | 'straightLine'>('select');
   const [drawColor, setDrawColor] = useState('#FFFFFF');
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -97,6 +99,7 @@ export default function Mapeamento() {
   const [showWatermark, setShowWatermark] = useState(true);
   const [showNameBackground, setShowNameBackground] = useState(true);
   const [showWatermarkBackground, setShowWatermarkBackground] = useState(true);
+  const [exportScale, setExportScale] = useState(2);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -192,6 +195,24 @@ export default function Mapeamento() {
             ctx.fillText(element.text, element.x, element.y);
           }
           break;
+        case 'rectangle':
+          if (element.x !== undefined && element.y !== undefined && element.width !== undefined && element.height !== undefined) {
+            ctx.beginPath();
+            ctx.rect(element.x, element.y, element.width, element.height);
+            ctx.globalAlpha = 0.3;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.stroke();
+          }
+          break;
+        case 'straightLine':
+          if (element.x !== undefined && element.y !== undefined && element.x2 !== undefined && element.y2 !== undefined) {
+            ctx.beginPath();
+            ctx.moveTo(element.x, element.y);
+            ctx.lineTo(element.x2, element.y2);
+            ctx.stroke();
+          }
+          break;
       }
     });
 
@@ -237,6 +258,24 @@ export default function Mapeamento() {
               ctx.fill();
               ctx.globalAlpha = 1;
             }
+            ctx.stroke();
+          }
+          break;
+        case 'rectangle':
+          if (currentDrawing.x !== undefined && currentDrawing.y !== undefined && currentDrawing.width !== undefined && currentDrawing.height !== undefined) {
+            ctx.beginPath();
+            ctx.rect(currentDrawing.x, currentDrawing.y, currentDrawing.width, currentDrawing.height);
+            ctx.globalAlpha = 0.3;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.stroke();
+          }
+          break;
+        case 'straightLine':
+          if (currentDrawing.x !== undefined && currentDrawing.y !== undefined && currentDrawing.x2 !== undefined && currentDrawing.y2 !== undefined) {
+            ctx.beginPath();
+            ctx.moveTo(currentDrawing.x, currentDrawing.y);
+            ctx.lineTo(currentDrawing.x2, currentDrawing.y2);
             ctx.stroke();
           }
           break;
@@ -434,6 +473,26 @@ export default function Mapeamento() {
         y: pos.y,
         radius: 0,
       });
+    } else if (drawTool === 'rectangle') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'rectangle',
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        width: 0,
+        height: 0,
+      });
+    } else if (drawTool === 'straightLine') {
+      setCurrentDrawing({
+        id: Date.now().toString(),
+        type: 'straightLine',
+        color: drawColor,
+        x: pos.x,
+        y: pos.y,
+        x2: pos.x,
+        y2: pos.y,
+      });
     }
   };
 
@@ -489,6 +548,18 @@ export default function Mapeamento() {
       setCurrentDrawing(prev => prev ? {
         ...prev,
         radius,
+      } : null);
+    } else if (currentDrawing.type === 'rectangle') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        width: pos.x - drawStart.x,
+        height: pos.y - drawStart.y,
+      } : null);
+    } else if (currentDrawing.type === 'straightLine') {
+      setCurrentDrawing(prev => prev ? {
+        ...prev,
+        x2: pos.x,
+        y2: pos.y,
       } : null);
     }
   };
@@ -737,13 +808,12 @@ export default function Mapeamento() {
     const rect = container.getBoundingClientRect();
     
     const finalCanvas = document.createElement('canvas');
-    const scale = 2;
-    finalCanvas.width = rect.width * scale;
-    finalCanvas.height = rect.height * scale;
+    finalCanvas.width = rect.width * exportScale;
+    finalCanvas.height = rect.height * exportScale;
     const ctx = finalCanvas.getContext('2d');
     if (!ctx) return null;
     
-    ctx.scale(scale, scale);
+    ctx.scale(exportScale, exportScale);
     
     // 1. Desenhar imagem de fundo do mapa
     const mapImg = new Image();
@@ -1368,8 +1438,10 @@ export default function Mapeamento() {
                     <div className="text-xs space-y-1 text-muted-foreground">
                       <p><strong>✏️ Linha:</strong> Clique, segure e arraste para desenhar livre</p>
                       <p><strong>➡️ Seta:</strong> Clique no início, arraste até o fim e solte</p>
-                      <p><strong>⭕ Círculo:</strong> Clique no centro, arraste e solte (preenchido transparente)</p>
+                      <p><strong>⭕ Círculo:</strong> Clique no centro, arraste e solte</p>
                       <p><strong>○ Círculo vazio:</strong> Igual ao círculo, mas só contorno</p>
+                      <p><strong>▢ Retângulo:</strong> Clique no canto, arraste até o outro</p>
+                      <p><strong>— Linha Reta:</strong> Clique no início, arraste até o fim</p>
                       <p><strong>📝 Anotação:</strong> Clique onde quer escrever e digite</p>
                       <p><strong>🗑️ Apagar:</strong> Clique no desenho que quer remover</p>
                     </div>
@@ -1516,6 +1588,21 @@ export default function Mapeamento() {
                         </label>
                       </div>
 
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Resolução do Export</label>
+                        <Select value={String(exportScale)} onValueChange={(v) => setExportScale(Number(v))}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Resolução" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1x (Rápido)</SelectItem>
+                            <SelectItem value="2">2x (Padrão)</SelectItem>
+                            <SelectItem value="3">3x (Alta)</SelectItem>
+                            <SelectItem value="4">4x (Ultra)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div className="space-y-2 pt-2">
                         <Button onClick={handleExportImage} className="w-full" variant="premium">
                           <Download className="h-4 w-4 mr-2" />
@@ -1573,7 +1660,7 @@ export default function Mapeamento() {
                         style={{ 
                           pointerEvents: drawTool === 'select' ? 'none' : 'auto',
                           zIndex: drawTool === 'select' ? 1 : 15,
-                          cursor: drawTool === 'draw' || drawTool === 'arrow' || drawTool === 'circle' || drawTool === 'circleOutline' || drawTool === 'text'
+                          cursor: drawTool === 'draw' || drawTool === 'arrow' || drawTool === 'circle' || drawTool === 'circleOutline' || drawTool === 'text' || drawTool === 'rectangle' || drawTool === 'straightLine'
                             ? 'crosshair'
                             : drawTool === 'eraser'
                               ? 'pointer'
