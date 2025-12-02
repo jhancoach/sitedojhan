@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { DrawingTools } from '@/components/mapeamento/DrawingTools';
-import { FormationTemplates, FormationTemplate } from '@/components/mapeamento/FormationTemplates';
 import { ProjectManager } from '@/components/mapeamento/ProjectManager';
 
 interface MapData {
@@ -72,6 +71,9 @@ export default function Mapeamento() {
   const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    console.log('Nomes atualizados', names);
+  }, [names]);
   // Inicializar Fabric Canvas
   useEffect(() => {
     if (!fabricCanvasRef.current || !canvasRef.current || !selectedMap) return;
@@ -188,6 +190,8 @@ export default function Mapeamento() {
       type: 'text',
     };
 
+    console.log('Adding name item', newItem);
+
     setNames([...names, newItem]);
     setNewName('');
     toast.success('Item adicionado');
@@ -267,28 +271,6 @@ export default function Mapeamento() {
 
   const handleDrag = (id: string, data: { x: number; y: number }) => {
     setNames(names.map(n => n.id === id ? { ...n, x: data.x, y: data.y } : n));
-  };
-
-  const handleApplyTemplate = (template: FormationTemplate) => {
-    if (!selectedMap) {
-      toast.error('Selecione um mapa primeiro');
-      return;
-    }
-
-    const containerWidth = canvasRef.current?.offsetWidth || 800;
-    const containerHeight = canvasRef.current?.offsetHeight || 450;
-
-    const newNames: NameItem[] = template.positions.map((pos, index) => ({
-      id: `${Date.now()}_${index}`,
-      text: pos.label,
-      x: (pos.x / 100) * containerWidth,
-      y: (pos.y / 100) * containerHeight,
-      color: selectedColor,
-      type: 'text' as const,
-    }));
-
-    setNames(newNames);
-    toast.success(`Template ${template.name} aplicado`);
   };
 
   const handleSaveProject = async (projectName: string) => {
@@ -682,8 +664,6 @@ export default function Mapeamento() {
                     </div>
                   )}
 
-                  {/* Templates */}
-                  <FormationTemplates onApplyTemplate={handleApplyTemplate} />
 
                   {/* Zoom (Mapa) */}
                   {selectedMap && (
