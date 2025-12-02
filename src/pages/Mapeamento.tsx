@@ -130,9 +130,7 @@ export default function Mapeamento() {
     console.log('✅ Modo de desenho alterado para:', drawTool, 'Cor:', drawColor);
 
     // Limpar todos os event listeners anteriores
-    fabricCanvas.off('mouse:down');
-    fabricCanvas.off('mouse:move');
-    fabricCanvas.off('mouse:up');
+    fabricCanvas.off();
 
     // Sempre desabilitar modo desenho livre primeiro
     fabricCanvas.isDrawingMode = false;
