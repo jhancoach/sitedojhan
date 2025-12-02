@@ -1,16 +1,22 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon } from 'lucide-react';
 import Draggable from 'react-draggable';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { Canvas as FabricCanvas, Line, Path, IText } from 'fabric';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { DrawingTools } from '@/components/mapeamento/DrawingTools';
+import { FormationTemplates, FormationTemplate } from '@/components/mapeamento/FormationTemplates';
+import { ProjectManager } from '@/components/mapeamento/ProjectManager';
 
 interface MapData {
   name: string;
@@ -49,7 +55,7 @@ const textColors = [
 ];
 
 export default function Mapeamento() {
-  const { t } = useLanguage();
+  const { user } = useAuth();
   const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
   const [names, setNames] = useState<NameItem[]>([]);
   const [newName, setNewName] = useState('');
@@ -58,8 +64,98 @@ export default function Mapeamento() {
   const [editingText, setEditingText] = useState('');
   const [itemType, setItemType] = useState<'text' | 'logo'>('text');
   const [zoom, setZoom] = useState(1);
+  const [drawTool, setDrawTool] = useState<'select' | 'draw' | 'arrow' | 'text' | 'eraser'>('select');
+  const [drawColor, setDrawColor] = useState('#FFFFFF');
+  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  
   const canvasRef = useRef<HTMLDivElement>(null);
+  const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Inicializar Fabric Canvas
+  useEffect(() => {
+    if (!fabricCanvasRef.current || !selectedMap) return;
+
+    const canvas = new FabricCanvas(fabricCanvasRef.current, {
+      width: fabricCanvasRef.current.offsetWidth,
+      height: fabricCanvasRef.current.offsetHeight,
+      backgroundColor: 'transparent',
+    });
+
+    setFabricCanvas(canvas);
+
+    return () => {
+      canvas.dispose();
+    };
+  }, [selectedMap]);
+
+  // Atualizar modo de desenho
+  useEffect(() => {
+    if (!fabricCanvas) return;
+
+    fabricCanvas.isDrawingMode = drawTool === 'draw';
+    fabricCanvas.selection = drawTool === 'select';
+
+    if (drawTool === 'draw' && fabricCanvas.freeDrawingBrush) {
+      fabricCanvas.freeDrawingBrush.color = drawColor;
+      fabricCanvas.freeDrawingBrush.width = 3;
+    }
+
+    if (drawTool === 'arrow') {
+      let line: Line | null = null;
+      let isDrawing = false;
+
+      fabricCanvas.on('mouse:down', (e) => {
+        if (drawTool !== 'arrow') return;
+        isDrawing = true;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        
+        line = new Line([pointer.x, pointer.y, pointer.x, pointer.y], {
+          stroke: drawColor,
+          strokeWidth: 3,
+          selectable: true,
+        });
+        fabricCanvas.add(line);
+      });
+
+      fabricCanvas.on('mouse:move', (e) => {
+        if (!isDrawing || !line || drawTool !== 'arrow') return;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        line.set({ x2: pointer.x, y2: pointer.y });
+        fabricCanvas.renderAll();
+      });
+
+      fabricCanvas.on('mouse:up', () => {
+        isDrawing = false;
+      });
+    }
+
+    if (drawTool === 'text') {
+      fabricCanvas.on('mouse:down', (e) => {
+        if (drawTool !== 'text') return;
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        
+        const text = new IText('Clique para editar', {
+          left: pointer.x,
+          top: pointer.y,
+          fill: drawColor,
+          fontSize: 20,
+          fontWeight: 'bold',
+          selectable: true,
+        });
+        fabricCanvas.add(text);
+        fabricCanvas.setActiveObject(text);
+        text.enterEditing();
+      });
+    }
+
+    if (drawTool === 'eraser') {
+      fabricCanvas.on('mouse:down', (e) => {
+        if (drawTool !== 'eraser' || !e.target) return;
+        fabricCanvas.remove(e.target);
+      });
+    }
+  }, [drawTool, drawColor, fabricCanvas]);
 
   const handleAddName = () => {
     if (!newName.trim() && itemType === 'text') {
@@ -114,7 +210,7 @@ export default function Mapeamento() {
 
   const handleDuplicate = (id: string) => {
     if (names.length >= 15) {
-      toast.error('Máximo de 15 nomes atingido');
+      toast.error('Máximo de 15 itens atingido');
       return;
     }
 
@@ -127,13 +223,13 @@ export default function Mapeamento() {
         y: original.y + 20,
       };
       setNames([...names, duplicate]);
-      toast.success('Nome duplicado');
+      toast.success('Item duplicado');
     }
   };
 
   const handleDelete = (id: string) => {
     setNames(names.filter(n => n.id !== id));
-    toast.success('Nome removido');
+    toast.success('Item removido');
   };
 
   const handleStartEdit = (id: string, currentText: string) => {
@@ -160,6 +256,88 @@ export default function Mapeamento() {
 
   const handleDrag = (id: string, data: { x: number; y: number }) => {
     setNames(names.map(n => n.id === id ? { ...n, x: data.x, y: data.y } : n));
+  };
+
+  const handleApplyTemplate = (template: FormationTemplate) => {
+    if (!selectedMap) {
+      toast.error('Selecione um mapa primeiro');
+      return;
+    }
+
+    const containerWidth = canvasRef.current?.offsetWidth || 800;
+    const containerHeight = canvasRef.current?.offsetHeight || 450;
+
+    const newNames: NameItem[] = template.positions.map((pos, index) => ({
+      id: `${Date.now()}_${index}`,
+      text: pos.label,
+      x: (pos.x / 100) * containerWidth,
+      y: (pos.y / 100) * containerHeight,
+      color: selectedColor,
+      type: 'text' as const,
+    }));
+
+    setNames(newNames);
+    toast.success(`Template ${template.name} aplicado`);
+  };
+
+  const handleSaveProject = async (projectName: string) => {
+    if (!user || !selectedMap) {
+      toast.error('Faça login e selecione um mapa');
+      return;
+    }
+
+    try {
+      const desenhos = fabricCanvas?.toJSON() || {};
+
+      const { error } = await supabase
+        .from('mapeamento_projetos')
+        .insert({
+          user_id: user.id,
+          nome: projectName,
+          mapa_nome: selectedMap.name,
+          itens: names as any,
+          anotacoes: [] as any,
+          desenhos: desenhos as any,
+        });
+
+      if (error) throw error;
+      
+      toast.success('Projeto salvo com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      toast.error('Erro ao salvar projeto');
+    }
+  };
+
+  const handleLoadProject = async (projectId: string) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('mapeamento_projetos')
+        .select('*')
+        .eq('id', projectId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      const map = maps.find(m => m.name === data.mapa_nome);
+      if (map) setSelectedMap(map);
+
+      setNames((data.itens as any) || []);
+      
+      if (fabricCanvas && data.desenhos) {
+        fabricCanvas.loadFromJSON(data.desenhos as any, () => {
+          fabricCanvas.renderAll();
+        });
+      }
+
+      toast.success('Projeto carregado');
+    } catch (error) {
+      console.error('Erro ao carregar:', error);
+      toast.error('Erro ao carregar projeto');
+    }
   };
 
   const handleExportImage = async () => {
@@ -203,12 +381,10 @@ export default function Mapeamento() {
       toast.info('Gerando PDF... Aguarde');
       const pdf = new jsPDF('landscape', 'mm', 'a4');
       const originalMap = selectedMap;
-      const originalNames = names;
 
       for (let i = 0; i < maps.length; i++) {
         setSelectedMap(maps[i]);
         
-        // Aguardar renderização
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const canvas = await html2canvas(canvasRef.current, {
@@ -228,10 +404,7 @@ export default function Mapeamento() {
       }
 
       pdf.save('mapeamento-apresentacao.pdf');
-      
-      // Restaurar estado original
       setSelectedMap(originalMap);
-      setNames(originalNames);
       
       toast.success('PDF gerado com sucesso');
     } catch (error) {
@@ -298,7 +471,7 @@ export default function Mapeamento() {
             Mapeamento Tático
           </h1>
           <p className="text-muted-foreground text-lg">
-            Crie estratégias visuais posicionando nomes sobre os mapas do Free Fire
+            Crie estratégias visuais com nomes, logos, desenhos e formações
           </p>
         </div>
 
@@ -308,234 +481,260 @@ export default function Mapeamento() {
             <CardHeader>
               <CardTitle className="text-xl">Controles</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Seleção de Mapa - Grid Visual */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Selecione o Mapa</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {maps.map((map) => (
-                    <button
-                      key={map.name}
-                      onClick={() => setSelectedMap(map)}
-                      className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
-                        selectedMap?.name === map.name
-                          ? 'border-primary shadow-premium'
-                          : 'border-border/50 hover:border-primary/50'
-                      }`}
-                    >
-                      <img
-                        src={map.url}
-                        alt={map.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end">
-                        <span className="text-white font-bold text-xs p-2 w-full text-center">
-                          {map.name}
-                        </span>
-                      </div>
-                      {selectedMap?.name === map.name && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <Check className="h-8 w-8 text-primary drop-shadow-lg" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <CardContent>
+              <Tabs defaultValue="map" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="map">Mapa</TabsTrigger>
+                  <TabsTrigger value="draw">Desenho</TabsTrigger>
+                  <TabsTrigger value="project">Projeto</TabsTrigger>
+                </TabsList>
 
-              {/* Tipo de Item */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Tipo de Item ({names.length}/15)
-                </label>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <Button
-                    variant={itemType === 'text' ? 'default' : 'outline'}
-                    onClick={() => setItemType('text')}
-                    className="w-full"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Nome
-                  </Button>
-                  <Button
-                    variant={itemType === 'logo' ? 'default' : 'outline'}
-                    onClick={() => {
-                      setItemType('logo');
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={names.length >= 15}
-                    className="w-full"
-                  >
-                    <ImageIcon className="h-4 w-4 mr-2" />
-                    Logo
-                  </Button>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                  className="hidden"
-                />
-              </div>
-
-              {/* Adicionar Nome */}
-              {itemType === 'text' && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Adicionar Nome
-                  </label>
-                  <div className="space-y-2">
-                    <Input
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      placeholder="Digite o nome"
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddName()}
-                    />
-                    <Select value={selectedColor} onValueChange={setSelectedColor}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {textColors.map((color) => (
-                          <SelectItem key={color.value} value={color.value}>
-                            <span style={{ color: color.value }}>● {color.label}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      onClick={handleAddName}
-                      className="w-full"
-                      disabled={names.length >= 15}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Lista de Itens */}
-              {names.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Itens Adicionados</label>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {names.map((name) => (
-                      <div
-                        key={name.id}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-card/50 border border-border"
-                      >
-                        {editingId === name.id ? (
-                          <>
-                            <Input
-                              value={editingText}
-                              onChange={(e) => setEditingText(e.target.value)}
-                              className="flex-1 h-8 text-sm"
-                              autoFocus
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') handleSaveEdit(name.id);
-                                if (e.key === 'Escape') handleCancelEdit();
-                              }}
-                            />
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleSaveEdit(name.id)}
-                              className="h-8 w-8"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            {name.type === 'logo' && name.logo && (
-                              <img src={name.logo} alt={name.text} className="h-6 w-6 object-contain" />
-                            )}
-                            <span
-                              className="flex-1 truncate text-sm"
-                              style={{ color: name.color }}
-                            >
-                              {name.text}
+                <TabsContent value="map" className="space-y-4 mt-4">
+                  {/* Seleção de Mapa */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Selecione o Mapa</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {maps.map((map) => (
+                        <button
+                          key={map.name}
+                          onClick={() => setSelectedMap(map)}
+                          className={`relative aspect-video rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
+                            selectedMap?.name === map.name
+                              ? 'border-primary shadow-premium'
+                              : 'border-border/50 hover:border-primary/50'
+                          }`}
+                        >
+                          <img
+                            src={map.url}
+                            alt={map.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end">
+                            <span className="text-white font-bold text-xs p-2 w-full text-center">
+                              {map.name}
                             </span>
-                            {name.type === 'text' && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleStartEdit(name.id, name.text)}
-                                className="h-8 w-8"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDuplicate(name.id)}
-                              disabled={names.length >= 15}
-                              className="h-8 w-8"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDelete(name.id)}
-                              className="h-8 w-8"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
+                          </div>
+                          {selectedMap?.name === map.name && (
+                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                              <Check className="h-8 w-8 text-primary drop-shadow-lg" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tipo de Item */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Adicionar Item ({names.length}/15)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <Button
+                        variant={itemType === 'text' ? 'default' : 'outline'}
+                        onClick={() => setItemType('text')}
+                        className="w-full"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Nome
+                      </Button>
+                      <Button
+                        variant={itemType === 'logo' ? 'default' : 'outline'}
+                        onClick={() => {
+                          setItemType('logo');
+                          fileInputRef.current?.click();
+                        }}
+                        disabled={names.length >= 15}
+                        className="w-full"
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Logo
+                      </Button>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Adicionar Nome */}
+                  {itemType === 'text' && (
+                    <div>
+                      <div className="space-y-2">
+                        <Input
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          placeholder="Digite o nome"
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddName()}
+                        />
+                        <Select value={selectedColor} onValueChange={setSelectedColor}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {textColors.map((color) => (
+                              <SelectItem key={color.value} value={color.value}>
+                                <span style={{ color: color.value }}>● {color.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          onClick={handleAddName}
+                          className="w-full"
+                          disabled={names.length >= 15}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar
+                        </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Controles de Zoom */}
-              {selectedMap && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Zoom</label>
-                  <div className="flex gap-2">
-                    <Button onClick={handleZoomOut} variant="outline" className="flex-1">
-                      <ZoomOut className="h-4 w-4 mr-2" />
-                      -
-                    </Button>
-                    <Button onClick={handleZoomIn} variant="outline" className="flex-1">
-                      <ZoomIn className="h-4 w-4 mr-2" />
-                      +
-                    </Button>
-                  </div>
-                  <div className="text-center text-sm text-muted-foreground mt-1">
-                    {Math.round(zoom * 100)}%
-                  </div>
-                </div>
-              )}
-
-              {/* Botões de Exportação */}
-              {selectedMap && (
-                <div className="space-y-2 pt-4 border-t">
-                  <Button onClick={handleExportImage} className="w-full" variant="premium">
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar Imagem Atual
-                  </Button>
-                  <Button onClick={handleExportPDF} className="w-full" variant="default">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Baixar PDF (Apresentação)
-                  </Button>
-                  <Button onClick={handlePrint} className="w-full" variant="outline">
-                    <Printer className="h-4 w-4 mr-2" />
-                    Imprimir
-                  </Button>
-                  {navigator.share && (
-                    <Button onClick={handleShare} className="w-full" variant="outline">
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Compartilhar
-                    </Button>
+                    </div>
                   )}
-                </div>
-              )}
+
+                  {/* Lista de Itens */}
+                  {names.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Itens no Mapa</label>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {names.map((name) => (
+                          <div
+                            key={name.id}
+                            className="flex items-center gap-2 p-2 rounded-lg bg-card/50 border border-border"
+                          >
+                            {editingId === name.id ? (
+                              <>
+                                <Input
+                                  value={editingText}
+                                  onChange={(e) => setEditingText(e.target.value)}
+                                  className="flex-1 h-8 text-sm"
+                                  autoFocus
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') handleSaveEdit(name.id);
+                                    if (e.key === 'Escape') handleCancelEdit();
+                                  }}
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleSaveEdit(name.id)}
+                                  className="h-8 w-8"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                {name.type === 'logo' && name.logo && (
+                                  <img src={name.logo} alt={name.text} className="h-6 w-6 object-contain" />
+                                )}
+                                <span
+                                  className="flex-1 truncate text-sm"
+                                  style={{ color: name.color }}
+                                >
+                                  {name.text}
+                                </span>
+                                {name.type === 'text' && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => handleStartEdit(name.id, name.text)}
+                                    className="h-8 w-8"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleDuplicate(name.id)}
+                                  disabled={names.length >= 15}
+                                  className="h-8 w-8"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleDelete(name.id)}
+                                  className="h-8 w-8"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Templates */}
+                  <FormationTemplates onApplyTemplate={handleApplyTemplate} />
+
+                  {/* Zoom */}
+                  {selectedMap && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Zoom</label>
+                      <div className="flex gap-2">
+                        <Button onClick={handleZoomOut} variant="outline" className="flex-1">
+                          <ZoomOut className="h-4 w-4 mr-2" />
+                          -
+                        </Button>
+                        <Button onClick={handleZoomIn} variant="outline" className="flex-1">
+                          <ZoomIn className="h-4 w-4 mr-2" />
+                          +
+                        </Button>
+                      </div>
+                      <div className="text-center text-sm text-muted-foreground mt-1">
+                        {Math.round(zoom * 100)}%
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="draw" className="space-y-4 mt-4">
+                  <DrawingTools
+                    activeTool={drawTool}
+                    onToolChange={setDrawTool}
+                    drawColor={drawColor}
+                    onColorChange={setDrawColor}
+                  />
+                </TabsContent>
+
+                <TabsContent value="project" className="space-y-4 mt-4">
+                  <ProjectManager
+                    onSave={handleSaveProject}
+                    onLoad={handleLoadProject}
+                    canSave={!!selectedMap}
+                  />
+                  
+                  {selectedMap && (
+                    <div className="space-y-2 pt-4 border-t">
+                      <Button onClick={handleExportImage} className="w-full" variant="premium">
+                        <Download className="h-4 w-4 mr-2" />
+                        Baixar Imagem Atual
+                      </Button>
+                      <Button onClick={handleExportPDF} className="w-full" variant="default">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Baixar PDF (Apresentação)
+                      </Button>
+                      <Button onClick={handlePrint} className="w-full" variant="outline">
+                        <Printer className="h-4 w-4 mr-2" />
+                        Imprimir
+                      </Button>
+                      {navigator.share && (
+                        <Button onClick={handleShare} className="w-full" variant="outline">
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Compartilhar
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
@@ -559,6 +758,13 @@ export default function Mapeamento() {
                         transition: 'transform 0.2s ease',
                       }}
                     >
+                      {/* Canvas Fabric para Desenhos */}
+                      <canvas
+                        ref={fabricCanvasRef}
+                        className="absolute inset-0 w-full h-full"
+                        style={{ pointerEvents: drawTool === 'select' ? 'auto' : 'all' }}
+                      />
+
                       {/* Itens Arrastáveis */}
                       {names.map((name) => (
                         <Draggable
