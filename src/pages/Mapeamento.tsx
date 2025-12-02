@@ -74,11 +74,15 @@ export default function Mapeamento() {
 
   // Inicializar Fabric Canvas
   useEffect(() => {
-    if (!fabricCanvasRef.current || !selectedMap) return;
+    if (!fabricCanvasRef.current || !canvasRef.current || !selectedMap) return;
+
+    const container = canvasRef.current;
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 450;
 
     const canvas = new FabricCanvas(fabricCanvasRef.current, {
-      width: fabricCanvasRef.current.offsetWidth,
-      height: fabricCanvasRef.current.offsetHeight,
+      width,
+      height,
       backgroundColor: 'transparent',
     });
 
@@ -681,7 +685,7 @@ export default function Mapeamento() {
                   {/* Templates */}
                   <FormationTemplates onApplyTemplate={handleApplyTemplate} />
 
-                  {/* Zoom */}
+                  {/* Zoom (Mapa) */}
                   {selectedMap && (
                     <div>
                       <label className="text-sm font-medium mb-2 block">Zoom</label>
@@ -709,6 +713,26 @@ export default function Mapeamento() {
                     drawColor={drawColor}
                     onColorChange={setDrawColor}
                   />
+
+                  {/* Zoom (Desenho) */}
+                  {selectedMap && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Zoom</label>
+                      <div className="flex gap-2">
+                        <Button onClick={handleZoomOut} variant="outline" className="flex-1">
+                          <ZoomOut className="h-4 w-4 mr-2" />
+                          -
+                        </Button>
+                        <Button onClick={handleZoomIn} variant="outline" className="flex-1">
+                          <ZoomIn className="h-4 w-4 mr-2" />
+                          +
+                        </Button>
+                      </div>
+                      <div className="text-center text-sm text-muted-foreground mt-1">
+                        {Math.round(zoom * 100)}%
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="project" className="space-y-4 mt-4">
