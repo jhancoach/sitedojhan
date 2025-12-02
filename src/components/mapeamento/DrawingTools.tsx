@@ -6,6 +6,10 @@ interface DrawingToolsProps {
   onToolChange: (tool: 'select' | 'draw' | 'arrow' | 'text' | 'eraser' | 'circle' | 'circleOutline' | 'move') => void;
   drawColor: string;
   onColorChange: (color: string) => void;
+  lineThickness: number;
+  onLineThicknessChange: (thickness: number) => void;
+  arrowStyle: 'simple' | 'filled' | 'double';
+  onArrowStyleChange: (style: 'simple' | 'filled' | 'double') => void;
 }
 
 const drawColors = [
@@ -17,7 +21,16 @@ const drawColors = [
   { label: 'Preto', value: '#000000' },
 ];
 
-export const DrawingTools = ({ activeTool, onToolChange, drawColor, onColorChange }: DrawingToolsProps) => {
+export const DrawingTools = ({ 
+  activeTool, 
+  onToolChange, 
+  drawColor, 
+  onColorChange,
+  lineThickness,
+  onLineThicknessChange,
+  arrowStyle,
+  onArrowStyleChange
+}: DrawingToolsProps) => {
   return (
     <div className="space-y-4">
       <div>
@@ -112,6 +125,54 @@ export const DrawingTools = ({ activeTool, onToolChange, drawColor, onColorChang
               title={color.label}
             />
           ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium mb-2 block">
+          Espessura da Linha: {lineThickness}px
+        </label>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={lineThickness}
+          onChange={(e) => onLineThicknessChange(Number(e.target.value))}
+          className="w-full"
+        />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>Fina</span>
+          <span>Grossa</span>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium mb-2 block">Estilo da Seta</label>
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            variant={arrowStyle === 'simple' ? 'default' : 'outline'}
+            onClick={() => onArrowStyleChange('simple')}
+            size="sm"
+            className="w-full text-xs"
+          >
+            Simples →
+          </Button>
+          <Button
+            variant={arrowStyle === 'filled' ? 'default' : 'outline'}
+            onClick={() => onArrowStyleChange('filled')}
+            size="sm"
+            className="w-full text-xs"
+          >
+            Cheia ▶
+          </Button>
+          <Button
+            variant={arrowStyle === 'double' ? 'default' : 'outline'}
+            onClick={() => onArrowStyleChange('double')}
+            size="sm"
+            className="w-full text-xs"
+          >
+            Dupla ↔
+          </Button>
         </div>
       </div>
     </div>

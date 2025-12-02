@@ -92,6 +92,10 @@ export default function Mapeamento() {
   const [drawingDragStart, setDrawingDragStart] = useState<{ x: number; y: number } | null>(null);
   const [drawingHistory, setDrawingHistory] = useState<Record<string, DrawingElement[]>[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [lineThickness, setLineThickness] = useState(3);
+  const [arrowStyle, setArrowStyle] = useState<'simple' | 'filled' | 'double'>('simple');
+  const [showWatermark, setShowWatermark] = useState(true);
+  const [showNameBackground, setShowNameBackground] = useState(true);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -99,6 +103,25 @@ export default function Mapeamento() {
 
   // Obter desenhos do mapa atual
   const currentDrawings = selectedMap ? (mapDrawings[selectedMap.name] || []) : [];
+
+  // Função para desenhar ponta de seta
+  const drawArrowHead = (ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, style: 'simple' | 'filled' | 'double', headLength: number) => {
+    if (style === 'simple') {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - headLength * Math.cos(angle - Math.PI / 6), y - headLength * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - headLength * Math.cos(angle + Math.PI / 6), y - headLength * Math.sin(angle + Math.PI / 6));
+      ctx.stroke();
+    } else if (style === 'filled') {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - headLength * Math.cos(angle - Math.PI / 6), y - headLength * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x - headLength * Math.cos(angle + Math.PI / 6), y - headLength * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+  };
 
   // Renderizar todos os desenhos no canvas
   const renderDrawings = useCallback(() => {
@@ -115,7 +138,7 @@ export default function Mapeamento() {
     currentDrawings.forEach(element => {
       ctx.strokeStyle = element.color;
       ctx.fillStyle = element.color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = lineThickness;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
@@ -136,13 +159,13 @@ export default function Mapeamento() {
             ctx.stroke();
             // Desenhar ponta da seta
             const angle = Math.atan2(element.y2 - element.y, element.x2 - element.x);
-            const headLength = 15;
-            ctx.beginPath();
-            ctx.moveTo(element.x2, element.y2);
-            ctx.lineTo(element.x2 - headLength * Math.cos(angle - Math.PI / 6), element.y2 - headLength * Math.sin(angle - Math.PI / 6));
-            ctx.moveTo(element.x2, element.y2);
-            ctx.lineTo(element.x2 - headLength * Math.cos(angle + Math.PI / 6), element.y2 - headLength * Math.sin(angle + Math.PI / 6));
-            ctx.stroke();
+            const headLength = 10 + lineThickness * 2;
+            drawArrowHead(ctx, element.x2, element.y2, angle, arrowStyle, headLength);
+            // Seta dupla - desenhar também na origem
+            if (arrowStyle === 'double') {
+              const reverseAngle = angle + Math.PI;
+              drawArrowHead(ctx, element.x, element.y, reverseAngle, 'simple', headLength);
+            }
           }
           break;
         case 'circle':
@@ -175,7 +198,7 @@ export default function Mapeamento() {
     if (currentDrawing) {
       ctx.strokeStyle = currentDrawing.color;
       ctx.fillStyle = currentDrawing.color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = lineThickness;
       ctx.lineCap = 'round';
 
       switch (currentDrawing.type) {
@@ -193,6 +216,14 @@ export default function Mapeamento() {
             ctx.moveTo(currentDrawing.x, currentDrawing.y);
             ctx.lineTo(currentDrawing.x2, currentDrawing.y2);
             ctx.stroke();
+            // Preview da ponta
+            const angle = Math.atan2(currentDrawing.y2 - currentDrawing.y, currentDrawing.x2 - currentDrawing.x);
+            const headLength = 10 + lineThickness * 2;
+            drawArrowHead(ctx, currentDrawing.x2, currentDrawing.y2, angle, arrowStyle, headLength);
+            if (arrowStyle === 'double') {
+              const reverseAngle = angle + Math.PI;
+              drawArrowHead(ctx, currentDrawing.x, currentDrawing.y, reverseAngle, 'simple', headLength);
+            }
           }
           break;
         case 'circle':
@@ -210,7 +241,7 @@ export default function Mapeamento() {
           break;
       }
     }
-  }, [currentDrawings, currentDrawing]);
+  }, [currentDrawings, currentDrawing, lineThickness, arrowStyle]);
 
   // Redimensionar e renderizar canvas quando mapa muda
   useEffect(() => {
@@ -1224,6 +1255,10 @@ export default function Mapeamento() {
                     onToolChange={setDrawTool}
                     drawColor={drawColor}
                     onColorChange={setDrawColor}
+                    lineThickness={lineThickness}
+                    onLineThicknessChange={setLineThickness}
+                    arrowStyle={arrowStyle}
+                    onArrowStyleChange={setArrowStyle}
                   />
 
                   {/* Botões Desfazer/Refazer */}
@@ -1309,13 +1344,38 @@ export default function Mapeamento() {
                       </div>
                       
                       <div className="space-y-3">
-                        <label className="text-sm font-medium">Marca d'água</label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">Marca d'água</label>
+                          <label className="flex items-center gap-2 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={showWatermark}
+                              onChange={(e) => setShowWatermark(e.target.checked)}
+                              className="rounded"
+                            />
+                            Exibir
+                          </label>
+                        </div>
                         <Input
                           value={watermark}
                           onChange={(e) => setWatermark(e.target.value)}
                           placeholder="@seuinstagram"
                           className="w-full"
+                          disabled={!showWatermark}
                         />
+                      </div>
+
+                      <div className="flex items-center justify-between py-2">
+                        <label className="text-sm font-medium">Fundo nos nomes</label>
+                        <label className="flex items-center gap-2 text-xs">
+                          <input
+                            type="checkbox"
+                            checked={showNameBackground}
+                            onChange={(e) => setShowNameBackground(e.target.checked)}
+                            className="rounded"
+                          />
+                          Exibir
+                        </label>
                       </div>
 
                       <div className="space-y-2 pt-2">
@@ -1393,17 +1453,16 @@ export default function Mapeamento() {
                       {names.map((name) => (
                         <div
                           key={name.id}
-                          className="absolute cursor-move select-none rounded shadow-lg flex items-center justify-center"
+                          className="absolute cursor-move select-none rounded flex items-center justify-center"
                           style={{
                             left: name.x,
                             top: name.y,
-                            transform: 'translate(-50%, -50%)',
-                            backgroundColor: `rgba(0,0,0,${nameBackgroundOpacity})`,
-                            border: nameBackgroundOpacity > 0 ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                            backgroundColor: showNameBackground ? `rgba(0,0,0,${nameBackgroundOpacity})` : 'transparent',
+                            border: showNameBackground && nameBackgroundOpacity > 0 ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                            boxShadow: showNameBackground ? '0 2px 8px rgba(0,0,0,0.5)' : 'none',
                             zIndex: 10,
                             pointerEvents: 'auto',
-                            padding: '6px 12px',
-                            minWidth: 'max-content',
+                            padding: showNameBackground ? '6px 12px' : '2px',
                           }}
                           onMouseDown={(event) => handleNameMouseDown(name.id, event)}
                         >
@@ -1433,7 +1492,7 @@ export default function Mapeamento() {
 
 
                       {/* Marca d'água */}
-                      {watermark.trim() && (
+                      {showWatermark && watermark.trim() && (
                         <div
                           className="absolute bottom-4 right-4 font-bold text-sm rounded flex items-center justify-center"
                           style={{
