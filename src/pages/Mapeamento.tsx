@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye, FolderSync, Move } from 'lucide-react';
+import { Download, Printer, Share2, Plus, Copy, Trash2, Pencil, Check, ZoomIn, ZoomOut, FileText, Image as ImageIcon, Undo, Redo, Eye, FolderSync, Move, Archive } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import JSZip from 'jszip';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1405,6 +1406,219 @@ export default function Mapeamento() {
     }
   };
 
+  const createCanvasForMap = async (map: MapData): Promise<HTMLCanvasElement | null> => {
+    const names = mapNames[map.name] || [];
+    const drawings = mapDrawings[map.name] || [];
+    
+    // Criar canvas temporário
+    const tempCanvas = document.createElement('canvas');
+    const rect = { width: 1280, height: 720 }; // Dimensões padrão 16:9
+    tempCanvas.width = rect.width * exportScale;
+    tempCanvas.height = rect.height * exportScale;
+    const ctx = tempCanvas.getContext('2d');
+    if (!ctx) return null;
+    
+    ctx.scale(exportScale, exportScale);
+    
+    // 1. Desenhar imagem de fundo do mapa
+    const mapImg = new Image();
+    mapImg.crossOrigin = 'anonymous';
+    
+    await new Promise<void>((resolve, reject) => {
+      mapImg.onload = () => resolve();
+      mapImg.onerror = reject;
+      mapImg.src = map.url;
+    });
+    
+    ctx.drawImage(mapImg, 0, 0, rect.width, rect.height);
+    
+    // 2. Desenhar os desenhos
+    for (const element of drawings) {
+      ctx.strokeStyle = element.color;
+      ctx.fillStyle = element.color;
+      ctx.lineWidth = lineThickness;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (element.type === 'line' && element.points && element.points.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(element.points[0].x, element.points[0].y);
+        for (let i = 1; i < element.points.length; i++) {
+          ctx.lineTo(element.points[i].x, element.points[i].y);
+        }
+        ctx.stroke();
+      } else if (element.type === 'arrow' && element.x !== undefined && element.y !== undefined && element.x2 !== undefined && element.y2 !== undefined) {
+        const elementArrowStyle = element.arrowStyle || 'simple';
+        if (elementArrowStyle === 'dashed') {
+          ctx.setLineDash([10, 5]);
+        }
+        ctx.beginPath();
+        ctx.moveTo(element.x, element.y);
+        ctx.lineTo(element.x2, element.y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        const angle = Math.atan2(element.y2 - element.y, element.x2 - element.x);
+        const headLength = 10 + lineThickness * 2;
+        drawArrowHead(ctx, element.x2, element.y2, angle, elementArrowStyle, headLength);
+        if (elementArrowStyle === 'double') {
+          const reverseAngle = angle + Math.PI;
+          drawArrowHead(ctx, element.x, element.y, reverseAngle, 'simple', headLength);
+        }
+      } else if ((element.type === 'circle' || element.type === 'circleOutline') && element.x !== undefined && element.y !== undefined && element.radius !== undefined) {
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, element.radius, 0, Math.PI * 2);
+        if (element.type === 'circle') {
+          ctx.fill();
+        } else {
+          ctx.stroke();
+        }
+      } else if (element.type === 'rectangle' && element.x !== undefined && element.y !== undefined && element.width !== undefined && element.height !== undefined) {
+        ctx.strokeRect(element.x, element.y, element.width, element.height);
+      } else if (element.type === 'straightLine' && element.x !== undefined && element.y !== undefined && element.x2 !== undefined && element.y2 !== undefined) {
+        ctx.beginPath();
+        ctx.moveTo(element.x, element.y);
+        ctx.lineTo(element.x2, element.y2);
+        ctx.stroke();
+      } else if (element.type === 'text' && element.x !== undefined && element.y !== undefined && element.text) {
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = '#000';
+        const offsets = [[2, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+        for (const [ox, oy] of offsets) {
+          ctx.fillText(element.text, element.x + ox, element.y + oy);
+        }
+        ctx.fillStyle = element.color;
+        ctx.fillText(element.text, element.x, element.y);
+      }
+    }
+    
+    // 3. Desenhar os nomes dos times
+    for (const name of names) {
+      if (name.type === 'logo' && name.logo) {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve) => {
+          logoImg.onload = () => resolve();
+          logoImg.onerror = () => resolve();
+          logoImg.src = name.logo!;
+        });
+        
+        const logoSize = 48;
+        const padding = showNameBackground ? 8 : 0;
+        const bgWidth = logoSize + padding * 2;
+        const bgHeight = logoSize + padding * 2;
+        
+        if (showNameBackground) {
+          ctx.fillStyle = `rgba(0,0,0,${nameBackgroundOpacity})`;
+          ctx.beginPath();
+          ctx.roundRect(name.x, name.y, bgWidth, bgHeight, 4);
+          ctx.fill();
+        }
+        
+        ctx.drawImage(logoImg, name.x + padding, name.y + padding, logoSize, logoSize);
+      } else {
+        ctx.font = `bold ${nameFontSize}px Arial`;
+        const textMetrics = ctx.measureText(name.text);
+        const textWidth = textMetrics.width;
+        const textHeight = nameFontSize;
+        const paddingX = showNameBackground ? 12 : 0;
+        const paddingY = showNameBackground ? 7 : 0;
+        const bgWidth = textWidth + paddingX * 2;
+        const bgHeight = textHeight + paddingY * 2;
+        
+        if (showNameBackground) {
+          ctx.fillStyle = `rgba(0,0,0,${nameBackgroundOpacity})`;
+          ctx.beginPath();
+          ctx.roundRect(name.x, name.y, bgWidth, bgHeight, 4);
+          ctx.fill();
+        }
+        
+        ctx.fillStyle = nameBorderColor;
+        const offsets = [[2, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+        for (const [ox, oy] of offsets) {
+          ctx.fillText(name.text, name.x + paddingX + ox, name.y + paddingY + textHeight - 2 + oy);
+        }
+        
+        ctx.fillStyle = name.color;
+        ctx.fillText(name.text, name.x + paddingX, name.y + paddingY + textHeight - 2);
+      }
+    }
+    
+    // 4. Desenhar marca d'água
+    if (showWatermark && watermark.trim()) {
+      ctx.font = 'bold 14px Arial';
+      const wmMetrics = ctx.measureText(watermark);
+      const wmWidth = wmMetrics.width;
+      const wmHeight = 14;
+      const wmPaddingX = showWatermarkBackground ? 12 : 0;
+      const wmPaddingY = showWatermarkBackground ? 7 : 0;
+      const wmBgWidth = wmWidth + wmPaddingX * 2;
+      const wmBgHeight = wmHeight + wmPaddingY * 2;
+      const wmX = rect.width - wmBgWidth - 16;
+      const wmY = rect.height - wmBgHeight - 16;
+      
+      if (showWatermarkBackground) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.beginPath();
+        ctx.roundRect(wmX, wmY, wmBgWidth, wmBgHeight, 4);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = '#000';
+        const offsets = [[2, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+        for (const [ox, oy] of offsets) {
+          ctx.fillText(watermark, wmX + wmPaddingX + ox, wmY + wmPaddingY + wmHeight - 2 + oy);
+        }
+      }
+      
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText(watermark, wmX + wmPaddingX, wmY + wmPaddingY + wmHeight - 2);
+    }
+    
+    return tempCanvas;
+  };
+
+  const handleExportAllZip = async () => {
+    const mapsWithContent = maps.filter(map => {
+      const names = mapNames[map.name] || [];
+      return names.length >= 2;
+    });
+
+    if (mapsWithContent.length === 0) {
+      toast.error('Nenhum mapa com conteúdo para exportar. Adicione pelo menos 2 nomes em cada mapa.');
+      return;
+    }
+
+    try {
+      toast.info(`Exportando ${mapsWithContent.length} mapa(s)... Aguarde`);
+      const zip = new JSZip();
+
+      for (const map of mapsWithContent) {
+        const canvas = await createCanvasForMap(map);
+        if (canvas) {
+          const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob((b) => resolve(b), 'image/png');
+          });
+          if (blob) {
+            zip.file(`mapeamento-${map.name}.png`, blob);
+          }
+        }
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mapeamentos-${presentationTitle || 'todos'}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      toast.success(`${mapsWithContent.length} mapa(s) exportado(s) com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao exportar ZIP:', error);
+      toast.error('Erro ao exportar mapas');
+    }
+  };
+
   const handleZoomIn = () => {
     setZoom(prev => Math.min(prev + 0.1, 2));
   };
@@ -2059,6 +2273,14 @@ export default function Mapeamento() {
                         >
                           <FileText className="h-4 w-4 mr-2" />
                           Baixar PDF (Com Capa)
+                        </Button>
+                        <Button 
+                          onClick={handleExportAllZip} 
+                          className="w-full" 
+                          variant="outline"
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          Exportar Todos (ZIP)
                         </Button>
                         <Button onClick={handlePrint} className="w-full" variant="outline">
                           <Printer className="h-4 w-4 mr-2" />
