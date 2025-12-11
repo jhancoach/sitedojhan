@@ -10,7 +10,7 @@ export default function Carregamentos() {
   const { t } = useLanguage();
   
   const handleDownload = (url: string) => {
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (

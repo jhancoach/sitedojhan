@@ -29,7 +29,7 @@ export default function VisoesAereas() {
                 </div>
                 <h3 className="text-xl font-bold text-center mb-4">{view.name}</h3>
                 <Button
-                  onClick={() => window.open(view.url, '_blank')}
+                  onClick={() => window.open(view.url, '_blank', 'noopener,noreferrer')}
                   className="w-full"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />

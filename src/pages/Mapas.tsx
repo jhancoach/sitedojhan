@@ -12,7 +12,7 @@ export default function Mapas() {
   const { t } = useLanguage();
 
   const handleDownload = (url: string, name: string) => {
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (

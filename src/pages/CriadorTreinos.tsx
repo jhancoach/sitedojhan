@@ -28,7 +28,7 @@ export default function CriadorTreinos() {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => window.open('https://criador-de-treinos-ff-jhan-medeiros.vercel.app/', '_blank')}
+              onClick={() => window.open('https://criador-de-treinos-ff-jhan-medeiros.vercel.app/', '_blank', 'noopener,noreferrer')}
             >
               {t('trainingCreator.accessButton')}
               <ExternalLink className="h-5 w-5" />
