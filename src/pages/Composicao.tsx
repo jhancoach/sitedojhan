@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { PetSelector } from '@/components/PetSelector';
-import { Printer, X, Plus } from 'lucide-react';
+import { Printer, X, Plus, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { activeCharacters, passiveCharacters, Character } from '@/data/characters';
 import { pets, Pet } from '@/data/pets';
 import { loadouts } from '@/data/loadouts';
@@ -111,6 +112,34 @@ export default function Composicao() {
     window.print();
   };
 
+  const handleSavePng = async () => {
+    if (!printRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(printRef.current, {
+        backgroundColor: '#1a1a2e',
+        scale: 2,
+        useCORS: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'composicao.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: 'Sucesso',
+        description: 'Composição salva como PNG!',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Falha ao salvar imagem',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getCurrentCharacters = () => {
     if (!currentSelection) return [];
     const { playerIndex, slot } = currentSelection;
@@ -172,7 +201,11 @@ export default function Composicao() {
             {t('composition.description')}
           </p>
 
-          <div className="flex justify-end mb-6 print:hidden">
+          <div className="flex justify-end gap-2 mb-6 print:hidden">
+            <Button onClick={handleSavePng} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Salvar em PNG
+            </Button>
             <Button onClick={handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
               {t('composition.print')}
