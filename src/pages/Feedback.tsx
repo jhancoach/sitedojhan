@@ -58,6 +58,19 @@ export default function Feedback() {
   const tipoValue = watch('tipo');
 
   const onSubmit = async (data: FeedbackFormData) => {
+    // Client-side rate limiting - prevent spam submissions
+    const RATE_LIMIT_KEY = 'lastFeedbackSubmit';
+    const RATE_LIMIT_MS = 60000; // 1 minute between submissions
+    
+    const lastSubmit = localStorage.getItem(RATE_LIMIT_KEY);
+    if (lastSubmit && Date.now() - parseInt(lastSubmit) < RATE_LIMIT_MS) {
+      const remainingSeconds = Math.ceil((RATE_LIMIT_MS - (Date.now() - parseInt(lastSubmit))) / 1000);
+      toast.error('Aguarde um momento', {
+        description: `Por favor, aguarde ${remainingSeconds} segundos antes de enviar outra mensagem.`,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -71,6 +84,9 @@ export default function Feedback() {
       ]);
 
       if (error) throw error;
+
+      // Store submission timestamp for rate limiting
+      localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString());
 
       toast.success('Mensagem enviada com sucesso!', {
         description: 'Obrigado pelo seu feedback. Em breve entraremos em contato.',

@@ -74,10 +74,12 @@ export default function AdminStorage() {
       });
 
       setFiles(filesWithUrls);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Log error for debugging - don't expose details to user
+      console.warn('Failed to load files');
       toast({
         title: 'Erro ao carregar arquivos',
-        description: error.message,
+        description: 'Não foi possível carregar os arquivos. Tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -110,10 +112,12 @@ export default function AdminStorage() {
       });
 
       loadFiles();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Log error for debugging - don't expose details to user
+      console.warn('Failed to upload file');
       toast({
         title: 'Erro no upload',
-        description: error.message,
+        description: 'Não foi possível enviar o arquivo. Verifique o tamanho e formato.',
         variant: 'destructive',
       });
     } finally {
@@ -138,10 +142,12 @@ export default function AdminStorage() {
       });
 
       loadFiles();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Log error for debugging - don't expose details to user
+      console.warn('Failed to delete file');
       toast({
         title: 'Erro ao deletar',
-        description: error.message,
+        description: 'Não foi possível remover o arquivo. Tente novamente.',
         variant: 'destructive',
       });
     }
