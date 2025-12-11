@@ -228,6 +228,7 @@ export default function Composicao() {
                       value={player.name}
                       onChange={(e) => updatePlayer(playerIndex, 'name', e.target.value)}
                       placeholder={t('composition.namePlaceholder')}
+                      className="text-white bg-background"
                     />
                   </div>
 
