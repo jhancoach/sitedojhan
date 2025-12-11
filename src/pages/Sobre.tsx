@@ -3,6 +3,7 @@ import { Footer } from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal, Target, Star } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 export default function Sobre() {
   const { t } = useLanguage();
@@ -93,7 +94,7 @@ export default function Sobre() {
           </section>
 
           <div className="prose prose-lg dark:prose-invert max-w-none">
-            <p className="text-lg" dangerouslySetInnerHTML={{ __html: t('about.intro') }} />
+            <p className="text-lg" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t('about.intro')) }} />
 
             <h2 className="text-2xl font-bold mt-8 mb-4">{t('about.education')}</h2>
             <ul>
