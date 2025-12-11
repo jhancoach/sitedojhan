@@ -40,7 +40,8 @@ export default function FeedbackAdmin() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        // Error logged server-side - RLS will prevent unauthorized access
+        console.warn('Unable to fetch feedback messages');
       } else {
         setMessages((data || []) as FeedbackMessage[]);
       }

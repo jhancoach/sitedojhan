@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * IMPORTANT: This hook is for UI RENDERING ONLY.
+ * 
+ * It should NOT be relied upon for security - actual authorization is enforced
+ * server-side via RLS policies using the has_role() database function.
+ * 
+ * This hook queries the user_roles table to determine if the current user has
+ * a specific role, allowing conditional UI rendering (e.g., showing admin links).
+ * 
+ * All sensitive operations MUST be protected by RLS policies - client-side
+ * checks can be bypassed and should only be used to improve UX.
+ */
 export function useHasRole(role: 'admin' | 'user') {
   const { user } = useAuth();
   const [hasRole, setHasRole] = useState(false);
@@ -24,13 +36,15 @@ export function useHasRole(role: 'admin' | 'user') {
           .maybeSingle();
 
         if (error) {
-          console.error('Error checking role:', error);
+          // Log generic message - actual error details stay server-side
+          console.warn('Unable to verify user role');
           setHasRole(false);
         } else {
           setHasRole(!!data);
         }
-      } catch (error) {
-        console.error('Error checking role:', error);
+      } catch {
+        // Log generic message without exposing error details
+        console.warn('Unable to verify user role');
         setHasRole(false);
       } finally {
         setLoading(false);

@@ -13,7 +13,7 @@ export default function Personagens() {
   const [activeTab, setActiveTab] = useState('ativos');
 
   const handleDownload = (url: string) => {
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (

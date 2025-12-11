@@ -41,8 +41,8 @@ export const ProjectManager = ({ onSave, onLoad, canSave }: ProjectManagerProps)
 
       if (error) throw error;
       setProjects(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar projetos:', error);
+    } catch {
+      // Error logged server-side
       toast.error('Erro ao carregar projetos');
     } finally {
       setLoading(false);
@@ -78,8 +78,8 @@ export const ProjectManager = ({ onSave, onLoad, canSave }: ProjectManagerProps)
       
       toast.success('Projeto excluído');
       fetchProjects();
-    } catch (error) {
-      console.error('Erro ao excluir:', error);
+    } catch {
+      // Error logged server-side
       toast.error('Erro ao excluir projeto');
     }
   };

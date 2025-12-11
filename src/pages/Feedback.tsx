@@ -77,8 +77,8 @@ export default function Feedback() {
       });
 
       reset();
-    } catch (error) {
-      console.error('Erro ao enviar feedback:', error);
+    } catch {
+      // Error logged server-side - show generic message to user
       toast.error('Erro ao enviar mensagem', {
         description: 'Tente novamente mais tarde.',
       });

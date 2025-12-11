@@ -476,7 +476,7 @@ export default function Mapeamento() {
     if (drawTool === 'select') return;
     
     const pos = getMousePos(e);
-    console.log('🖱️ Canvas click em', pos, 'ferramenta:', drawTool);
+    // Debug logging removed for production
 
     // Ferramenta MOVER
     if (drawTool === 'move') {
@@ -671,7 +671,7 @@ export default function Mapeamento() {
     setMapDrawings(newMapDrawings);
     saveToHistory(newMapDrawings);
 
-    console.log('✅ Desenho finalizado:', currentDrawing.type);
+    // Drawing completed successfully
     toast.success('Desenho adicionado');
 
     setIsDrawing(false);
@@ -906,7 +906,7 @@ export default function Mapeamento() {
       type: 'text',
     };
 
-    console.log('Adding name item', newItem);
+    // Name item added successfully
 
     setCurrentNames([...currentNames, newItem]);
     setNewName('');
@@ -1083,8 +1083,7 @@ export default function Mapeamento() {
       }
       setPreviewImage(canvas.toDataURL('image/png'));
       setShowPreview(true);
-    } catch (error) {
-      console.error('Erro ao gerar preview:', error);
+    } catch {
       toast.error('Erro ao gerar preview');
     }
   };
@@ -1124,8 +1123,7 @@ export default function Mapeamento() {
       if (error) throw error;
       
       toast.success('Projeto salvo com sucesso');
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
+    } catch {
       toast.error('Erro ao salvar projeto');
     }
   };
@@ -1155,8 +1153,7 @@ export default function Mapeamento() {
       setMapDrawings(loadedDrawings);
 
       toast.success('Projeto carregado');
-    } catch (error) {
-      console.error('Erro ao carregar:', error);
+    } catch {
       toast.error('Erro ao carregar projeto');
     }
   };
@@ -1311,8 +1308,7 @@ export default function Mapeamento() {
           toast.success('Imagem baixada com sucesso');
         }
       });
-    } catch (error) {
-      console.error('Erro ao exportar:', error);
+    } catch {
       toast.error('Erro ao exportar imagem');
     }
   };
@@ -1400,8 +1396,7 @@ export default function Mapeamento() {
       pdf.save(`mapeamento-${presentationTitle || selectedMap.name}.pdf`);
       
       toast.success('PDF gerado com sucesso');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
+    } catch {
       toast.error('Erro ao gerar PDF');
     }
   };
@@ -1613,8 +1608,7 @@ export default function Mapeamento() {
       URL.revokeObjectURL(url);
       
       toast.success(`${mapsWithContent.length} mapa(s) exportado(s) com sucesso!`);
-    } catch (error) {
-      console.error('Erro ao exportar ZIP:', error);
+    } catch {
       toast.error('Erro ao exportar mapas');
     }
   };
@@ -1756,8 +1750,7 @@ export default function Mapeamento() {
           toast.error('Compartilhamento não disponível neste navegador');
         }
       });
-    } catch (error) {
-      console.error('Erro ao compartilhar:', error);
+    } catch {
       toast.error('Erro ao compartilhar');
     }
   };
