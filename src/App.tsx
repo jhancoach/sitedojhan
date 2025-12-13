@@ -24,6 +24,7 @@ import AdminStorage from "./pages/AdminStorage";
 import SorteioMapas from "./pages/SorteioMapas";
 import CriadorTreinos from "./pages/CriadorTreinos";
 import Mapeamento from "./pages/Mapeamento";
+import MontarElenco from "./pages/MontarElenco";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ const App = () => {
                 <Route path="/sorteio-mapas" element={<SorteioMapas />} />
                 <Route path="/criador-treinos" element={<CriadorTreinos />} />
                 <Route path="/mapeamento" element={<Mapeamento />} />
+                <Route path="/montar-elenco" element={<MontarElenco />} />
                 <Route path="/admin/storage" element={<AdminStorage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
