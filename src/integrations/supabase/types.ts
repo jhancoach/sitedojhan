@@ -19,8 +19,10 @@ export type Database = {
           coach: Json | null
           created_at: string
           id: string
+          logo_url: string | null
           nome: string
           reservas: Json
+          team_name: string | null
           titulares: Json
           updated_at: string
           user_id: string
@@ -29,8 +31,10 @@ export type Database = {
           coach?: Json | null
           created_at?: string
           id?: string
+          logo_url?: string | null
           nome: string
           reservas?: Json
+          team_name?: string | null
           titulares?: Json
           updated_at?: string
           user_id: string
@@ -39,8 +43,10 @@ export type Database = {
           coach?: Json | null
           created_at?: string
           id?: string
+          logo_url?: string | null
           nome?: string
           reservas?: Json
+          team_name?: string | null
           titulares?: Json
           updated_at?: string
           user_id?: string
