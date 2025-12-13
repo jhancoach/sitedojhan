@@ -1,16 +1,21 @@
-import { useState, DragEvent } from 'react';
+import { useState, useRef, DragEvent, ChangeEvent, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Trash2, RotateCcw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList } from 'lucide-react';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PlayerSlot {
   id: string;
   name: string | null;
   role: string | null;
+  imageUrl: string | null;
 }
 
 interface RoleTag {
@@ -18,6 +23,20 @@ interface RoleTag {
   name: string;
   color: string;
   icon: string;
+}
+
+interface SavedRoster {
+  id: string;
+  nome: string;
+  coach: PlayerSlot | null;
+  titulares: PlayerSlot[];
+  reservas: PlayerSlot[];
+  created_at: string;
+}
+
+interface HistoryState {
+  slots: PlayerSlot[];
+  players: string[];
 }
 
 const ROLE_TAGS: RoleTag[] = [
@@ -29,31 +48,97 @@ const ROLE_TAGS: RoleTag[] = [
   { id: 'coach', name: 'COACH', color: 'bg-purple-500/80 border-purple-400', icon: '📋' },
 ];
 
-const initialSlots: PlayerSlot[] = [
-  // Coach
-  { id: 'coach', name: null, role: null },
-  // Lineup Principal - Row 1 (3 players)
-  { id: 'lineup1-1', name: null, role: null },
-  { id: 'lineup1-2', name: null, role: null },
-  { id: 'lineup1-3', name: null, role: null },
-  // Lineup Principal - Row 2 (2 players)
-  { id: 'lineup2-1', name: null, role: null },
-  { id: 'lineup2-2', name: null, role: null },
-  // Reservas - Row 1 (3 players)
-  { id: 'reserva1-1', name: null, role: null },
-  { id: 'reserva1-2', name: null, role: null },
-  { id: 'reserva1-3', name: null, role: null },
-  // Reservas - Row 2 (2 players)
-  { id: 'reserva2-1', name: null, role: null },
-  { id: 'reserva2-2', name: null, role: null },
+const createInitialSlots = (): PlayerSlot[] => [
+  { id: 'coach', name: null, role: null, imageUrl: null },
+  { id: 'lineup1-1', name: null, role: null, imageUrl: null },
+  { id: 'lineup1-2', name: null, role: null, imageUrl: null },
+  { id: 'lineup1-3', name: null, role: null, imageUrl: null },
+  { id: 'lineup2-1', name: null, role: null, imageUrl: null },
+  { id: 'lineup2-2', name: null, role: null, imageUrl: null },
+  { id: 'reserva1-1', name: null, role: null, imageUrl: null },
+  { id: 'reserva1-2', name: null, role: null, imageUrl: null },
+  { id: 'reserva1-3', name: null, role: null, imageUrl: null },
+  { id: 'reserva2-1', name: null, role: null, imageUrl: null },
+  { id: 'reserva2-2', name: null, role: null, imageUrl: null },
 ];
 
 export default function MontarElenco() {
+  const { user } = useAuth();
   const [players, setPlayers] = useState<string[]>([]);
   const [newPlayerName, setNewPlayerName] = useState('');
-  const [slots, setSlots] = useState<PlayerSlot[]>(initialSlots);
+  const [slots, setSlots] = useState<PlayerSlot[]>(createInitialSlots());
   const [draggedPlayer, setDraggedPlayer] = useState<string | null>(null);
   const [draggedRole, setDraggedRole] = useState<string | null>(null);
+  const [isCardMode, setIsCardMode] = useState(false);
+  const [savedRosters, setSavedRosters] = useState<SavedRoster[]>([]);
+  const [rosterName, setRosterName] = useState('');
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Undo/Redo history
+  const [history, setHistory] = useState<HistoryState[]>([{ slots: createInitialSlots(), players: [] }]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  
+  const rosterRef = useRef<HTMLDivElement>(null);
+
+  // Load saved rosters on mount
+  useEffect(() => {
+    if (user) {
+      loadSavedRosters();
+    }
+  }, [user]);
+
+  const loadSavedRosters = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('elencos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error loading rosters:', error);
+      return;
+    }
+    
+    setSavedRosters(data.map(r => ({
+      id: r.id,
+      nome: r.nome,
+      coach: r.coach as unknown as PlayerSlot | null,
+      titulares: r.titulares as unknown as PlayerSlot[],
+      reservas: r.reservas as unknown as PlayerSlot[],
+      created_at: r.created_at
+    })));
+  };
+
+  const saveToHistory = (newSlots: PlayerSlot[], newPlayers: string[]) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push({ slots: [...newSlots], players: [...newPlayers] });
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setSlots([...history[newIndex].slots]);
+      setPlayers([...history[newIndex].players]);
+      toast.success('Ação desfeita');
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setSlots([...history[newIndex].slots]);
+      setPlayers([...history[newIndex].players]);
+      toast.success('Ação refeita');
+    }
+  };
 
   const handleAddPlayer = () => {
     if (!newPlayerName.trim()) {
@@ -64,17 +149,21 @@ export default function MontarElenco() {
       toast.error('Jogador já existe');
       return;
     }
-    setPlayers([...players, newPlayerName.trim().toUpperCase()]);
+    const newPlayers = [...players, newPlayerName.trim().toUpperCase()];
+    setPlayers(newPlayers);
     setNewPlayerName('');
+    saveToHistory(slots, newPlayers);
     toast.success('Jogador adicionado!');
   };
 
   const handleRemovePlayer = (player: string) => {
-    setPlayers(players.filter(p => p !== player));
-    // Also remove from any slot
-    setSlots(slots.map(slot => 
+    const newPlayers = players.filter(p => p !== player);
+    const newSlots = slots.map(slot => 
       slot.name === player ? { ...slot, name: null } : slot
-    ));
+    );
+    setPlayers(newPlayers);
+    setSlots(newSlots);
+    saveToHistory(newSlots, newPlayers);
   };
 
   const handlePlayerDragStart = (e: DragEvent, player: string) => {
@@ -92,19 +181,24 @@ export default function MontarElenco() {
   const handleDrop = (e: DragEvent, slotId: string) => {
     e.preventDefault();
     
+    let newSlots = [...slots];
+    
     if (draggedPlayer) {
-      setSlots(slots.map(slot => 
+      newSlots = newSlots.map(slot => 
         slot.id === slotId ? { ...slot, name: draggedPlayer } : slot
-      ));
+      );
       setDraggedPlayer(null);
     }
     
     if (draggedRole) {
-      setSlots(slots.map(slot => 
+      newSlots = newSlots.map(slot => 
         slot.id === slotId ? { ...slot, role: draggedRole } : slot
-      ));
+      );
       setDraggedRole(null);
     }
+    
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
   };
 
   const handleDragOver = (e: DragEvent) => {
@@ -112,18 +206,138 @@ export default function MontarElenco() {
     e.dataTransfer.dropEffect = draggedRole ? 'copy' : 'move';
   };
 
-  const clearSlot = (slotId: string, type: 'name' | 'role' | 'both') => {
-    setSlots(slots.map(slot => {
+  const clearSlot = (slotId: string, type: 'name' | 'role' | 'image' | 'both') => {
+    const newSlots = slots.map(slot => {
       if (slot.id !== slotId) return slot;
-      if (type === 'both') return { ...slot, name: null, role: null };
+      if (type === 'both') return { ...slot, name: null, role: null, imageUrl: null };
       if (type === 'name') return { ...slot, name: null };
+      if (type === 'image') return { ...slot, imageUrl: null };
       return { ...slot, role: null };
-    }));
+    });
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
   };
 
   const resetAll = () => {
-    setSlots(initialSlots);
+    const newSlots = createInitialSlots();
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
     toast.success('Elenco resetado!');
+  };
+
+  const handleImageUpload = (slotId: string, e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const newSlots = slots.map(slot =>
+        slot.id === slotId ? { ...slot, imageUrl: reader.result as string } : slot
+      );
+      setSlots(newSlots);
+      saveToHistory(newSlots, players);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const exportAsPNG = async () => {
+    if (!rosterRef.current) return;
+    
+    try {
+      toast.loading('Gerando imagem...');
+      const canvas = await html2canvas(rosterRef.current, {
+        backgroundColor: '#1a1a2e',
+        scale: 2,
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'elenco.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast.dismiss();
+      toast.success('Imagem exportada!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Erro ao exportar imagem');
+    }
+  };
+
+  const saveRoster = async () => {
+    if (!user) {
+      toast.error('Faça login para salvar elencos');
+      return;
+    }
+    
+    if (!rosterName.trim()) {
+      toast.error('Digite um nome para o elenco');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    const coachSlot = slots.find(s => s.id === 'coach') || null;
+    const titulares = slots.filter(s => s.id.startsWith('lineup'));
+    const reservas = slots.filter(s => s.id.startsWith('reserva'));
+    
+    const { error } = await supabase.from('elencos').insert([{
+      user_id: user.id,
+      nome: rosterName.trim(),
+      coach: JSON.parse(JSON.stringify(coachSlot)),
+      titulares: JSON.parse(JSON.stringify(titulares)),
+      reservas: JSON.parse(JSON.stringify(reservas)),
+    }]);
+    
+    setIsLoading(false);
+    
+    if (error) {
+      toast.error('Erro ao salvar elenco');
+      console.error(error);
+      return;
+    }
+    
+    toast.success('Elenco salvo!');
+    setRosterName('');
+    setSaveDialogOpen(false);
+    loadSavedRosters();
+  };
+
+  const loadRoster = (roster: SavedRoster) => {
+    const newSlots = createInitialSlots();
+    
+    if (roster.coach) {
+      const idx = newSlots.findIndex(s => s.id === 'coach');
+      if (idx !== -1) newSlots[idx] = roster.coach;
+    }
+    
+    roster.titulares.forEach(t => {
+      const idx = newSlots.findIndex(s => s.id === t.id);
+      if (idx !== -1) newSlots[idx] = t;
+    });
+    
+    roster.reservas.forEach(r => {
+      const idx = newSlots.findIndex(s => s.id === r.id);
+      if (idx !== -1) newSlots[idx] = r;
+    });
+    
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
+    setLoadDialogOpen(false);
+    toast.success(`Elenco "${roster.nome}" carregado!`);
+  };
+
+  const deleteRoster = async (id: string) => {
+    const { error } = await supabase.from('elencos').delete().eq('id', id);
+    if (error) {
+      toast.error('Erro ao deletar');
+      return;
+    }
+    toast.success('Elenco deletado');
+    loadSavedRosters();
   };
 
   const getRoleTag = (roleName: string) => {
@@ -133,10 +347,11 @@ export default function MontarElenco() {
   const renderSlot = (slotId: string, label: string) => {
     const slot = slots.find(s => s.id === slotId);
     const roleTag = slot?.role ? getRoleTag(slot.role) : null;
+    const inputId = `image-upload-${slotId}`;
 
     return (
       <Card
-        className="relative bg-card/30 border-dashed border-2 border-border/50 hover:border-primary/50 transition-all cursor-pointer min-h-[120px]"
+        className={`relative bg-card/30 border-dashed border-2 border-border/50 hover:border-primary/50 transition-all cursor-pointer ${isCardMode ? 'min-h-[180px]' : 'min-h-[120px]'}`}
         onDrop={(e) => handleDrop(e, slotId)}
         onDragOver={handleDragOver}
       >
@@ -157,15 +372,38 @@ export default function MontarElenco() {
             )}
           </div>
 
-          {/* Player Icon */}
-          <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-2">
-            <User className="w-6 h-6 text-muted-foreground" />
+          {/* Image Upload Button */}
+          <div className="absolute top-2 left-2">
+            <label htmlFor={inputId} className="cursor-pointer">
+              <div className="p-1 rounded bg-muted/50 hover:bg-muted transition-colors">
+                <Image className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </label>
+            <input
+              id={inputId}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleImageUpload(slotId, e)}
+            />
+          </div>
+
+          {/* Player Image or Icon */}
+          <div 
+            className={`rounded-full bg-muted/50 flex items-center justify-center mb-2 overflow-hidden ${isCardMode ? 'w-20 h-20' : 'w-12 h-12'}`}
+            onClick={() => slot?.imageUrl && clearSlot(slotId, 'image')}
+          >
+            {slot?.imageUrl ? (
+              <img src={slot.imageUrl} alt="Player" className="w-full h-full object-cover" />
+            ) : (
+              <User className={`text-muted-foreground ${isCardMode ? 'w-10 h-10' : 'w-6 h-6'}`} />
+            )}
           </div>
 
           {/* Player Name */}
           {slot?.name ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">{slot.name}</span>
+              <span className={`font-medium text-foreground ${isCardMode ? 'text-base' : 'text-sm'}`}>{slot.name}</span>
               <button 
                 onClick={() => clearSlot(slotId, 'name')}
                 className="text-destructive/70 hover:text-destructive"
@@ -265,46 +503,130 @@ export default function MontarElenco() {
 
           {/* Main Area */}
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <h1 className="text-2xl font-bold text-premium">MONTAR ELENCO</h1>
-              <Button variant="outline" onClick={resetAll} className="gap-2">
-                <RotateCcw className="w-4 h-4" /> RESETAR
-              </Button>
-            </div>
-
-            {/* Coach Section */}
-            <div className="mb-8">
-              <h2 className="text-xs font-semibold text-muted-foreground mb-3 text-center">COACH</h2>
-              <div className="max-w-xs mx-auto">
-                {renderSlot('coach', 'ARRASTE NOME')}
+              <div className="flex flex-wrap gap-2">
+                {/* Undo/Redo */}
+                <Button variant="outline" size="icon" onClick={undo} disabled={historyIndex <= 0} title="Desfazer">
+                  <Undo2 className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={redo} disabled={historyIndex >= history.length - 1} title="Refazer">
+                  <Redo2 className="w-4 h-4" />
+                </Button>
+                
+                {/* View Mode Toggle */}
+                <Button variant="outline" size="icon" onClick={() => setIsCardMode(!isCardMode)} title={isCardMode ? "Modo Lista" : "Modo Card"}>
+                  {isCardMode ? <LayoutList className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+                </Button>
+                
+                {/* Export */}
+                <Button variant="outline" onClick={exportAsPNG} className="gap-2">
+                  <Download className="w-4 h-4" /> EXPORTAR PNG
+                </Button>
+                
+                {/* Save */}
+                <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2" disabled={!user}>
+                      <Save className="w-4 h-4" /> SALVAR
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Salvar Elenco</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <Input
+                        placeholder="Nome do elenco"
+                        value={rosterName}
+                        onChange={(e) => setRosterName(e.target.value)}
+                      />
+                      <Button onClick={saveRoster} disabled={isLoading} className="w-full">
+                        {isLoading ? 'Salvando...' : 'Salvar'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                {/* Load */}
+                <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2" disabled={!user}>
+                      <FolderOpen className="w-4 h-4" /> CARREGAR
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Carregar Elenco</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto pt-4">
+                      {savedRosters.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">Nenhum elenco salvo</p>
+                      ) : (
+                        savedRosters.map((roster) => (
+                          <div key={roster.id} className="flex items-center justify-between p-3 rounded bg-muted/50 border border-border/50">
+                            <div>
+                              <p className="font-medium">{roster.nome}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(roster.created_at).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => loadRoster(roster)}>Carregar</Button>
+                              <Button size="sm" variant="destructive" onClick={() => deleteRoster(roster.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                {/* Reset */}
+                <Button variant="outline" onClick={resetAll} className="gap-2">
+                  <RotateCcw className="w-4 h-4" /> RESETAR
+                </Button>
               </div>
             </div>
 
-            {/* Lineup Principal */}
-            <div className="mb-8">
-              <h2 className="text-sm font-semibold text-primary mb-4 text-center">LINEUP PRINCIPAL</h2>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                {renderSlot('lineup1-1', 'ARRASTE NOME')}
-                {renderSlot('lineup1-2', 'ARRASTE NOME')}
-                {renderSlot('lineup1-3', 'ARRASTE NOME')}
+            {/* Roster Content */}
+            <div ref={rosterRef} className="p-4 bg-background rounded-lg">
+              {/* Coach Section */}
+              <div className="mb-8">
+                <h2 className="text-xs font-semibold text-muted-foreground mb-3 text-center">COACH</h2>
+                <div className="max-w-xs mx-auto">
+                  {renderSlot('coach', 'ARRASTE NOME')}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                {renderSlot('lineup2-1', 'ARRASTE NOME')}
-                {renderSlot('lineup2-2', 'ARRASTE NOME')}
-              </div>
-            </div>
 
-            {/* Opção 2 / Reservas */}
-            <div>
-              <h2 className="text-sm font-semibold text-muted-foreground mb-4 text-center">↓ OPÇÃO 2 / RESERVAS</h2>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                {renderSlot('reserva1-1', 'ARRASTE NOME')}
-                {renderSlot('reserva1-2', 'ARRASTE NOME')}
-                {renderSlot('reserva1-3', 'ARRASTE NOME')}
+              {/* Lineup Principal */}
+              <div className="mb-8">
+                <h2 className="text-sm font-semibold text-primary mb-4 text-center">LINEUP PRINCIPAL</h2>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {renderSlot('lineup1-1', 'ARRASTE NOME')}
+                  {renderSlot('lineup1-2', 'ARRASTE NOME')}
+                  {renderSlot('lineup1-3', 'ARRASTE NOME')}
+                </div>
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                  {renderSlot('lineup2-1', 'ARRASTE NOME')}
+                  {renderSlot('lineup2-2', 'ARRASTE NOME')}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                {renderSlot('reserva2-1', 'ARRASTE NOME')}
-                {renderSlot('reserva2-2', 'ARRASTE NOME')}
+
+              {/* Opção 2 / Reservas */}
+              <div>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-4 text-center">↓ OPÇÃO 2 / RESERVAS</h2>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {renderSlot('reserva1-1', 'ARRASTE NOME')}
+                  {renderSlot('reserva1-2', 'ARRASTE NOME')}
+                  {renderSlot('reserva1-3', 'ARRASTE NOME')}
+                </div>
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                  {renderSlot('reserva2-1', 'ARRASTE NOME')}
+                  {renderSlot('reserva2-2', 'ARRASTE NOME')}
+                </div>
               </div>
             </div>
           </div>

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      elencos: {
+        Row: {
+          coach: Json | null
+          created_at: string
+          id: string
+          nome: string
+          reservas: Json
+          titulares: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coach?: Json | null
+          created_at?: string
+          id?: string
+          nome: string
+          reservas?: Json
+          titulares?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coach?: Json | null
+          created_at?: string
+          id?: string
+          nome?: string
+          reservas?: Json
+          titulares?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string
