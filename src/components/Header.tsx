@@ -41,6 +41,7 @@ export function Header() {
     { name: t('nav.mapDraw'), path: '/sorteio-mapas' },
     { name: t('nav.trainingCreator'), path: '/criador-treinos' },
     { name: 'Mapeamento', path: '/mapeamento' },
+    { name: 'Montar Elenco', path: '/montar-elenco' },
     { name: t('nav.feedback'), path: '/feedback' },
   ];
 
