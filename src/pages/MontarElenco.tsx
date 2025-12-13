@@ -310,17 +310,13 @@ export default function MontarElenco() {
     const titulares = slots.filter(s => s.id.startsWith('lineup'));
     const reservas = slots.filter(s => s.id.startsWith('reserva'));
     
-    const insertData: Record<string, unknown> = {
+    const { error } = await supabase.from('elencos').insert([{
       user_id: user.id,
       nome: rosterName.trim(),
       coach: JSON.parse(JSON.stringify(coachSlot)),
       titulares: JSON.parse(JSON.stringify(titulares)),
       reservas: JSON.parse(JSON.stringify(reservas)),
-      logo_url: teamLogo,
-      team_name: teamName.trim() || null,
-    };
-    
-    const { error } = await supabase.from('elencos').insert([insertData]);
+    }]);
     
     setIsLoading(false);
     
