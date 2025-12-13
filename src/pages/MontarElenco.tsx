@@ -5,7 +5,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList, Shield, Pencil, Check, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList, Shield, Pencil, Check, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +36,7 @@ interface SavedRoster {
   created_at: string;
   logo_url?: string | null;
   team_name?: string | null;
+  notas?: string | null;
 }
 
 interface HistoryState {
@@ -81,6 +84,9 @@ export default function MontarElenco() {
   const [teamName, setTeamName] = useState('');
   const [editingRosterId, setEditingRosterId] = useState<string | null>(null);
   const [editingRosterName, setEditingRosterName] = useState('');
+  const [rosterNotes, setRosterNotes] = useState('');
+  const [mobileSelectSlot, setMobileSelectSlot] = useState<string | null>(null);
+  const [mobileSelectType, setMobileSelectType] = useState<'player' | 'role'>('player');
   
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryState[]>([{ slots: createInitialSlots(), players: [] }]);
@@ -118,6 +124,7 @@ export default function MontarElenco() {
       created_at: r.created_at,
       logo_url: (r as Record<string, unknown>).logo_url as string | null,
       team_name: (r as Record<string, unknown>).team_name as string | null,
+      notas: (r as Record<string, unknown>).notas as string | null,
     })));
   };
 
@@ -231,8 +238,33 @@ export default function MontarElenco() {
     setSlots(newSlots);
     setTeamLogo(null);
     setTeamName('');
+    setRosterNotes('');
     saveToHistory(newSlots, players);
     toast.success('Elenco resetado!');
+  };
+
+  // Mobile tap to select player/role
+  const handleMobileSelectPlayer = (slotId: string, playerName: string) => {
+    const newSlots = slots.map(slot => 
+      slot.id === slotId ? { ...slot, name: playerName } : slot
+    );
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
+    setMobileSelectSlot(null);
+  };
+
+  const handleMobileSelectRole = (slotId: string, roleName: string) => {
+    const newSlots = slots.map(slot => 
+      slot.id === slotId ? { ...slot, role: roleName } : slot
+    );
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
+    setMobileSelectSlot(null);
+  };
+
+  const openMobileSelect = (slotId: string, type: 'player' | 'role') => {
+    setMobileSelectSlot(slotId);
+    setMobileSelectType(type);
   };
 
   const handleTeamLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -353,6 +385,7 @@ export default function MontarElenco() {
     setSlots(newSlots);
     setTeamLogo(roster.logo_url || null);
     setTeamName(roster.team_name || '');
+    setRosterNotes(roster.notas || '');
     saveToHistory(newSlots, players);
     setLoadDialogOpen(false);
     toast.success(`Elenco "${roster.nome}" carregado!`);
@@ -400,19 +433,28 @@ export default function MontarElenco() {
         className={`relative bg-card/30 border-dashed border-2 border-border/50 hover:border-primary/50 transition-all cursor-pointer ${isCardMode ? 'min-h-[180px]' : 'min-h-[120px]'}`}
         onDrop={(e) => handleDrop(e, slotId)}
         onDragOver={handleDragOver}
+        onClick={() => {
+          // Mobile: open player select on card tap (if no player assigned)
+          if (!slot?.name && players.length > 0) {
+            openMobileSelect(slotId, 'player');
+          }
+        }}
       >
         <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-          {/* Role Badge */}
+          {/* Role Badge - tap to select on mobile */}
           <div className="absolute top-2 right-2">
             {slot?.role ? (
               <span 
                 className={`px-2 py-1 text-xs font-bold rounded border ${roleTag?.color} text-foreground cursor-pointer hover:opacity-80`}
-                onClick={() => clearSlot(slotId, 'role')}
+                onClick={(e) => { e.stopPropagation(); clearSlot(slotId, 'role'); }}
               >
                 {roleTag?.icon} {slot.role}
               </span>
             ) : (
-              <span className="px-2 py-1 text-xs text-muted-foreground border border-dashed border-border rounded">
+              <span 
+                className="px-2 py-1 text-xs text-muted-foreground border border-dashed border-border rounded cursor-pointer hover:border-primary/50"
+                onClick={(e) => { e.stopPropagation(); openMobileSelect(slotId, 'role'); }}
+              >
                 FUNÇÃO
               </span>
             )}
@@ -420,7 +462,7 @@ export default function MontarElenco() {
 
           {/* Image Upload Button */}
           <div className="absolute top-2 left-2">
-            <label htmlFor={inputId} className="cursor-pointer">
+            <label htmlFor={inputId} className="cursor-pointer" onClick={(e) => e.stopPropagation()}>
               <div className="p-1 rounded bg-muted/50 hover:bg-muted transition-colors">
                 <Image className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -437,7 +479,7 @@ export default function MontarElenco() {
           {/* Player Image or Icon */}
           <div 
             className={`rounded-full bg-muted/50 flex items-center justify-center mb-2 overflow-hidden ${isCardMode ? 'w-20 h-20' : 'w-12 h-12'}`}
-            onClick={() => slot?.imageUrl && clearSlot(slotId, 'image')}
+            onClick={(e) => { e.stopPropagation(); if (slot?.imageUrl) clearSlot(slotId, 'image'); }}
           >
             {slot?.imageUrl ? (
               <img src={slot.imageUrl} alt="Player" className="w-full h-full object-cover" />
@@ -449,9 +491,14 @@ export default function MontarElenco() {
           {/* Player Name */}
           {slot?.name ? (
             <div className="flex items-center gap-2">
-              <span className={`font-medium text-foreground ${isCardMode ? 'text-base' : 'text-sm'}`}>{slot.name}</span>
+              <span 
+                className={`font-medium text-foreground ${isCardMode ? 'text-base' : 'text-sm'} cursor-pointer`}
+                onClick={(e) => { e.stopPropagation(); openMobileSelect(slotId, 'player'); }}
+              >
+                {slot.name}
+              </span>
               <button 
-                onClick={() => clearSlot(slotId, 'name')}
+                onClick={(e) => { e.stopPropagation(); clearSlot(slotId, 'name'); }}
                 className="text-destructive/70 hover:text-destructive"
               >
                 <Trash2 className="w-3 h-3" />
