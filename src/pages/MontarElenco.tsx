@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList } from 'lucide-react';
+import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList, Shield, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +32,8 @@ interface SavedRoster {
   titulares: PlayerSlot[];
   reservas: PlayerSlot[];
   created_at: string;
+  logo_url?: string | null;
+  team_name?: string | null;
 }
 
 interface HistoryState {
@@ -75,6 +77,10 @@ export default function MontarElenco() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [teamLogo, setTeamLogo] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState('');
+  const [editingRosterId, setEditingRosterId] = useState<string | null>(null);
+  const [editingRosterName, setEditingRosterName] = useState('');
   
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryState[]>([{ slots: createInitialSlots(), players: [] }]);
@@ -109,7 +115,9 @@ export default function MontarElenco() {
       coach: r.coach as unknown as PlayerSlot | null,
       titulares: r.titulares as unknown as PlayerSlot[],
       reservas: r.reservas as unknown as PlayerSlot[],
-      created_at: r.created_at
+      created_at: r.created_at,
+      logo_url: (r as Record<string, unknown>).logo_url as string | null,
+      team_name: (r as Record<string, unknown>).team_name as string | null,
     })));
   };
 
@@ -221,8 +229,26 @@ export default function MontarElenco() {
   const resetAll = () => {
     const newSlots = createInitialSlots();
     setSlots(newSlots);
+    setTeamLogo(null);
+    setTeamName('');
     saveToHistory(newSlots, players);
     toast.success('Elenco resetado!');
+  };
+
+  const handleTeamLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTeamLogo(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleImageUpload = (slotId: string, e: ChangeEvent<HTMLInputElement>) => {
@@ -284,13 +310,17 @@ export default function MontarElenco() {
     const titulares = slots.filter(s => s.id.startsWith('lineup'));
     const reservas = slots.filter(s => s.id.startsWith('reserva'));
     
-    const { error } = await supabase.from('elencos').insert([{
+    const insertData: Record<string, unknown> = {
       user_id: user.id,
       nome: rosterName.trim(),
       coach: JSON.parse(JSON.stringify(coachSlot)),
       titulares: JSON.parse(JSON.stringify(titulares)),
       reservas: JSON.parse(JSON.stringify(reservas)),
-    }]);
+      logo_url: teamLogo,
+      team_name: teamName.trim() || null,
+    };
+    
+    const { error } = await supabase.from('elencos').insert([insertData]);
     
     setIsLoading(false);
     
@@ -325,6 +355,8 @@ export default function MontarElenco() {
     });
     
     setSlots(newSlots);
+    setTeamLogo(roster.logo_url || null);
+    setTeamName(roster.team_name || '');
     saveToHistory(newSlots, players);
     setLoadDialogOpen(false);
     toast.success(`Elenco "${roster.nome}" carregado!`);
@@ -337,6 +369,24 @@ export default function MontarElenco() {
       return;
     }
     toast.success('Elenco deletado');
+    loadSavedRosters();
+  };
+
+  const updateRosterName = async (id: string, newName: string) => {
+    if (!newName.trim()) {
+      toast.error('Nome não pode estar vazio');
+      return;
+    }
+    
+    const { error } = await supabase.from('elencos').update({ nome: newName.trim() }).eq('id', id);
+    if (error) {
+      toast.error('Erro ao atualizar nome');
+      return;
+    }
+    
+    toast.success('Nome atualizado');
+    setEditingRosterId(null);
+    setEditingRosterName('');
     loadSavedRosters();
   };
 
@@ -541,6 +591,39 @@ export default function MontarElenco() {
                         value={rosterName}
                         onChange={(e) => setRosterName(e.target.value)}
                       />
+                      <Input
+                        placeholder="Nome do time (opcional)"
+                        value={teamName}
+                        onChange={(e) => setTeamName(e.target.value)}
+                      />
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden border border-dashed border-border">
+                          {teamLogo ? (
+                            <img src={teamLogo} alt="Logo" className="w-full h-full object-contain" />
+                          ) : (
+                            <Shield className="w-6 h-6 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <label htmlFor="team-logo-upload" className="cursor-pointer">
+                            <Button variant="outline" size="sm" asChild>
+                              <span><Image className="w-4 h-4 mr-2" /> Upload Logo</span>
+                            </Button>
+                          </label>
+                          <input
+                            id="team-logo-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleTeamLogoUpload}
+                          />
+                          {teamLogo && (
+                            <Button variant="ghost" size="sm" onClick={() => setTeamLogo(null)}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Remover
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                       <Button onClick={saveRoster} disabled={isLoading} className="w-full">
                         {isLoading ? 'Salvando...' : 'Salvar'}
                       </Button>
@@ -564,14 +647,49 @@ export default function MontarElenco() {
                         <p className="text-center text-muted-foreground py-4">Nenhum elenco salvo</p>
                       ) : (
                         savedRosters.map((roster) => (
-                          <div key={roster.id} className="flex items-center justify-between p-3 rounded bg-muted/50 border border-border/50">
-                            <div>
-                              <p className="font-medium">{roster.nome}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(roster.created_at).toLocaleDateString('pt-BR')}
-                              </p>
+                          <div key={roster.id} className="flex items-center gap-3 p-3 rounded bg-muted/50 border border-border/50">
+                            {roster.logo_url && (
+                              <div className="w-10 h-10 rounded overflow-hidden shrink-0">
+                                <img src={roster.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              {editingRosterId === roster.id ? (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={editingRosterName}
+                                    onChange={(e) => setEditingRosterName(e.target.value)}
+                                    className="h-8 text-sm"
+                                    autoFocus
+                                  />
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateRosterName(roster.id, editingRosterName)}>
+                                    <Check className="w-4 h-4 text-green-500" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditingRosterId(null); setEditingRosterName(''); }}>
+                                    <X className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium truncate">{roster.nome}</p>
+                                    <button 
+                                      onClick={() => { setEditingRosterId(roster.id); setEditingRosterName(roster.nome); }}
+                                      className="text-muted-foreground hover:text-foreground"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  {roster.team_name && (
+                                    <p className="text-xs text-primary truncate">{roster.team_name}</p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(roster.created_at).toLocaleDateString('pt-BR')}
+                                  </p>
+                                </>
+                              )}
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 shrink-0">
                               <Button size="sm" onClick={() => loadRoster(roster)}>Carregar</Button>
                               <Button size="sm" variant="destructive" onClick={() => deleteRoster(roster.id)}>
                                 <Trash2 className="w-4 h-4" />
@@ -593,6 +711,20 @@ export default function MontarElenco() {
 
             {/* Roster Content */}
             <div ref={rosterRef} className="p-4 bg-background rounded-lg">
+              {/* Team Header */}
+              {(teamLogo || teamName) && (
+                <div className="flex items-center justify-center gap-4 mb-6 pb-4 border-b border-border/30">
+                  {teamLogo && (
+                    <div className="w-16 h-16 rounded-lg overflow-hidden">
+                      <img src={teamLogo} alt="Team Logo" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                  {teamName && (
+                    <h2 className="text-xl font-bold text-premium">{teamName}</h2>
+                  )}
+                </div>
+              )}
+              
               {/* Coach Section */}
               <div className="mb-8">
                 <h2 className="text-xs font-semibold text-muted-foreground mb-3 text-center">COACH</h2>
