@@ -57,11 +57,10 @@ const ROLE_TAGS: RoleTag[] = [
 
 const createInitialSlots = (): PlayerSlot[] => [
   { id: 'coach', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'lineup1-1', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'lineup1-2', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'lineup1-3', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'lineup2-1', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'lineup2-2', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup-1', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup-2', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup-3', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup-4', name: null, role: null, imageUrl: null, salary: null },
   { id: 'reserva1-1', name: null, role: null, imageUrl: null, salary: null },
   { id: 'reserva1-2', name: null, role: null, imageUrl: null, salary: null },
   { id: 'reserva1-3', name: null, role: null, imageUrl: null, salary: null },
@@ -827,15 +826,12 @@ export default function MontarElenco() {
 
               {/* Lineup Principal */}
               <div className="mb-8">
-                <h2 className="text-sm font-semibold text-primary mb-4 text-center">LINEUP PRINCIPAL</h2>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {renderSlot('lineup1-1', 'ARRASTE NOME')}
-                  {renderSlot('lineup1-2', 'ARRASTE NOME')}
-                  {renderSlot('lineup1-3', 'ARRASTE NOME')}
-                </div>
-                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                  {renderSlot('lineup2-1', 'ARRASTE NOME')}
-                  {renderSlot('lineup2-2', 'ARRASTE NOME')}
+                <h2 className="text-sm font-semibold text-primary mb-4 text-center">LINEUP PRINCIPAL (4 JOGADORES)</h2>
+                <div className="grid grid-cols-4 gap-4">
+                  {renderSlot('lineup-1', 'JOGADOR 1')}
+                  {renderSlot('lineup-2', 'JOGADOR 2')}
+                  {renderSlot('lineup-3', 'JOGADOR 3')}
+                  {renderSlot('lineup-4', 'JOGADOR 4')}
                 </div>
               </div>
 
