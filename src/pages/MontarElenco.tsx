@@ -61,11 +61,6 @@ const createInitialSlots = (): PlayerSlot[] => [
   { id: 'lineup-2', name: null, role: null, imageUrl: null, salary: null },
   { id: 'lineup-3', name: null, role: null, imageUrl: null, salary: null },
   { id: 'lineup-4', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'reserva1-1', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'reserva1-2', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'reserva1-3', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'reserva2-1', name: null, role: null, imageUrl: null, salary: null },
-  { id: 'reserva2-2', name: null, role: null, imageUrl: null, salary: null },
 ];
 
 export default function MontarElenco() {
@@ -91,6 +86,7 @@ export default function MontarElenco() {
   const [editSlotDialogOpen, setEditSlotDialogOpen] = useState(false);
   const [editingSlot, setEditingSlot] = useState<PlayerSlot | null>(null);
   const [tempSlotData, setTempSlotData] = useState<{ player: string; role: string; salary: string }>({ player: '', role: '', salary: '' });
+  const [reserveSlots, setReserveSlots] = useState<PlayerSlot[]>([]);
   
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryState[]>([{ slots: createInitialSlots(), players: [] }]);
@@ -200,24 +196,40 @@ export default function MontarElenco() {
   const handleDrop = (e: DragEvent, slotId: string) => {
     e.preventDefault();
     
-    let newSlots = [...slots];
+    const isReserve = reserveSlots.some(s => s.id === slotId);
     
-    if (draggedPlayer) {
-      newSlots = newSlots.map(slot => 
-        slot.id === slotId ? { ...slot, name: draggedPlayer } : slot
-      );
-      setDraggedPlayer(null);
+    if (isReserve) {
+      let newReserves = [...reserveSlots];
+      if (draggedPlayer) {
+        newReserves = newReserves.map(slot => 
+          slot.id === slotId ? { ...slot, name: draggedPlayer } : slot
+        );
+        setDraggedPlayer(null);
+      }
+      if (draggedRole) {
+        newReserves = newReserves.map(slot => 
+          slot.id === slotId ? { ...slot, role: draggedRole } : slot
+        );
+        setDraggedRole(null);
+      }
+      setReserveSlots(newReserves);
+    } else {
+      let newSlots = [...slots];
+      if (draggedPlayer) {
+        newSlots = newSlots.map(slot => 
+          slot.id === slotId ? { ...slot, name: draggedPlayer } : slot
+        );
+        setDraggedPlayer(null);
+      }
+      if (draggedRole) {
+        newSlots = newSlots.map(slot => 
+          slot.id === slotId ? { ...slot, role: draggedRole } : slot
+        );
+        setDraggedRole(null);
+      }
+      setSlots(newSlots);
+      saveToHistory(newSlots, players);
     }
-    
-    if (draggedRole) {
-      newSlots = newSlots.map(slot => 
-        slot.id === slotId ? { ...slot, role: draggedRole } : slot
-      );
-      setDraggedRole(null);
-    }
-    
-    setSlots(newSlots);
-    saveToHistory(newSlots, players);
   };
 
   const handleDragOver = (e: DragEvent) => {
@@ -226,20 +238,29 @@ export default function MontarElenco() {
   };
 
   const clearSlot = (slotId: string, type: 'name' | 'role' | 'image' | 'both') => {
-    const newSlots = slots.map(slot => {
+    const isReserve = reserveSlots.some(s => s.id === slotId);
+    
+    const updateSlot = (slot: PlayerSlot) => {
       if (slot.id !== slotId) return slot;
       if (type === 'both') return { ...slot, name: null, role: null, imageUrl: null };
       if (type === 'name') return { ...slot, name: null };
       if (type === 'image') return { ...slot, imageUrl: null };
       return { ...slot, role: null };
-    });
-    setSlots(newSlots);
-    saveToHistory(newSlots, players);
+    };
+    
+    if (isReserve) {
+      setReserveSlots(reserveSlots.map(updateSlot));
+    } else {
+      const newSlots = slots.map(updateSlot);
+      setSlots(newSlots);
+      saveToHistory(newSlots, players);
+    }
   };
 
   const resetAll = () => {
     const newSlots = createInitialSlots();
     setSlots(newSlots);
+    setReserveSlots([]);
     setTeamLogo(null);
     setTeamName('');
     setRosterNotes('');
@@ -247,22 +268,55 @@ export default function MontarElenco() {
     toast.success('Elenco resetado!');
   };
 
+  const addReserveSlot = () => {
+    const newId = `reserva-${Date.now()}`;
+    setReserveSlots([...reserveSlots, { id: newId, name: null, role: null, imageUrl: null, salary: null }]);
+  };
+
+  const calculateTotalSalaries = () => {
+    const allSlots = [...slots, ...reserveSlots];
+    let total = 0;
+    allSlots.forEach(slot => {
+      if (slot.salary) {
+        const numericValue = parseFloat(slot.salary.replace(/[^\d.,]/g, '').replace(',', '.'));
+        if (!isNaN(numericValue)) {
+          total += numericValue;
+        }
+      }
+    });
+    return total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
   // Mobile tap to select player/role
   const handleMobileSelectPlayer = (slotId: string, playerName: string) => {
-    const newSlots = slots.map(slot => 
-      slot.id === slotId ? { ...slot, name: playerName } : slot
-    );
-    setSlots(newSlots);
-    saveToHistory(newSlots, players);
+    const isReserve = reserveSlots.some(s => s.id === slotId);
+    if (isReserve) {
+      setReserveSlots(reserveSlots.map(slot => 
+        slot.id === slotId ? { ...slot, name: playerName } : slot
+      ));
+    } else {
+      const newSlots = slots.map(slot => 
+        slot.id === slotId ? { ...slot, name: playerName } : slot
+      );
+      setSlots(newSlots);
+      saveToHistory(newSlots, players);
+    }
     setMobileSelectSlot(null);
   };
 
   const handleMobileSelectRole = (slotId: string, roleName: string) => {
-    const newSlots = slots.map(slot => 
-      slot.id === slotId ? { ...slot, role: roleName } : slot
-    );
-    setSlots(newSlots);
-    saveToHistory(newSlots, players);
+    const isReserve = reserveSlots.some(s => s.id === slotId);
+    if (isReserve) {
+      setReserveSlots(reserveSlots.map(slot => 
+        slot.id === slotId ? { ...slot, role: roleName } : slot
+      ));
+    } else {
+      const newSlots = slots.map(slot => 
+        slot.id === slotId ? { ...slot, role: roleName } : slot
+      );
+      setSlots(newSlots);
+      saveToHistory(newSlots, players);
+    }
     setMobileSelectSlot(null);
   };
 
@@ -272,7 +326,7 @@ export default function MontarElenco() {
   };
 
   const openEditSlotDialog = (slotId: string) => {
-    const slot = slots.find(s => s.id === slotId);
+    const slot = slots.find(s => s.id === slotId) || reserveSlots.find(s => s.id === slotId);
     if (slot) {
       setEditingSlot(slot);
       setTempSlotData({
@@ -287,7 +341,7 @@ export default function MontarElenco() {
   const saveSlotChanges = () => {
     if (!editingSlot) return;
     
-    const newSlots = slots.map(slot => 
+    const updateSlot = (slot: PlayerSlot) => 
       slot.id === editingSlot.id 
         ? { 
             ...slot, 
@@ -295,10 +349,18 @@ export default function MontarElenco() {
             role: tempSlotData.role || null,
             salary: tempSlotData.salary || null,
           } 
-        : slot
-    );
-    setSlots(newSlots);
-    saveToHistory(newSlots, players);
+        : slot;
+    
+    const isReserve = reserveSlots.some(s => s.id === editingSlot.id);
+    
+    if (isReserve) {
+      setReserveSlots(reserveSlots.map(updateSlot));
+    } else {
+      const newSlots = slots.map(updateSlot);
+      setSlots(newSlots);
+      saveToHistory(newSlots, players);
+    }
+    
     setEditSlotDialogOpen(false);
     setEditingSlot(null);
     toast.success('Card atualizado!');
@@ -329,13 +391,21 @@ export default function MontarElenco() {
       return;
     }
     
+    const isReserve = reserveSlots.some(s => s.id === slotId);
+    
     const reader = new FileReader();
     reader.onloadend = () => {
-      const newSlots = slots.map(slot =>
-        slot.id === slotId ? { ...slot, imageUrl: reader.result as string } : slot
-      );
-      setSlots(newSlots);
-      saveToHistory(newSlots, players);
+      if (isReserve) {
+        setReserveSlots(reserveSlots.map(slot =>
+          slot.id === slotId ? { ...slot, imageUrl: reader.result as string } : slot
+        ));
+      } else {
+        const newSlots = slots.map(slot =>
+          slot.id === slotId ? { ...slot, imageUrl: reader.result as string } : slot
+        );
+        setSlots(newSlots);
+        saveToHistory(newSlots, players);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -461,7 +531,7 @@ export default function MontarElenco() {
   };
 
   const renderSlot = (slotId: string, label: string) => {
-    const slot = slots.find(s => s.id === slotId);
+    const slot = slots.find(s => s.id === slotId) || reserveSlots.find(s => s.id === slotId);
     const roleTag = slot?.role ? getRoleTag(slot.role) : null;
     const inputId = `image-upload-${slotId}`;
 
@@ -838,14 +908,27 @@ export default function MontarElenco() {
               {/* Opção 2 / Reservas */}
               <div>
                 <h2 className="text-sm font-semibold text-muted-foreground mb-4 text-center">↓ OPÇÃO 2 / RESERVAS</h2>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {renderSlot('reserva1-1', 'ARRASTE NOME')}
-                  {renderSlot('reserva1-2', 'ARRASTE NOME')}
-                  {renderSlot('reserva1-3', 'ARRASTE NOME')}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {reserveSlots.map((slot) => renderSlot(slot.id, 'RESERVA'))}
+                  <Card
+                    className="relative bg-card/30 border-dashed border-2 border-border/50 hover:border-primary/50 transition-all cursor-pointer min-h-[120px] flex items-center justify-center"
+                    onClick={addReserveSlot}
+                  >
+                    <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+                      <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+                      <span className="text-xs text-muted-foreground">ADICIONAR</span>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                  {renderSlot('reserva2-1', 'ARRASTE NOME')}
-                  {renderSlot('reserva2-2', 'ARRASTE NOME')}
+              </div>
+
+              {/* Total Salaries */}
+              <div className="mt-8 p-4 bg-muted/30 rounded-lg border border-border/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" /> TOTAL DE SALÁRIOS
+                  </span>
+                  <span className="text-lg font-bold text-green-500">{calculateTotalSalaries()}</span>
                 </div>
               </div>
             </div>
