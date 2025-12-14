@@ -667,6 +667,17 @@ export default function MontarElenco() {
                           )}
                         </div>
                       </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                          <FileText className="w-4 h-4" /> Notas / Observações
+                        </label>
+                        <Textarea
+                          placeholder="Adicione notas sobre o elenco, estratégias, observações..."
+                          value={rosterNotes}
+                          onChange={(e) => setRosterNotes(e.target.value)}
+                          className="min-h-[80px]"
+                        />
+                      </div>
                       <Button onClick={saveRoster} disabled={isLoading} className="w-full">
                         {isLoading ? 'Salvando...' : 'Salvar'}
                       </Button>
@@ -807,6 +818,65 @@ export default function MontarElenco() {
           </div>
         </div>
       </main>
+
+      {/* Mobile Select Dialog */}
+      <Dialog open={mobileSelectSlot !== null} onOpenChange={(open) => !open && setMobileSelectSlot(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {mobileSelectType === 'player' ? 'Selecionar Jogador' : 'Selecionar Função'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[300px] overflow-y-auto pt-2">
+            {mobileSelectType === 'player' ? (
+              players.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">Nenhum jogador adicionado</p>
+              ) : (
+                players.map((player) => (
+                  <Button
+                    key={player}
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => mobileSelectSlot && handleMobileSelectPlayer(mobileSelectSlot, player)}
+                  >
+                    <User className="w-4 h-4" />
+                    {player}
+                  </Button>
+                ))
+              )
+            ) : (
+              ROLE_TAGS.map((role) => (
+                <Button
+                  key={role.id}
+                  variant="outline"
+                  className={`w-full justify-start gap-2 ${role.color}`}
+                  onClick={() => mobileSelectSlot && handleMobileSelectRole(mobileSelectSlot, role.name)}
+                >
+                  <span>{role.icon}</span>
+                  {role.name}
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notes Display (if has notes) */}
+      {rosterNotes && (
+        <div className="container mx-auto px-4 pb-4">
+          <Card className="glass-effect">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-semibold text-muted-foreground mb-1">NOTAS</h4>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{rosterNotes}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Footer />
     </div>

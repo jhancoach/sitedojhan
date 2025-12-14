@@ -21,6 +21,7 @@ export type Database = {
           id: string
           logo_url: string | null
           nome: string
+          notas: string | null
           reservas: Json
           team_name: string | null
           titulares: Json
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           nome: string
+          notas?: string | null
           reservas?: Json
           team_name?: string | null
           titulares?: Json
@@ -45,6 +47,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           nome?: string
+          notas?: string | null
           reservas?: Json
           team_name?: string | null
           titulares?: Json
