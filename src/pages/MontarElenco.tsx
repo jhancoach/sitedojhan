@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList, Shield, Pencil, Check, X, FileText } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Plus, User, Trash2, RotateCcw, Download, Save, Undo2, Redo2, Image, FolderOpen, LayoutGrid, LayoutList, Shield, Pencil, Check, X, FileText, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +19,7 @@ interface PlayerSlot {
   name: string | null;
   role: string | null;
   imageUrl: string | null;
+  salary: string | null;
 }
 
 interface RoleTag {
@@ -54,17 +56,17 @@ const ROLE_TAGS: RoleTag[] = [
 ];
 
 const createInitialSlots = (): PlayerSlot[] => [
-  { id: 'coach', name: null, role: null, imageUrl: null },
-  { id: 'lineup1-1', name: null, role: null, imageUrl: null },
-  { id: 'lineup1-2', name: null, role: null, imageUrl: null },
-  { id: 'lineup1-3', name: null, role: null, imageUrl: null },
-  { id: 'lineup2-1', name: null, role: null, imageUrl: null },
-  { id: 'lineup2-2', name: null, role: null, imageUrl: null },
-  { id: 'reserva1-1', name: null, role: null, imageUrl: null },
-  { id: 'reserva1-2', name: null, role: null, imageUrl: null },
-  { id: 'reserva1-3', name: null, role: null, imageUrl: null },
-  { id: 'reserva2-1', name: null, role: null, imageUrl: null },
-  { id: 'reserva2-2', name: null, role: null, imageUrl: null },
+  { id: 'coach', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup1-1', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup1-2', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup1-3', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup2-1', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'lineup2-2', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'reserva1-1', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'reserva1-2', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'reserva1-3', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'reserva2-1', name: null, role: null, imageUrl: null, salary: null },
+  { id: 'reserva2-2', name: null, role: null, imageUrl: null, salary: null },
 ];
 
 export default function MontarElenco() {
@@ -87,6 +89,9 @@ export default function MontarElenco() {
   const [rosterNotes, setRosterNotes] = useState('');
   const [mobileSelectSlot, setMobileSelectSlot] = useState<string | null>(null);
   const [mobileSelectType, setMobileSelectType] = useState<'player' | 'role'>('player');
+  const [editSlotDialogOpen, setEditSlotDialogOpen] = useState(false);
+  const [editingSlot, setEditingSlot] = useState<PlayerSlot | null>(null);
+  const [tempSlotData, setTempSlotData] = useState<{ player: string; role: string; salary: string }>({ player: '', role: '', salary: '' });
   
   // Undo/Redo history
   const [history, setHistory] = useState<HistoryState[]>([{ slots: createInitialSlots(), players: [] }]);
@@ -267,6 +272,39 @@ export default function MontarElenco() {
     setMobileSelectType(type);
   };
 
+  const openEditSlotDialog = (slotId: string) => {
+    const slot = slots.find(s => s.id === slotId);
+    if (slot) {
+      setEditingSlot(slot);
+      setTempSlotData({
+        player: slot.name || '',
+        role: slot.role || '',
+        salary: slot.salary || '',
+      });
+      setEditSlotDialogOpen(true);
+    }
+  };
+
+  const saveSlotChanges = () => {
+    if (!editingSlot) return;
+    
+    const newSlots = slots.map(slot => 
+      slot.id === editingSlot.id 
+        ? { 
+            ...slot, 
+            name: tempSlotData.player || null, 
+            role: tempSlotData.role || null,
+            salary: tempSlotData.salary || null,
+          } 
+        : slot
+    );
+    setSlots(newSlots);
+    saveToHistory(newSlots, players);
+    setEditSlotDialogOpen(false);
+    setEditingSlot(null);
+    toast.success('Card atualizado!');
+  };
+
   const handleTeamLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -433,12 +471,7 @@ export default function MontarElenco() {
         className={`relative bg-card/30 border-dashed border-2 border-border/50 hover:border-primary/50 transition-all cursor-pointer ${isCardMode ? 'min-h-[180px]' : 'min-h-[120px]'}`}
         onDrop={(e) => handleDrop(e, slotId)}
         onDragOver={handleDragOver}
-        onClick={() => {
-          // Mobile: open player select on card tap (if no player assigned)
-          if (!slot?.name && players.length > 0) {
-            openMobileSelect(slotId, 'player');
-          }
-        }}
+        onClick={() => openEditSlotDialog(slotId)}
       >
         <CardContent className="p-4 flex flex-col items-center justify-center h-full">
           {/* Role Badge - tap to select on mobile */}
@@ -490,19 +523,24 @@ export default function MontarElenco() {
 
           {/* Player Name */}
           {slot?.name ? (
-            <div className="flex items-center gap-2">
-              <span 
-                className={`font-medium text-foreground ${isCardMode ? 'text-base' : 'text-sm'} cursor-pointer`}
-                onClick={(e) => { e.stopPropagation(); openMobileSelect(slotId, 'player'); }}
-              >
-                {slot.name}
-              </span>
-              <button 
-                onClick={(e) => { e.stopPropagation(); clearSlot(slotId, 'name'); }}
-                className="text-destructive/70 hover:text-destructive"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className={`font-medium text-foreground ${isCardMode ? 'text-base' : 'text-sm'}`}>
+                  {slot.name}
+                </span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); clearSlot(slotId, 'name'); }}
+                  className="text-destructive/70 hover:text-destructive"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+              {slot.salary && (
+                <span className="text-xs text-green-500 flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  {slot.salary}
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-xs text-muted-foreground">{label}</span>
@@ -818,6 +856,61 @@ export default function MontarElenco() {
           </div>
         </div>
       </main>
+
+      {/* Edit Slot Dialog */}
+      <Dialog open={editSlotDialogOpen} onOpenChange={setEditSlotDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar Card</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label className="text-sm text-muted-foreground mb-2 block">Jogador</Label>
+              <Select value={tempSlotData.player} onValueChange={(v) => setTempSlotData(prev => ({ ...prev, player: v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar jogador" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum</SelectItem>
+                  {players.map((player) => (
+                    <SelectItem key={player} value={player}>{player}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="text-sm text-muted-foreground mb-2 block">Função</Label>
+              <Select value={tempSlotData.role} onValueChange={(v) => setTempSlotData(prev => ({ ...prev, role: v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhuma</SelectItem>
+                  {ROLE_TAGS.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.icon} {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="text-sm text-muted-foreground mb-2 block">Salário</Label>
+              <Input
+                placeholder="Ex: R$ 1.500 ou 1500"
+                value={tempSlotData.salary}
+                onChange={(e) => setTempSlotData(prev => ({ ...prev, salary: e.target.value }))}
+              />
+            </div>
+            
+            <Button onClick={saveSlotChanges} className="w-full">
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Select Dialog */}
       <Dialog open={mobileSelectSlot !== null} onOpenChange={(open) => !open && setMobileSelectSlot(null)}>
