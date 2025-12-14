@@ -866,12 +866,12 @@ export default function MontarElenco() {
           <div className="space-y-4 pt-2">
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Jogador</Label>
-              <Select value={tempSlotData.player} onValueChange={(v) => setTempSlotData(prev => ({ ...prev, player: v }))}>
+              <Select value={tempSlotData.player || "__none__"} onValueChange={(v) => setTempSlotData(prev => ({ ...prev, player: v === "__none__" ? "" : v }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar jogador" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {players.map((player) => (
                     <SelectItem key={player} value={player}>{player}</SelectItem>
                   ))}
@@ -881,12 +881,12 @@ export default function MontarElenco() {
             
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Função</Label>
-              <Select value={tempSlotData.role} onValueChange={(v) => setTempSlotData(prev => ({ ...prev, role: v }))}>
+              <Select value={tempSlotData.role || "__none__"} onValueChange={(v) => setTempSlotData(prev => ({ ...prev, role: v === "__none__" ? "" : v }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="__none__">Nenhuma</SelectItem>
                   {ROLE_TAGS.map((role) => (
                     <SelectItem key={role.id} value={role.name}>
                       {role.icon} {role.name}
